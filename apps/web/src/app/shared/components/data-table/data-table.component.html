@@ -1,0 +1,26 @@
+<table class="data-table">
+  <thead>
+    <tr>
+      @for (col of columns; track col) {
+        <th>{{ col.header }}</th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    @if (data?.length > 0) {
+      @for (row of data; track row) {
+        <tr>
+          @for (col of columns; track col) {
+            <td>{{ row[col.field] }}</td>
+          }
+        </tr>
+      }
+    } @else {
+      <tr>
+        <td [attr.colspan]="columns?.length || 1" class="dt-no-data">
+          No data available at this time
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

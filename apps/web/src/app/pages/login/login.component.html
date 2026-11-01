@@ -1,0 +1,51 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <h1 class="app-title">Dental RCM Suite</h1>
+
+    @if (!mustChangePassword) {
+      <form class="login-form" [formGroup]="form" (ngSubmit)="login()">
+        <label class="field">
+          <span class="field-label">Email</span>
+          <input type="email" formControlName="email" autocomplete="username" required />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Password</span>
+          <input type="password" formControlName="password" autocomplete="current-password" required />
+        </label>
+
+        @if (error) {
+          <p class="login-error" role="alert">{{ error }}</p>
+        }
+
+        <button class="login-button" type="submit" [disabled]="loading || form.invalid">
+          {{ loading ? 'Signing in...' : 'Sign in' }}
+        </button>
+      </form>
+    } @else {
+      <form class="login-form" [formGroup]="changeForm" (ngSubmit)="changePassword()">
+        <p class="change-prompt">
+          This account is still using its initial password. Choose a new one to continue.
+        </p>
+
+        <label class="field">
+          <span class="field-label">New password</span>
+          <input type="password" formControlName="newPassword" autocomplete="new-password" required />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Confirm new password</span>
+          <input type="password" formControlName="confirmPassword" autocomplete="new-password" required />
+        </label>
+
+        @if (error) {
+          <p class="login-error" role="alert">{{ error }}</p>
+        }
+
+        <button class="login-button" type="submit" [disabled]="loading || changeForm.invalid">
+          {{ loading ? 'Saving...' : 'Set password and continue' }}
+        </button>
+      </form>
+    }
+  </div>
+</div>

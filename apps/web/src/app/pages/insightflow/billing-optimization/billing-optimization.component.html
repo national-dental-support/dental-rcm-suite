@@ -1,0 +1,112 @@
+<div class="xen-page billing-opt-page">
+  <div class="xen-toolbar">
+    <h2 class="page-title">Billing Optimizer</h2>
+    <span class="spacer"></span>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Category</mat-label>
+      <mat-select [(value)]="filterCategory" (selectionChange)="onCategoryChange($event.value)">
+        <mat-option value="">All Categories</mat-option>
+        <mat-option *ngFor="let c of categories" [value]="c">{{ c }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Priority</mat-label>
+      <mat-select [(value)]="filterPriority" (selectionChange)="onPriorityChange($event.value)">
+        <mat-option value="">All Priorities</mat-option>
+        <mat-option *ngFor="let p of priorities" [value]="p">{{ p | titlecase }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="xen-loading" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading billing recommendations&#x2026;</p>
+  </div>
+
+  <div class="xen-empty" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <p>Failed to load recommendations. <button mat-button color="primary" (click)="load()">Retry</button></p>
+  </div>
+
+  <ng-container *ngIf="!loading && !error && stats">
+    <!-- KPI Cards -->
+    <div class="kpi-row">
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Total Opportunities</div>
+          <div class="kpi-value">{{ stats.totalOpportunities }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="xen-card kpi-card highlight">
+        <mat-card-content>
+          <div class="kpi-label">Est. Revenue Lift</div>
+          <div class="kpi-value">${{ stats.estimatedRevenue | number }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Applied This Month</div>
+          <div class="kpi-value">{{ stats.appliedThisMonth }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Avg Impact / Rec</div>
+          <div class="kpi-value">${{ stats.avgImpactPerRec | number }}</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Recommendations Table -->
+    <mat-card class="xen-card table-card">
+      <mat-card-header>
+        <mat-card-title>Billing Recommendations ({{ filteredRecs.length }})</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="filteredRecs" class="xen-table" *ngIf="filteredRecs.length; else emptyRecs">
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef>Priority</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="priority-badge" [attr.data-priority]="r.priority">{{ r.priority | titlecase }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef>Category</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="category-chip">{{ r.category }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let r">{{ r.description }}</td>
+          </ng-container>
+          <ng-container matColumnDef="impact">
+            <th mat-header-cell *matHeaderCellDef>Est. Impact</th>
+            <td mat-cell *matCellDef="let r" class="impact-cell">${{ r.estimatedImpact | number }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="status-chip" [style.background]="statusColor(r.status)">{{ r.status | titlecase }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let r">
+              <ng-container *ngIf="r.status === 'new'">
+                <button mat-stroked-button color="primary" (click)="applyRec(r)" class="action-btn">Apply</button>
+                <button mat-stroked-button (click)="dismissRec(r)" class="action-btn">Dismiss</button>
+              </ng-container>
+              <span *ngIf="r.status !== 'new'" class="status-text">{{ r.status | titlecase }}</span>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="['priority','category','description','impact','status','actions']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['priority','category','description','impact','status','actions']"></tr>
+        </table>
+        <ng-template #emptyRecs>
+          <div class="xen-empty"><p>No recommendations match the current filters.</p></div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+</div>

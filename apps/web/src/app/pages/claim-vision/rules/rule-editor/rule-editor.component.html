@@ -1,0 +1,410 @@
+<section
+  class="rule-editor"
+  [class.rule-editor--readonly]="isViewMode"
+  [formGroup]="form"
+  >
+  <!-- ============ RULE DETAILS CARD ============ -->
+  <div class="rule-editor__card">
+    <div class="card-header">
+      <mat-icon class="card-header__icon">description</mat-icon>
+      <span class="card-header__title">Rule Details</span>
+    </div>
+
+    <div class="rule-editor__form-grid">
+      <div class="field-group">
+        <label class="field-label">Rule Name</label>
+        <input
+          class="field-input"
+          type="text"
+          placeholder="Give this rule a name..."
+          formControlName="name"
+          />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Category</label>
+          <input
+            class="field-input"
+            type="text"
+            placeholder="Select or type a category..."
+            formControlName="category"
+            [matAutocomplete]="categoryAuto"
+            />
+            <mat-autocomplete #categoryAuto="matAutocomplete" class="rule-autocomplete-panel">
+              @for (c of filterCategories(form.get('category')?.value); track c) {
+                <mat-option [value]="c">
+                  {{ c }}
+                </mat-option>
+              }
+            </mat-autocomplete>
+          </div>
+
+          <div class="field-group field-group--full">
+            <label class="field-label">Description</label>
+            <textarea
+              class="field-input field-input--textarea"
+              rows="3"
+              placeholder="Describe what this rule does..."
+              formControlName="description"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SCOPE CARD ============ -->
+      <div class="rule-editor__card">
+        <div class="card-header">
+          <mat-icon class="card-header__icon">tune</mat-icon>
+          <span class="card-header__title">Rule Scope</span>
+          <span class="card-header__subtitle">Define where this rule applies</span>
+        </div>
+
+        <div class="scope-grid">
+          @for (opt of scopeOptions; track opt) {
+            <button
+              type="button"
+              class="scope-chip"
+              [class.scope-chip--active]="form.get('scope')?.value === opt.key"
+              [disabled]="isViewMode"
+              (click)="onScopeChange(opt.key)"
+              >
+              <mat-icon class="scope-chip__icon">{{ opt.icon }}</mat-icon>
+              <span>{{ opt.label }}</span>
+            </button>
+          }
+        </div>
+
+        @if (needsScopeValues) {
+          <div class="scope-values">
+            <label class="field-label">
+              Applies to these {{ form.get('scope')?.value }}s:
+            </label>
+            <div class="scope-tags">
+              @for (val of (form.get('scopeValues')?.value ?? []); track val; let i = $index) {
+                <span
+                  class="scope-tag"
+                  >
+                  {{ val }}
+                  @if (!isViewMode) {
+                    <button
+                      type="button"
+                      class="scope-tag__remove"
+                      (click)="removeScopeValue(i)"
+                      >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </span>
+              }
+            </div>
+            @if (!isViewMode) {
+              <div class="scope-add-row">
+                <input
+                  class="field-input"
+                  type="text"
+                  [placeholder]="loadingScopeSuggestions ? 'Loading...' : 'Type to search ' + form.get('scope')?.value + 's...'"
+                  [(ngModel)]="scopeValueInput"
+                  [ngModelOptions]="{standalone: true}"
+                  [matAutocomplete]="scopeAuto"
+                  (keydown)="onScopeValueKeydown($event)"
+                  title="Scope value search"
+                  />
+                  <mat-autocomplete
+                    #scopeAuto="matAutocomplete"
+                    class="rule-autocomplete-panel"
+                    (optionSelected)="onScopeOptionSelected($event)"
+                    >
+                    @for (s of filterScopeSuggestions(scopeValueInput); track s) {
+                      <mat-option
+                        [value]="s"
+                        >
+                        {{ s }}
+                      </mat-option>
+                    }
+                    @if (loadingScopeSuggestions) {
+                      <mat-option disabled>
+                        Loading suggestions...
+                      </mat-option>
+                    }
+                    @if (!loadingScopeSuggestions && filterScopeSuggestions(scopeValueInput).length === 0 && scopeValueInput.trim()) {
+                      <mat-option
+                        disabled
+                        >
+                        No matches &#x2014; press Enter to add "{{ scopeValueInput.trim() }}"
+                      </mat-option>
+                    }
+                  </mat-autocomplete>
+                  <button
+                    type="button"
+                    class="btn btn--small btn--outline"
+                    (click)="addScopeValue()"
+                    [disabled]="!scopeValueInput.trim()"
+                    >
+                    <mat-icon>add</mat-icon> Add
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- ============ CONDITIONS CARD ============ -->
+        <div class="rule-editor__card">
+          <div class="card-header">
+            <mat-icon class="card-header__icon">filter_list</mat-icon>
+            <span class="card-header__title">Conditions</span>
+          </div>
+
+          <div class="rule-editor__if-row">
+            <span class="rule-editor__if-label">If</span>
+            <select
+              class="field-input field-input--select rule-editor__any-all-select"
+              formControlName="matchType"
+              aria-label="Match type"
+              >
+              <option value="any">Any</option>
+              <option value="all">All</option>
+            </select>
+            <span class="rule-editor__any-all-text">
+              of the following conditions are met:
+            </span>
+          </div>
+
+          <div class="rule-editor__conditions" formArrayName="conditions">
+            @for (condGroup of conditions.controls; track condGroup; let i = $index) {
+              <div
+                class="condition-row"
+                [formGroupName]="i"
+                >
+                <div class="field-group">
+                  <label class="field-label">Field</label>
+                  <input
+                    class="field-input"
+                    type="text"
+                    placeholder="Search 837 fields&#x2026;"
+                    [(ngModel)]="fieldInputs[i]"
+                    [ngModelOptions]="{standalone: true}"
+                    [matAutocomplete]="fieldAuto"
+                    [readonly]="isViewMode"
+                    />
+                    <mat-autocomplete
+                      #fieldAuto="matAutocomplete"
+                      class="rule-autocomplete-panel"
+                      (optionSelected)="onFieldSelected(i, $event)"
+                      (closed)="onFieldPanelClosed(i)"
+                      >
+                      @for (f of filteredFieldOptions(fieldInputs[i]); track f) {
+                        <mat-option
+                          [value]="f.key"
+                          >
+                          <span class="field-group-prefix">{{ f.group }}</span>{{ f.label }}
+                        </mat-option>
+                      }
+                    </mat-autocomplete>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label">Operator</label>
+                    <select
+                      class="field-input field-input--select"
+                      aria-label="Condition operator"
+                      formControlName="operator"
+                      >
+                      <option value="" disabled>Select an operator...</option>
+                      @for (op of availableOperators; track op) {
+                        <option [value]="op">{{ op }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label">Value</label>
+                    <input
+                      class="field-input"
+                      type="text"
+                      placeholder="Start typing..."
+                      formControlName="value"
+                      />
+                    </div>
+                    <div class="condition-row__actions">
+                      @if (!isViewMode && conditions.length > 1) {
+                        <button
+                          type="button"
+                          class="icon-btn icon-btn--remove"
+                          aria-label="Remove condition"
+                          (click)="removeCondition(i)"
+                          >
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (!isViewMode) {
+                <button
+                  type="button"
+                  class="link-btn link-btn--add"
+                  (click)="addCondition()"
+                  >
+                  <mat-icon>add_circle_outline</mat-icon>
+                  <span>Add condition</span>
+                </button>
+              }
+            </div>
+
+            <!-- ============ ACTIONS CARD ============ -->
+            <div class="rule-editor__card">
+              <div class="card-header">
+                <mat-icon class="card-header__icon">bolt</mat-icon>
+                <span class="card-header__title">Actions</span>
+                <span class="card-header__subtitle">What happens when conditions are met</span>
+              </div>
+
+              <div class="rule-editor__actions" formArrayName="actions">
+                @for (actGroup of actions.controls; track actGroup; let i = $index) {
+                  <div
+                    class="action-row"
+                    [formGroupName]="i"
+                    >
+                    <div class="field-group">
+                      <label class="field-label">Action Type</label>
+                      <select
+                        class="field-input field-input--select"
+                        aria-label="Action type"
+                        formControlName="actionType"
+                        >
+                        <option value="" disabled>Select an action...</option>
+                        @for (a of availableActions; track a) {
+                          <option [value]="a">{{ a }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="field-group field-group--message">
+                      <label class="field-label">Message</label>
+                      <textarea
+                        class="field-input field-input--textarea"
+                        rows="2"
+                        placeholder="Enter a message..."
+                        formControlName="message"
+                      ></textarea>
+                    </div>
+                    @if (!isViewMode && actions.length > 1) {
+                      <button
+                        type="button"
+                        class="icon-btn icon-btn--remove"
+                        aria-label="Remove action"
+                        (click)="removeAction(i)"
+                        >
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+              @if (!isViewMode) {
+                <button
+                  type="button"
+                  class="link-btn link-btn--add"
+                  (click)="addAction()"
+                  >
+                  <mat-icon>add_circle_outline</mat-icon>
+                  <span>Add action</span>
+                </button>
+              }
+            </div>
+
+            <!-- ============ ACTIVATION CARD ============ -->
+            <div class="rule-editor__card">
+              <div class="card-header">
+                <mat-icon class="card-header__icon">toggle_on</mat-icon>
+                <span class="card-header__title">Rule Activation</span>
+              </div>
+
+              <div class="activation-row">
+                <label class="radio-pill" [class.radio-pill--active]="form.get('status')?.value === 'Active'">
+                  <input
+                    type="radio"
+                    name="status"
+                    [checked]="form.get('status')?.value === 'Active'"
+                    (change)="onActiveChange()"
+                    [disabled]="isViewMode"
+                    />
+                    <mat-icon>check_circle</mat-icon>
+                    <span>Active</span>
+                  </label>
+
+                  <label class="radio-pill" [class.radio-pill--inactive]="form.get('status')?.value === 'Inactive'">
+                    <input
+                      type="radio"
+                      name="status"
+                      [checked]="form.get('status')?.value === 'Inactive'"
+                      (change)="onInactiveChange()"
+                      [disabled]="isViewMode"
+                      />
+                      <mat-icon>pause_circle</mat-icon>
+                      <span>Inactive</span>
+                    </label>
+
+                    <label class="radio-pill" [class.radio-pill--expires]="form.get('status')?.value === 'Expires'">
+                      <input
+                        type="radio"
+                        name="status"
+                        [checked]="form.get('status')?.value === 'Expires'"
+                        (change)="onExpiresChange()"
+                        [disabled]="isViewMode"
+                        />
+                        <mat-icon>schedule</mat-icon>
+                        <span>Expire on date</span>
+                      </label>
+
+                      @if (form.get('status')?.value === 'Expires') {
+                        <div class="activation-row__date">
+                          <label class="field-label">Expiration Date</label>
+                          <div class="date-input-wrapper">
+                            <input
+                              class="field-input"
+                              [matDatepicker]="expiresPicker"
+                              placeholder="Select date"
+                              formControlName="expiresDate"
+                              />
+                              <mat-datepicker-toggle
+                                matSuffix
+                                [for]="expiresPicker"
+                                [disabled]="isViewMode"
+                              ></mat-datepicker-toggle>
+                              <mat-datepicker #expiresPicker></mat-datepicker>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- ============ FOOTER ============ -->
+                    <div class="rule-editor__footer">
+                      <button
+                        type="button"
+                        class="btn btn--secondary"
+                        (click)="onCancelClicked()"
+                        >
+                        {{ isViewMode ? 'Back' : 'Cancel' }}
+                      </button>
+
+                      @if (!isViewMode) {
+                        <button
+                          type="button"
+                          class="btn btn--secondary"
+                          (click)="onSimulateClicked()"
+                          >
+                          Simulate
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn--primary"
+                          (click)="onSaveClicked()"
+                          >
+                          Save Rule
+                        </button>
+                      }
+                    </div>
+                  </section>

@@ -1,0 +1,457 @@
+<section class="page-content">
+
+  <!-- -- Summary tiles --------------------------------------------------- -->
+  @if (!loading && !error) {
+    <div class="tiles">
+      <div class="tile">
+        <div class="tile__header">
+          <span class="tile__label">Files Posted</span>
+          <button class="tile__info-btn" type="button"
+            matTooltip="Total number of ERA/EOB remittance files that have completed the full reconciliation lifecycle and been posted to the Practice Management System. Each file represents one payer payment batch."
+            matTooltipPosition="below" matTooltipClass="info-tooltip">
+            <mat-icon>info_outline</mat-icon>
+          </button>
+        </div>
+        <span class="tile__value">{{ totalFiles | number }}</span>
+      </div>
+      <div class="tile">
+        <div class="tile__header">
+          <span class="tile__label">Total ERA Amount</span>
+          <button class="tile__info-btn" type="button"
+            matTooltip="Sum of all remittance file amounts as reported by payers. This is the gross insurance payment committed across all ERA/EOB files &#x2014; before any bank deposit matching or reconciliation."
+            matTooltipPosition="below" matTooltipClass="info-tooltip">
+            <mat-icon>info_outline</mat-icon>
+          </button>
+        </div>
+        <span class="tile__value">{{ fmt(sumEra) }}</span>
+      </div>
+      <div class="tile">
+        <div class="tile__header">
+          <span class="tile__label">Total Deposited</span>
+          <button class="tile__info-btn" type="button"
+            matTooltip="Sum of all confirmed bank deposit amounts matched to these ERA files. Represents actual cash received in the practice's satellite bank account. Should equal Total ERA Amount for fully reconciled files."
+            matTooltipPosition="below" matTooltipClass="info-tooltip">
+            <mat-icon>info_outline</mat-icon>
+          </button>
+        </div>
+        <span class="tile__value">{{ fmt(sumDeposited) }}</span>
+      </div>
+      <div class="tile">
+        <div class="tile__header">
+          <span class="tile__label">Avg Reimbursement Rate</span>
+          <button class="tile__info-btn" type="button"
+            matTooltip="Average reimbursement rate across all posted files: total insurance paid divided by total charges billed. Reflects how effectively payer fee schedules cover billed amounts. Benchmark: 40&#x2013;60% is typical for dental."
+            matTooltipPosition="below" matTooltipClass="info-tooltip">
+            <mat-icon>info_outline</mat-icon>
+          </button>
+        </div>
+        <span class="tile__value">{{ avgReimbRate() }}%</span>
+      </div>
+    </div>
+  }
+
+  <!-- -- Audit log card --------------------------------------------------- -->
+  <div class="audit-card">
+
+    <div class="audit-card__header">
+      <span class="audit-card__title">Fully Adjudicated &amp; Posted &#x2014; Audit Log</span>
+
+      <div class="hc-search">
+        <mat-icon class="hc-search__icon">search</mat-icon>
+        <input #searchInput class="hc-search__input" type="text"
+          placeholder="Search payer, file, bank, location&#x2026;"
+          [value]="searchTerm"
+          (input)="onSearch(searchInput.value)" />
+          @if (searchTerm) {
+            <button mat-icon-button class="hc-search__clear"
+              type="button" (click)="onSearch(''); searchInput.value = ''" matTooltip="Clear">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+
+        @if (!loading) {
+          <span class="hc-count">{{ total | number }} record{{ total !== 1 ? 's' : '' }}</span>
+        }
+      </div>
+
+      @if (loading) {
+        <div class="state-row"><mat-spinner diameter="28"></mat-spinner></div>
+      }
+      @if (error && !loading) {
+        <div class="state-row state-row--error">
+          <mat-icon>error_outline</mat-icon>
+          <span>Failed to load records.</span>
+        </div>
+      }
+
+      @if (!loading && !error) {
+        <table class="audit-table">
+          <thead>
+            <tr>
+              <th class="col-expand" aria-label="Expand row"></th>
+              <th class="sortable" (click)="sort('postedDate')">Posted Date <mat-icon class="sort-icon">{{ sortIcon('postedDate') }}</mat-icon></th>
+              <th class="sortable" (click)="sort('reconciledId')">ERA / EOB File <mat-icon class="sort-icon">{{ sortIcon('reconciledId') }}</mat-icon></th>
+              <th class="sortable" (click)="sort('payerName')">Payer <mat-icon class="sort-icon">{{ sortIcon('payerName') }}</mat-icon></th>
+              <th class="sortable" (click)="sort('practiceLocation')">Location <mat-icon class="sort-icon">{{ sortIcon('practiceLocation') }}</mat-icon></th>
+              <th class="sortable" (click)="sort('fileType')">Type <mat-icon class="sort-icon">{{ sortIcon('fileType') }}</mat-icon></th>
+              <th class="sortable num" (click)="sort('claimCount')">Claims <mat-icon class="sort-icon">{{ sortIcon('claimCount') }}</mat-icon></th>
+              <th class="sortable num" (click)="sort('amountFullEra')">ERA Amount <mat-icon class="sort-icon">{{ sortIcon('amountFullEra') }}</mat-icon></th>
+              <th class="sortable num" (click)="sort('amountDeposited')">Deposited <mat-icon class="sort-icon">{{ sortIcon('amountDeposited') }}</mat-icon></th>
+              <th class="num">Variance</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of pageRows; track row) {
+              <!-- -- Summary row --------------------------------------------- -->
+              <tr class="audit-row" [class.audit-row--open]="expandedId === row.reconciledId"
+                (click)="toggleExpand(row)">
+                <td class="col-expand">
+                  <mat-icon class="expand-icon" [class.expand-icon--open]="expandedId === row.reconciledId">
+                    chevron_right
+                  </mat-icon>
+                </td>
+                <td class="cell-date">{{ fmtDate(row.postedDate) }}</td>
+                <td class="mono">{{ row.reconciledId }}</td>
+                <td>{{ row.payerName || '&#x2014;' }}</td>
+                <td class="cell-locations">
+                  <span class="loc-chip">{{ locations(row)[0] || '&#x2014;' }}</span>
+                  @if (locations(row).length > 1) {
+                    <span class="loc-more">+{{ locations(row).length - 1 }}</span>
+                  }
+                </td>
+                <td><span class="type-badge type-badge--{{ row.fileType | lowercase }}">{{ row.fileType }}</span></td>
+                <td class="num">{{ row.claimCount }}</td>
+                <td class="num">{{ fmt(row.amountFullEra) }}</td>
+                <td class="num">{{ fmt(row.amountDeposited) }}</td>
+                <td class="num" [ngClass]="varianceClass(variance(row))">
+                  {{ variance(row) === 0 ? '&#x2014;' : fmt(variance(row)) }}
+                </td>
+                <td>
+                  <span class="status-badge status-badge--posted">
+                    <mat-icon class="status-badge__icon">check_circle</mat-icon> Posted
+                  </span>
+                </td>
+              </tr>
+              <!-- -- Expanded detail ---------------------------------------- -->
+              @if (expandedId === row.reconciledId) {
+                <tr class="detail-row">
+                  <td colspan="11" class="detail-cell">
+                    <!-- -- EFT Transaction Header --------------------------- -->
+                    <div class="eft-header">
+                      <div class="eft-header__icon-wrap">
+                        <mat-icon class="eft-header__icon">verified</mat-icon>
+                      </div>
+                      <div class="eft-header__main">
+                        <div class="eft-header__type">Electronic Funds Transfer &#x2014; Fully Reconciled &amp; Posted</div>
+                        <div class="eft-header__amount">{{ fmt(row.amountFullEra) }}</div>
+                        <div class="eft-header__meta">
+                          <span class="eft-meta-item"><mat-icon>business</mat-icon>{{ row.payerName || '&#x2014;' }}</span>
+                          <span class="eft-meta-sep">&#x00B7;</span>
+                          <span class="eft-meta-item"><mat-icon>tag</mat-icon>{{ row.reconciledId }}</span>
+                          <span class="eft-meta-sep">&#x00B7;</span>
+                          <span class="eft-meta-item"><mat-icon>calendar_today</mat-icon>Posted {{ fmtDate(row.postedDate) }}</span>
+                        </div>
+                      </div>
+                      <div class="eft-header__badges">
+                        <span class="eft-badge eft-badge--posted"><mat-icon>check_circle</mat-icon> Fully Posted</span>
+                        <span class="eft-badge eft-badge--type">{{ row.fileType }}</span>
+                        <span class="eft-badge eft-badge--claims">{{ row.claimCount }} Claims</span>
+                      </div>
+                    </div>
+                    <!-- -- Banking details + lifecycle ---------------------- -->
+                    <div class="eft-body">
+                      <!-- Banking & Transfer Details -->
+                      <div class="bank-card">
+                        <div class="bank-card__header">
+                          <mat-icon>account_balance</mat-icon>
+                          <span>Banking &amp; Transfer Details</span>
+                        </div>
+                        <div class="bank-flow">
+                          <div class="bank-node">
+                            <div class="bank-node__badge">EFT Received</div>
+                            <div class="bank-node__name">{{ row.bankName || row.sweepSourceBankName || '&#x2014;' }}</div>
+                            <div class="bank-node__account">{{ row.bankAccountNickname || row.bankAccountName || row.sweepSourceAccountName || '&#x2014;' }}</div>
+                            <div class="bank-node__sub">Deposited {{ fmtDate(row.depositDate) }}</div>
+                            @if (row.depositMethod) {
+                              <div class="bank-node__method">{{ row.depositMethod }}</div>
+                            }
+                          </div>
+                          <div class="bank-transfer">
+                            <div class="bank-transfer__amt">{{ fmt(row.amountDeposited) }}</div>
+                            <mat-icon class="bank-transfer__icon">east</mat-icon>
+                            <div class="bank-transfer__label">Funds Swept</div>
+                          </div>
+                          <div class="bank-node bank-node--dest">
+                            <div class="bank-node__badge bank-node__badge--dest">Operating Account</div>
+                            <div class="bank-node__name">{{ row.sweepDestBankName || '&#x2014;' }}</div>
+                            <div class="bank-node__account">{{ row.sweepDestAccountName || '&#x2014;' }}</div>
+                            <div class="bank-node__sub">Swept {{ fmtDate(row.sweepDate) }}</div>
+                          </div>
+                        </div>
+                        <div class="bank-stats">
+                          <div class="bank-stat">
+                            <span class="bank-stat__label">Bank Feed ID</span>
+                            <span class="bank-stat__value mono">{{ row.bankFeedId || '&#x2014;' }}</span>
+                          </div>
+                          <div class="bank-stat">
+                            <span class="bank-stat__label">ERA Amount</span>
+                            <span class="bank-stat__value">{{ fmt(row.amountFullEra) }}</span>
+                          </div>
+                          <div class="bank-stat">
+                            <span class="bank-stat__label">Deposited</span>
+                            <span class="bank-stat__value">{{ fmt(row.amountDeposited) }}</span>
+                          </div>
+                          <div class="bank-stat">
+                            <span class="bank-stat__label">Amount Swept</span>
+                            <span class="bank-stat__value fw">{{ fmt(row.sweepAmount) }}</span>
+                          </div>
+                          <div class="bank-stat">
+                            <span class="bank-stat__label">Variance</span>
+                            <span class="bank-stat__value" [ngClass]="varianceClass(variance(row))">
+                              {{ variance(row) === 0 ? 'None' : fmt(variance(row)) }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Payment Lifecycle (vertical) -->
+                      <div class="lc-card">
+                        <div class="lc-card__header">
+                          <mat-icon>route</mat-icon>
+                          <span>Payment Lifecycle</span>
+                        </div>
+                        <div class="lc-steps">
+                          <div class="lc-step lc-step--done">
+                            <div class="lc-step__left">
+                              <div class="lc-step__icon"><mat-icon>download_done</mat-icon></div>
+                              <div class="lc-step__connector"></div>
+                            </div>
+                            <div class="lc-step__body">
+                              <div class="lc-step__label">ERA Received</div>
+                              <div class="lc-step__date">{{ fmtDate(row.fileDate) }}</div>
+                              <div class="lc-step__sub">File ingested from payer</div>
+                            </div>
+                          </div>
+                          <div class="lc-step lc-step--done">
+                            <div class="lc-step__left">
+                              <div class="lc-step__icon"><mat-icon>account_balance</mat-icon></div>
+                              <div class="lc-step__connector"></div>
+                            </div>
+                            <div class="lc-step__body">
+                              <div class="lc-step__label">Deposit Confirmed</div>
+                              <div class="lc-step__date">{{ fmtDate(row.depositDate) }}</div>
+                              <div class="lc-step__sub">{{ row.depositMethod || 'EFT' }} &#x00B7; {{ fmt(row.amountDeposited) }}</div>
+                            </div>
+                          </div>
+                          <div class="lc-step lc-step--done">
+                            <div class="lc-step__left">
+                              <div class="lc-step__icon"><mat-icon>compare_arrows</mat-icon></div>
+                              <div class="lc-step__connector"></div>
+                            </div>
+                            <div class="lc-step__body">
+                              <div class="lc-step__label">Reconciled</div>
+                              <div class="lc-step__date">{{ fmtDate(row.reconciledDate) }}</div>
+                              <div class="lc-step__sub">ERA &#x2194; bank deposit matched</div>
+                            </div>
+                          </div>
+                          <div class="lc-step lc-step--done">
+                            <div class="lc-step__left">
+                              <div class="lc-step__icon"><mat-icon>how_to_reg</mat-icon></div>
+                              <div class="lc-step__connector"></div>
+                            </div>
+                            <div class="lc-step__body">
+                              <div class="lc-step__label">Posted to PMS</div>
+                              <div class="lc-step__date">{{ fmtDate(row.postedDate) }}</div>
+                              <div class="lc-step__sub">by {{ row.postedBy || '&#x2014;' }}</div>
+                            </div>
+                          </div>
+                          <div class="lc-step lc-step--sweep">
+                            <div class="lc-step__left">
+                              <div class="lc-step__icon"><mat-icon>swap_horiz</mat-icon></div>
+                            </div>
+                            <div class="lc-step__body">
+                              <div class="lc-step__label">Funds Swept</div>
+                              <div class="lc-step__date">{{ fmtDate(row.sweepDate) }}</div>
+                              <div class="lc-step__sub">&#x2192; {{ row.sweepDestAccountName || '&#x2014;' }}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Location breakdown (multi-location EFTs) -->
+                    @if (!claimsLoading.has(row.reconciledId) && (locBreakdownMap.get(row.reconciledId)?.length ?? 0) > 1) {
+                      <div class="loc-breakdown"
+                        >
+                        <div class="loc-breakdown__title">
+                          Payment by Location
+                          <span class="loc-breakdown__count">{{ locBreakdownMap.get(row.reconciledId)!.length }} locations</span>
+                        </div>
+                        <table class="loc-table">
+                          <thead>
+                            <tr>
+                              <th>Location</th>
+                              <th class="num">Claims</th>
+                              <th class="num">Charged</th>
+                              <th class="num">Allowed</th>
+                              <th class="num">Ins Paid</th>
+                              <th class="num">Patient Resp</th>
+                              <th class="num">Adjustments</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (loc of locBreakdownMap.get(row.reconciledId); track loc) {
+                              <tr class="loc-row">
+                                <td>{{ loc.location }}</td>
+                                <td class="num">{{ loc.claimCount }}</td>
+                                <td class="num">{{ fmt(loc.totalCharge) }}</td>
+                                <td class="num">{{ fmt(loc.totalAllowed) }}</td>
+                                <td class="num fw">{{ fmt(loc.totalPaid) }}</td>
+                                <td class="num">{{ fmt(loc.totalPatientResp) }}</td>
+                                <td class="num">{{ fmt(loc.totalAdjustment) }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                    <!-- Financial reconciliation summary -->
+                    <div class="fin-summary">
+                      <div class="fin-summary__title">Financial Reconciliation Summary</div>
+                      <div class="fin-summary__equation">
+                        <span class="fin-summary__eq-item fin-summary__eq-item--charge">{{ fmt(row.totalCharge) }}</span>
+                        <span class="fin-summary__eq-op">=</span>
+                        <span class="fin-summary__eq-item fin-summary__eq-item--paid">{{ fmt(row.totalPaid) }}</span>
+                        <span class="fin-summary__eq-op">+</span>
+                        <span class="fin-summary__eq-item">{{ fmt(row.totalPatientResp) }}</span>
+                        <span class="fin-summary__eq-op">+</span>
+                        <span class="fin-summary__eq-item">{{ fmt(row.totalCharge - row.totalAllowed) }}</span>
+                        <span class="fin-summary__eq-op">+</span>
+                        <span class="fin-summary__eq-item">{{ fmt(row.totalAdjustment) }}</span>
+                      </div>
+                      <div class="fin-summary__grid">
+                        <div class="fin-summary__item">
+                          <span class="fin-summary__label">Total Billed</span>
+                          <span class="fin-summary__value">{{ fmt(row.totalCharge) }}</span>
+                          <span class="fin-summary__sub">Charges submitted to payer</span>
+                        </div>
+                        <div class="fin-summary__item">
+                          <span class="fin-summary__label">Insurance Payment</span>
+                          <span class="fin-summary__value fin-summary__value--pos">{{ fmt(row.totalPaid) }}</span>
+                          <span class="fin-summary__sub">Payer remittance (= ERA/EFT amount)</span>
+                        </div>
+                        <div class="fin-summary__item">
+                          <span class="fin-summary__label">Patient Responsibility</span>
+                          <span class="fin-summary__value">{{ fmt(row.totalPatientResp) }}</span>
+                          <span class="fin-summary__sub">Co-pay, deductible, coinsurance</span>
+                        </div>
+                        <div class="fin-summary__item">
+                          <span class="fin-summary__label">Contractual Write-Off</span>
+                          <span class="fin-summary__value fin-summary__value--muted">{{ fmt(row.totalCharge - row.totalAllowed) }}</span>
+                          <span class="fin-summary__sub">Billed &#x2212; Allowed (fee schedule adj.)</span>
+                        </div>
+                        <div class="fin-summary__item">
+                          <span class="fin-summary__label">Other Adjustments</span>
+                          <span class="fin-summary__value fin-summary__value--muted">{{ fmt(row.totalAdjustment) }}</span>
+                          <span class="fin-summary__sub">CO/PR/OA codes beyond write-off</span>
+                        </div>
+                        <div class="fin-summary__item fin-summary__item--rate">
+                          <span class="fin-summary__label">Reimbursement Rate</span>
+                          <span class="fin-summary__value fin-summary__value--accent">{{ reimbRate(row) }}%</span>
+                          <span class="fin-summary__sub">Insurance Payment &#x00F7; Total Billed</span>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Claims adjudication table -->
+                    <div class="claims-section">
+                      <span class="claims-section__title">Claim Adjudication Detail</span>
+                      @if (claimsLoading.has(row.reconciledId)) {
+                        <div class="claims-loading">
+                          <mat-spinner diameter="20"></mat-spinner>
+                        </div>
+                      }
+                      @if (!claimsLoading.has(row.reconciledId)) {
+                        <table class="claims-table">
+                          <thead>
+                            <tr>
+                              <th>Claim ID</th>
+                              <th>Location</th>
+                              <th>Payer</th>
+                              <th>Date of Service</th>
+                              <th class="num">Charged</th>
+                              <th class="num">Allowed</th>
+                              <th class="num">Ins Paid</th>
+                              <th class="num">Patient Resp</th>
+                              <th class="num">Adjustment</th>
+                              <th class="num">Write-Off</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (c of claimsMap.get(row.reconciledId); track c) {
+                              <tr class="claim-row">
+                                <td class="mono">{{ c.claimId }}</td>
+                                <td>{{ c.location }}</td>
+                                <td>{{ c.payerName }}</td>
+                                <td class="cell-date">{{ fmtDate(c.dateOfService) }}</td>
+                                <td class="num">{{ fmt(c.chargeAmt) }}</td>
+                                <td class="num">{{ fmt(c.allowedAmt) }}</td>
+                                <td class="num fw">{{ fmt(c.paidAmt) }}</td>
+                                <td class="num">{{ fmt(c.patientRespAmt) }}</td>
+                                <td class="num">{{ fmt(c.adjustmentAmt) }}</td>
+                                <td class="num">{{ fmt(c.writeOff) }}</td>
+                                <td><span class="line-status line-status--{{ c.lineStatus }}">{{ c.lineStatus }}</span></td>
+                              </tr>
+                            }
+                            <!-- Totals row -->
+                            @if (claimsMap.get(row.reconciledId)?.length) {
+                              <tr class="totals-row">
+                                <td colspan="4" class="totals-label">Totals</td>
+                                <td class="num fw">{{ fmt(claimTotal(claimsMap.get(row.reconciledId)!, 'chargeAmt')) }}</td>
+                                <td class="num fw">{{ fmt(claimTotal(claimsMap.get(row.reconciledId)!, 'allowedAmt')) }}</td>
+                                <td class="num fw">{{ fmt(claimTotal(claimsMap.get(row.reconciledId)!, 'paidAmt')) }}</td>
+                                <td class="num fw">{{ fmt(claimTotal(claimsMap.get(row.reconciledId)!, 'patientRespAmt')) }}</td>
+                                <td class="num fw">{{ fmt(claimTotal(claimsMap.get(row.reconciledId)!, 'adjustmentAmt')) }}</td>
+                                <td class="num fw">{{ fmt(claimTotal(claimsMap.get(row.reconciledId)!, 'writeOff')) }}</td>
+                                <td></td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+            @if (!loading && rows.length === 0) {
+              <tr>
+                <td colspan="11" class="empty-row">
+                  <mat-icon>receipt_long</mat-icon>
+                  @if (searchTerm) {
+                    <span>No records match "{{ searchTerm }}".</span>
+                  }
+                  @if (!searchTerm) {
+                    <span>No fully posted transactions found.</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (!loading && total > pageSize) {
+        <div class="audit-pagination">
+          <button mat-icon-button type="button" [disabled]="page === 1" (click)="goPage(-1)" matTooltip="Previous">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="pagination-info">{{ pageFrom }}&#x2013;{{ pageTo }} of {{ total | number }}</span>
+          <button mat-icon-button type="button" [disabled]="page >= totalPages" (click)="goPage(1)" matTooltip="Next">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
+
+  </section>

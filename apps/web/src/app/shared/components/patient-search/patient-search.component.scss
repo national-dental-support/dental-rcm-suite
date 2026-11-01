@@ -1,0 +1,25 @@
+.patient-search-field {
+  width: 100%;
+}
+
+.patient-option {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.4;
+
+  .patient-name {
+    font-weight: 500;
+  }
+
+  .patient-meta {
+    display: flex;
+    gap: 12px;
+    font-size: var(--font-size-xs);
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+.search-loading {
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.54);
+}

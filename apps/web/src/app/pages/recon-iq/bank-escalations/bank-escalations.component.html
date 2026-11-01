@@ -1,0 +1,150 @@
+<section class="page-content">
+  <div class="toolbar-card">
+    <div class="cmdbar">
+      <div class="cmdbar__left">
+        <div class="cmdbar__title">Bank Issue Escalations</div>
+        <div class="cmdbar__hint">Track and resolve bank deposit issues</div>
+      </div>
+      <div class="cmdbar__right">
+        <mat-select [(ngModel)]="filterStatus" placeholder="Status" class="filter-select" (ngModelChange)="applyFilters()">
+          <mat-option value="">All Statuses</mat-option>
+          <mat-option value="open">Open</mat-option>
+          <mat-option value="investigating">Investigating</mat-option>
+          <mat-option value="resolved">Resolved</mat-option>
+          <mat-option value="dismissed">Dismissed</mat-option>
+        </mat-select>
+        <mat-select [(ngModel)]="filterPriority" placeholder="Priority" class="filter-select" (ngModelChange)="applyFilters()">
+          <mat-option value="">All Priorities</mat-option>
+          @for (p of priorities; track p) {
+            <mat-option [value]="p">{{ p | titlecase }}</mat-option>
+          }
+        </mat-select>
+        <button mat-stroked-button type="button" (click)="clearFilters()">Clear</button>
+        <button mat-flat-button color="primary" type="button" (click)="openNewForm()">
+          <mat-icon>add</mat-icon> New Escalation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-card__value">{{ stats.total }}</div>
+      <div class="stat-card__label">Total</div>
+    </div>
+    <div class="stat-card stat-card--open">
+      <div class="stat-card__value">{{ stats.open }}</div>
+      <div class="stat-card__label">Open</div>
+    </div>
+    <div class="stat-card stat-card--investigating">
+      <div class="stat-card__value">{{ stats.investigating }}</div>
+      <div class="stat-card__label">Investigating</div>
+    </div>
+    <div class="stat-card stat-card--resolved">
+      <div class="stat-card__value">{{ stats.resolved }}</div>
+      <div class="stat-card__label">Resolved</div>
+    </div>
+  </div>
+
+  <!-- New Escalation Form -->
+  @if (showNewForm) {
+    <app-section-card [title]="'New Escalation'">
+      <div class="new-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Issue Type</mat-label>
+          <mat-select [(ngModel)]="newIssueType" required>
+            @for (t of issueTypes; track t) {
+              <mat-option [value]="t">{{ t | titlecase }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Priority</mat-label>
+          <mat-select [(ngModel)]="newPriority">
+            @for (p of priorities; track p) {
+              <mat-option [value]="p">{{ p | titlecase }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Bank Deposit ID (optional)</mat-label>
+          <input matInput [(ngModel)]="newDepositId" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="new-form__desc">
+          <mat-label>Description</mat-label>
+          <textarea matInput rows="3" [(ngModel)]="newDescription"></textarea>
+        </mat-form-field>
+        <div class="new-form__actions">
+          <button mat-stroked-button type="button" (click)="cancelNew()">Cancel</button>
+          <button mat-flat-button color="primary" type="button" [disabled]="!newIssueType || submitting" (click)="submitNew()">Submit</button>
+        </div>
+      </div>
+    </app-section-card>
+  }
+
+  <!-- Table -->
+  <app-section-card [title]="'Escalations (' + total + ')'">
+    @if (loading) {
+      <div class="loading-row"><mat-spinner diameter="28"></mat-spinner></div>
+    }
+
+    @if (!loading) {
+      <table class="esc-table">
+        <thead>
+          <tr>
+            <th>Issue Type</th>
+            <th>Deposit ID</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Assigned To</th>
+            <th>Days Open</th>
+            <th>Created By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track row) {
+            <tr>
+              <td>{{ row.issueType | titlecase }}</td>
+              <td class="mono">{{ row.bankDepositId || '&#x2014;' }}</td>
+              <td><span [class]="priorityClass(row.priority)">{{ row.priority | titlecase }}</span></td>
+              <td><span [class]="statusClass(row.status)">{{ row.status | titlecase }}</span></td>
+              <td>{{ row.assignedTo || '&#x2014;' }}</td>
+              <td>{{ row.daysOpen }}</td>
+              <td>{{ row.createdBy }}</td>
+              <td class="actions-cell">
+                @if (row.status === 'open') {
+                  <button mat-stroked-button type="button"
+                  (click)="setStatus(row, 'investigating')">Investigate</button>
+                }
+                @if (row.status !== 'resolved' && row.status !== 'dismissed') {
+                  <button mat-stroked-button type="button" color="warn"
+                  (click)="resolve(row)">Resolve</button>
+                }
+                @if (row.status !== 'dismissed' && row.status !== 'resolved') {
+                  <button mat-stroked-button type="button"
+                  (click)="setStatus(row, 'dismissed')">Dismiss</button>
+                }
+              </td>
+            </tr>
+          }
+          @if (rows.length === 0) {
+            <tr>
+              <td colspan="8" class="empty-row">No escalations found.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <!-- Pagination -->
+    @if (totalPages > 1) {
+      <div class="pagination">
+        <button mat-stroked-button type="button" [disabled]="page <= 1" (click)="loadRows(page - 1)">Prev</button>
+        <span>Page {{ page }} of {{ totalPages }}</span>
+        <button mat-stroked-button type="button" [disabled]="page >= totalPages" (click)="loadRows(page + 1)">Next</button>
+      </div>
+    }
+  </app-section-card>
+</section>

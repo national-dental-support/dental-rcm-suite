@@ -1,0 +1,124 @@
+<!-- rule-details-page.component.html -->
+<section class="page rule-details-page">
+  <header class="rule-details__header">
+    <div class="rule-details__header-inner">
+      <div class="breadcrumbs">
+        <h1 class="rule-details__title">{{ rule?.name }}</h1>
+      </div>
+
+      <div class="rule-details__title-row">
+        <button type="button" class="breadcrumbs__back" (click)="goBack()">
+          <mat-icon class="breadcrumbs__icon">arrow_back</mat-icon>
+          <span>Back to Rules</span>
+        </button>
+
+        <!-- Only show for custom rules -->
+        @if (rule?.kind === 'custom' && !editMode) {
+          <button
+            type="button"
+            class="rule-details__edit-btn"
+            (click)="scrollToEditor()"
+            >
+            <mat-icon class="rule-details__edit-icon">edit</mat-icon>
+            <span>Edit rule</span>
+          </button>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- CUSTOM RULE: full editor form -->
+  @if (rule?.kind === 'custom') {
+    <section class="rule-details__form-section" id="rule-editor">
+      <rp-rule-editor
+        [mode]="editMode ? 'edit' : 'view'"
+        [rule]="rule"
+        (save)="onSave($event)"
+        (cancel)="onEditorCancel()"
+      ></rp-rule-editor>
+    </section>
+  }
+
+  <!-- SYSTEM RULE: summary card -->
+  @if (rule?.kind === 'system') {
+    <section class="rule-details__summary">
+      <div class="summary-card">
+        <h2 class="summary-card__title">{{ rule?.name }}</h2>
+        <p class="summary-card__description">
+          {{ rule?.description }}
+        </p>
+        <div class="summary-card__meta">
+          <div>
+            <div class="summary-card__label">Category</div>
+            <div class="summary-card__value">{{ rule?.category }}</div>
+          </div>
+          <div>
+            <div class="summary-card__label">Status</div>
+            <div class="summary-card__value">{{ rule?.status }}</div>
+          </div>
+        </div>
+        <p class="summary-card__note">
+          This is a system rule and cannot be edited.
+        </p>
+      </div>
+    </section>
+  }
+
+  <!-- Rule Performance -->
+  <section class="card card--performance">
+    <header class="card__header">
+      <h2 class="card__title">Rule Performance</h2>
+      <div class="card__header-actions">
+        <button type="button" class="link-button" (click)="exportClaims()">
+          Export claims
+        </button>
+        <button type="button" class="link-button" (click)="goToInsightFlow()">
+          More rule insights&#x2026;
+        </button>
+      </div>
+    </header>
+
+    <div class="performance-grid">
+      <div class="metric-card">
+        <div class="metric-card__label">Claims impacted</div>
+        <div class="metric-card__value">{{ impactedLast12Months }}</div>
+        <div class="metric-card__sub">Past 12 months</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-card__label">Claims impacted</div>
+        <div class="metric-card__value">{{ impactedAllTime }}</div>
+        <div class="metric-card__sub">All time</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rule History -->
+  <section class="card card--history">
+    <header class="card__header">
+      <h2 class="card__title">Rule History</h2>
+      <button type="button" class="link-button" (click)="exportHistory()">
+        Export
+      </button>
+    </header>
+
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Action</th>
+          <th>Performed by</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of history; track item) {
+          <tr>
+            <td>{{ item.date }}</td>
+            <td>{{ item.action }}</td>
+            <td>{{ item.by }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</section>

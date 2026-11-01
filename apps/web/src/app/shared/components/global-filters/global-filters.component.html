@@ -1,0 +1,288 @@
+<div class="global-filters" [formGroup]="filtersForm">
+  <!-- Date Range -->
+  <button class="filter-pill" type="button" [matMenuTriggerFor]="dateMenu">
+    <span class="pill-label">Date Range</span>
+    <span class="pill-value">{{ dateRangeLabel }}</span>
+    <mat-icon class="pill-caret">expand_more</mat-icon>
+  </button>
+
+  <mat-menu #dateMenu="matMenu" panelClass="filter-menu" [overlapTrigger]="false">
+    <div class="filter-menu__body" (click)="$event.stopPropagation()">
+      <div class="filter-menu__header">
+        <div class="filter-menu__title">Date Range</div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="filter-menu__content">
+        <div class="date-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Start</mat-label>
+            <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+            <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>End</mat-label>
+            <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
+            <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="filter-menu__footer">
+        <button mat-button type="button" class="rp-btn-ghost" (click)="clearDateRangeAndApply()">
+          Clear
+        </button>
+      </div>
+    </div>
+  </mat-menu>
+
+  <!-- Payer -->
+  <button class="filter-pill" type="button" [matMenuTriggerFor]="payerMenu">
+    <span class="pill-label">Payer</span>
+    <span class="pill-value">{{ payerLabel }}</span>
+    <mat-icon class="pill-caret">expand_more</mat-icon>
+  </button>
+
+  <mat-menu #payerMenu="matMenu" panelClass="filter-menu">
+    <div class="filter-menu__body" (click)="$event.stopPropagation()">
+      <div class="filter-menu__header">
+        <div class="filter-menu__title">Payer</div>
+      </div>
+
+      <div class="filter-menu__search">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input class="search-input" type="text" placeholder="Search payers&#x2026;"
+          [value]="payerSearch"
+          (input)="payerSearch = $any($event.target).value"
+          (keydown)="$event.stopPropagation()" />
+          @if (payerSearch) {
+            <button class="search-clear" (click)="payerSearch = ''">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="filter-menu__content">
+          @if (filteredPayerOptions.length > 0) {
+            <mat-checkbox class="select-all-row"
+              [checked]="isAllSelectedStr(filtersForm.controls.payers, filteredPayerOptions)"
+              [indeterminate]="isSomeSelectedStr(filtersForm.controls.payers, filteredPayerOptions)"
+              (change)="toggleSelectAllStr(filtersForm.controls.payers, filteredPayerOptions)">
+              Select all
+            </mat-checkbox>
+          }
+          <div class="menu-list">
+            @for (p of filteredPayerOptions; track p) {
+              <mat-checkbox
+                [checked]="isSelected(filtersForm.controls.payers, p)"
+                (change)="toggleArrayValue(filtersForm.controls.payers, p, $event.checked)"
+                >
+                {{ p }}
+              </mat-checkbox>
+            }
+            @if (filteredPayerOptions.length === 0) {
+              <span class="no-results">No matches</span>
+            }
+          </div>
+        </div>
+
+        <div class="filter-menu__footer">
+          <button mat-button type="button" class="rp-btn-ghost" (click)="clearPayersAndApply(); payerSearch = ''">Clear</button>
+        </div>
+      </div>
+    </mat-menu>
+
+    <!-- Provider (#115: only on ReconIQ Operations Summary / ROS routes) -->
+    @if (showProvider) {
+      <button class="filter-pill" type="button"
+        [matMenuTriggerFor]="providersMenu">
+        <span class="pill-label">Provider</span>
+        <span class="pill-value">{{ providerLabel }}</span>
+        <mat-icon class="pill-caret">expand_more</mat-icon>
+      </button>
+    }
+
+    <mat-menu #providersMenu="matMenu" panelClass="filter-menu">
+      <div class="filter-menu__body" (click)="$event.stopPropagation()">
+        <div class="filter-menu__header">
+          <div class="filter-menu__title">Provider</div>
+        </div>
+
+        <div class="filter-menu__search">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input class="search-input" type="text" placeholder="Search providers&#x2026;"
+            [value]="providerSearch"
+            (input)="providerSearch = $any($event.target).value"
+            (keydown)="$event.stopPropagation()" />
+            @if (providerSearch) {
+              <button class="search-clear" (click)="providerSearch = ''">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+
+          <mat-divider></mat-divider>
+          <div class="filter-menu__content">
+            @if (filteredProviderOptions.length > 0) {
+              <mat-checkbox class="select-all-row"
+                [checked]="isAllSelectedStr(filtersForm.controls.providers, filteredProviderOptions)"
+                [indeterminate]="isSomeSelectedStr(filtersForm.controls.providers, filteredProviderOptions)"
+                (change)="toggleSelectAllStr(filtersForm.controls.providers, filteredProviderOptions)">
+                Select all
+              </mat-checkbox>
+            }
+            <div class="menu-list">
+              @for (pr of filteredProviderOptions; track pr) {
+                <mat-checkbox
+                  [checked]="isSelected(filtersForm.controls.providers, pr)"
+                  (change)="toggleArrayValue(filtersForm.controls.providers, pr, $event.checked)"
+                  >
+                  {{ pr }}
+                </mat-checkbox>
+              }
+              @if (filteredProviderOptions.length === 0) {
+                <span class="no-results">No matches</span>
+              }
+            </div>
+          </div>
+          <div class="filter-menu__footer">
+            <button mat-button type="button" class="rp-btn-ghost" (click)="clearProvidersAndApply(); providerSearch = ''">Clear</button>
+          </div>
+        </div>
+      </mat-menu>
+
+      <!-- Location (with Group / Practice / Location tabs) -->
+      <button class="filter-pill" type="button" [matMenuTriggerFor]="locationMenu">
+        <span class="pill-label">Location</span>
+        <span class="pill-value">{{ locationLabel }}</span>
+        <mat-icon class="pill-caret">expand_more</mat-icon>
+      </button>
+
+      <mat-menu #locationMenu="matMenu" panelClass="filter-menu filter-menu--location">
+        <div class="filter-menu__body" (click)="$event.stopPropagation()">
+          <div class="filter-menu__header">
+            <div class="filter-menu__title">Location</div>
+          </div>
+
+          <!-- Scope tabs -->
+          <div class="location-tabs">
+            <button class="location-tab" type="button"
+              [class.active]="locationTab === 'group'"
+              (click)="locationTab = 'group'; locationSearch = ''">
+              Group
+            </button>
+            <button class="location-tab" type="button"
+              [class.active]="locationTab === 'practice'"
+              (click)="locationTab = 'practice'; locationSearch = ''">
+              Practice
+            </button>
+            <button class="location-tab" type="button"
+              [class.active]="locationTab === 'location'"
+              (click)="locationTab = 'location'; locationSearch = ''">
+              Location
+            </button>
+          </div>
+
+          <!-- Search -->
+          <div class="filter-menu__search">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input class="search-input" type="text"
+              [placeholder]="'Search ' + locationTab + 's&#x2026;'"
+              [value]="locationSearch"
+              (input)="locationSearch = $any($event.target).value"
+              (keydown)="$event.stopPropagation()" />
+              @if (locationSearch) {
+                <button class="search-clear" (click)="locationSearch = ''">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <div class="filter-menu__content">
+              <!-- GROUP tab -->
+              @if (locationTab === 'group') {
+                @if (filteredGroupOptions.length > 0) {
+                  <mat-checkbox class="select-all-row"
+                    [checked]="isAllSelectedStr(filtersForm.controls.groups, filteredGroupOptions)"
+                    [indeterminate]="isSomeSelectedStr(filtersForm.controls.groups, filteredGroupOptions)"
+                    (change)="toggleSelectAllStr(filtersForm.controls.groups, filteredGroupOptions); onLocationTabChange()">
+                    Select all
+                  </mat-checkbox>
+                }
+                <div class="menu-list">
+                  @for (g of filteredGroupOptions; track g) {
+                    <mat-checkbox
+                      [checked]="isSelected(filtersForm.controls.groups, g)"
+                      (change)="toggleArrayValue(filtersForm.controls.groups, g, $event.checked); onLocationTabChange()">
+                      {{ g }}
+                    </mat-checkbox>
+                  }
+                  @if (filteredGroupOptions.length === 0) {
+                    <span class="no-results">No groups</span>
+                  }
+                </div>
+              }
+
+              <!-- PRACTICE tab -->
+              @if (locationTab === 'practice') {
+                @if (filteredPracticeOptions.length > 0) {
+                  <mat-checkbox class="select-all-row"
+                    [checked]="isAllSelectedStr(filtersForm.controls.practices, filteredPracticeOptions)"
+                    [indeterminate]="isSomeSelectedStr(filtersForm.controls.practices, filteredPracticeOptions)"
+                    (change)="toggleSelectAllStr(filtersForm.controls.practices, filteredPracticeOptions); onLocationTabChange()">
+                    Select all
+                  </mat-checkbox>
+                }
+                <div class="menu-list">
+                  @for (p of filteredPracticeOptions; track p) {
+                    <mat-checkbox
+                      [checked]="isSelected(filtersForm.controls.practices, p)"
+                      (change)="toggleArrayValue(filtersForm.controls.practices, p, $event.checked); onLocationTabChange()">
+                      {{ p }}
+                    </mat-checkbox>
+                  }
+                  @if (filteredPracticeOptions.length === 0) {
+                    <span class="no-results">No practices</span>
+                  }
+                </div>
+              }
+
+              <!-- LOCATION tab -->
+              @if (locationTab === 'location') {
+                @if (filteredLocationOptions.length > 0) {
+                  <mat-checkbox class="select-all-row"
+                    [checked]="isAllSelectedStr(filtersForm.controls.locations, filteredLocationOptions)"
+                    [indeterminate]="isSomeSelectedStr(filtersForm.controls.locations, filteredLocationOptions)"
+                    (change)="toggleSelectAllStr(filtersForm.controls.locations, filteredLocationOptions); onLocationTabChange()">
+                    Select all
+                  </mat-checkbox>
+                }
+                <div class="menu-list">
+                  @for (l of filteredLocationOptions; track l) {
+                    <mat-checkbox
+                      [checked]="isSelected(filtersForm.controls.locations, l)"
+                      (change)="toggleArrayValue(filtersForm.controls.locations, l, $event.checked); onLocationTabChange()">
+                      {{ l }}
+                    </mat-checkbox>
+                  }
+                  @if (filteredLocationOptions.length === 0) {
+                    <span class="no-results">No locations</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="filter-menu__footer">
+              <button mat-button type="button" class="rp-btn-ghost" (click)="clearLocationAndApply(); locationSearch = ''">Clear</button>
+            </div>
+          </div>
+        </mat-menu>
+      </div>

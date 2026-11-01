@@ -1,0 +1,382 @@
+/* payer-iq-global-filters.component.scss
+   Soft card container, pill triggers, clean Material menu panel
+*/
+
+:host {
+  display: block;
+}
+
+/* =========================
+   Toolbar container
+   ========================= */
+.global-filters {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  padding: 14px 16px;
+}
+
+/* =========================
+   Pill triggers
+   ========================= */
+.filter-pill {
+  height: 38px;
+  min-width: 220px;
+  max-width: 320px;
+
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid #e5ecf4;
+  background: var(--color-surface);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+
+  &:hover {
+    background: var(--color-bg-subtle);
+    border-color: #d7e3f1;
+  }
+
+  &:active {
+    transform: translateY(0.5px);
+  }
+
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--rcm-accent-muted, rgba(59, 130, 246, 0.20));
+    border-color: var(--rcm-accent-ring, rgba(59, 130, 246, 0.35));
+  }
+
+  /* When menu is open, Angular Material adds aria-expanded="true" */
+  &[aria-expanded='true'] {
+    background: var(--rcm-accent-tint, var(--color-bg-subtle));
+    border-color: #d7e3f1;
+  }
+}
+
+.pill-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--color-text-muted); /* slate-500 */
+  white-space: nowrap;
+}
+
+.pill-value {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text); /* slate-900 */
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pill-caret {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  color: var(--color-text-muted);
+  margin-left: 2px;
+}
+
+/* =========================
+   Material Menu panel styling
+   Apply via panelClass="filter-menu"
+   ========================= */
+
+/* Panel */
+::ng-deep .mat-mdc-menu-panel.filter-menu {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid #e5ecf4;
+  background: var(--color-surface);
+
+  /* Popover shadow */
+  box-shadow:
+    0 14px 35px rgba(15, 23, 42, 0.12),
+    0 4px 12px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+
+  /* keep it roomy but not huge */
+  min-width: 340px;
+  max-width: 420px;
+}
+
+/* Remove default padding from mat-menu content */
+::ng-deep .mat-mdc-menu-panel.filter-menu .mat-mdc-menu-content {
+  padding: 0 !important;
+}
+
+/* Menu body wrapper (your div) */
+.filter-menu__body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.filter-menu__header {
+  padding: 12px 14px;
+}
+
+.filter-menu__title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* Divider */
+::ng-deep .mat-mdc-menu-panel.filter-menu .mat-divider {
+  border-top-color: rgba(15, 23, 42, 0.08);
+}
+
+/* Search bar inside filter menus */
+.filter-menu__search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+
+  .search-icon {
+    font-size: var(--font-size-base);
+    width: 16px;
+    height: 16px;
+    color: var(--color-text-subtle);
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    padding: 0;
+
+    &::placeholder { color: var(--color-text-subtle); }
+  }
+
+  .search-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    color: var(--color-text-subtle);
+    &:hover { color: var(--color-text-muted); }
+
+    mat-icon { font-size: var(--font-size-base); width: var(--font-size-base); height: var(--font-size-base); }
+  }
+}
+
+.no-results {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+  padding: 4px 2px;
+}
+
+.select-all-row {
+  display: block;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+/* Content */
+.filter-menu__content {
+  padding: 12px 14px;
+}
+
+/* Date range row */
+.date-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Menu list (checkbox column) */
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 4px; /* room for scrollbar */
+
+  /* subtle scrollbar (works in modern browsers) */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.25);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+}
+
+/* Checkbox look */
+::ng-deep .mat-mdc-menu-panel.filter-menu mat-checkbox {
+  --mat-checkbox-state-layer-size: 36px;
+}
+
+::ng-deep .mat-mdc-menu-panel.filter-menu .mdc-form-field > label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+/* Form fields inside menu */
+.filter-field {
+  width: 100%;
+}
+
+/* Tidy up Material outline fields a bit for popovers */
+::ng-deep .mat-mdc-menu-panel.filter-menu .mat-mdc-form-field {
+  margin: 0;
+}
+
+::ng-deep .mat-mdc-menu-panel.filter-menu .mat-mdc-text-field-wrapper {
+  border-radius: var(--radius-md);
+}
+
+/* Footer */
+.filter-menu__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 14px;
+  background: var(--color-bg-subtle);
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+/* If your rp button classes exist globally, this just nudges spacing.
+   Otherwise harmless. */
+.rp-btn-ghost,
+.rp-btn-primary {
+  min-width: 84px;
+}
+
+.location-scope {
+  margin-bottom: 12px;
+
+  ::ng-deep .mat-button-toggle-group {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+}
+.enterprise-note {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.filter-menu.mat-mdc-menu-panel {
+  /* Make the panel wide enough for content, and prevent horizontal scroll */
+  min-width: 360px;
+  max-width: 520px;         /* adjust to taste */
+  overflow-x: hidden !important;
+}
+
+/* The inner menu content container (Material default can overflow) */
+.filter-menu .mat-mdc-menu-content {
+  overflow-x: hidden !important;
+  /* optional: allow vertical scroll if content gets tall */
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Your custom body wrapper */
+.filter-menu__body {
+  overflow-x: hidden;
+}
+
+/* The location scope toggle group is usually the #1 offender */
+.location-scope {
+  overflow-x: hidden;
+}
+
+.location-scope .mat-button-toggle-group {
+  display: flex;
+  flex-wrap: wrap;          /* [ok] prevents forcing a single long row */
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure individual toggles can shrink and wrap nicely */
+.location-scope .mat-button-toggle {
+  flex: 1 1 auto;
+}
+
+/* Checkbox label wrapping (prevents long names from widening panel) */
+.menu-list .mat-mdc-checkbox .mdc-form-field {
+  align-items: flex-start;
+}
+
+.menu-list .mat-mdc-checkbox .mdc-form-field > label {
+  white-space: normal;      /* [ok] wrap */
+  overflow-wrap: anywhere;  /* [ok] break long tokens */
+}
+
+/* If your menu list has padding that pushes width, keep it boxed */
+.menu-list {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Location tabbed dropdown */
+.location-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 12px;
+
+  .location-tab {
+    flex: 1;
+    padding: 8px 4px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+
+    &:hover {
+      color: var(--color-gray-700);
+    }
+
+    &.active {
+      color: var(--rcm-color-1, var(--color-info));
+      border-bottom-color: var(--rcm-color-1, var(--color-info));
+    }
+  }
+}
+

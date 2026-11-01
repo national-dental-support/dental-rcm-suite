@@ -1,0 +1,16 @@
+:host {
+  display: block;
+}
+
+.rp-line-chart__no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  border-radius: var(--radius);
+  background: var(--color-bg-muted);
+  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--font-size-md);
+  font-style: italic;
+  opacity: 0.75;
+}

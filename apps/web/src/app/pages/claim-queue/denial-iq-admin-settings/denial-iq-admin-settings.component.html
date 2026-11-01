@@ -1,0 +1,519 @@
+<div class="admin-settings xen-page">
+
+  <!-- Page header -->
+  <div class="xen-section admin-header">
+    <h2 class="admin-header__title">Denial IQ &#x2014; Admin Settings</h2>
+    <p class="admin-header__subtitle">Manage payer filing deadlines, appeal letter templates, and workflows.</p>
+  </div>
+
+  <!-- Sub-tab nav -->
+  <div class="admin-subtab-nav xen-section">
+    <button
+      type="button"
+      class="admin-subtab"
+      [class.admin-subtab--active]="activeSubTab === 'payer-deadlines'"
+      (click)="setSubTab('payer-deadlines')"
+      >
+      <mat-icon>schedule</mat-icon>
+      Payer Deadlines
+    </button>
+    <button
+      type="button"
+      class="admin-subtab"
+      [class.admin-subtab--active]="activeSubTab === 'appeal-templates'"
+      (click)="setSubTab('appeal-templates')"
+      >
+      <mat-icon>description</mat-icon>
+      Appeal Templates
+    </button>
+    <button
+      type="button"
+      class="admin-subtab"
+      [class.admin-subtab--active]="activeSubTab === 'denial-iq'"
+      (click)="setSubTab('denial-iq')"
+      >
+      <mat-icon>tune</mat-icon>
+      Denial IQ
+    </button>
+    <button
+      type="button"
+      class="admin-subtab"
+      [class.admin-subtab--active]="activeSubTab === 'payer-followup'"
+      (click)="setSubTab('payer-followup')"
+      >
+      <mat-icon>contact_phone</mat-icon>
+      Payer Follow-Up
+    </button>
+    <button
+      type="button"
+      class="admin-subtab"
+      [class.admin-subtab--active]="activeSubTab === 'groups'"
+      (click)="setSubTab('groups')"
+      >
+      <mat-icon>business</mat-icon>
+      Groups &amp; Locations
+    </button>
+  </div>
+
+  <!-- -- Payer Deadlines ------------------------------------------------- -->
+  @if (activeSubTab === 'payer-deadlines') {
+    <div class="xen-section section-header-row">
+      <h3 class="section-title">Payer Filing Deadlines</h3>
+      <button type="button" mat-raised-button color="primary" (click)="openAddDeadline()">
+        <mat-icon>add</mat-icon> Add Payer
+      </button>
+    </div>
+    <!-- Inline add/edit form -->
+    @if (showDeadlineForm && editingDeadline) {
+      <div class="xen-card deadline-form xen-section">
+        <h4 class="form-title">{{ editingDeadline.id ? 'Edit' : 'Add' }} Payer Deadline</h4>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Payer Name</mat-label>
+            <input matInput [(ngModel)]="editingDeadline.payer_name" placeholder="e.g. Medicare" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Filing Deadline (days)</mat-label>
+            <input matInput type="number" [(ngModel)]="editingDeadline.deadline_days" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Appeal Window (days)</mat-label>
+            <input matInput type="number" [(ngModel)]="editingDeadline.appeal_days" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="form-notes">
+            <mat-label>Notes</mat-label>
+            <input matInput [(ngModel)]="editingDeadline.notes" />
+          </mat-form-field>
+        </div>
+        <div class="form-actions">
+          <button type="button" mat-button (click)="cancelDeadlineForm()">Cancel</button>
+          <button type="button" mat-raised-button color="primary" (click)="saveDeadline()">Save</button>
+        </div>
+      </div>
+    }
+    @if (deadlinesLoading) {
+      <div class="xen-loading">Loading...</div>
+    }
+    @if (!deadlinesLoading) {
+      <div class="xen-card xen-section">
+        @if (deadlines.length) {
+          <table class="xen-table">
+            <thead>
+              <tr>
+                <th>Payer Name</th>
+                <th>Filing Deadline (days)</th>
+                <th>Appeal Window (days)</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of deadlines; track d) {
+                <tr>
+                  <td><strong>{{ d.payer_name }}</strong></td>
+                  <td>{{ d.deadline_days }}d</td>
+                  <td>{{ d.appeal_days }}d</td>
+                  <td class="notes-cell">{{ d.notes || '&#x2014;' }}</td>
+                  <td>
+                    <button type="button" mat-icon-button (click)="openEditDeadline(d)" matTooltip="Edit">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="xen-empty">No payer deadlines configured.</p>
+        }
+      </div>
+    }
+  }
+
+  <!-- -- Appeal Templates ------------------------------------------------ -->
+  @if (activeSubTab === 'appeal-templates') {
+    <div class="xen-section section-header-row">
+      <h3 class="section-title">Appeal Letter Templates</h3>
+      @if (!showTemplateForm) {
+        <div class="section-header-actions">
+          <!-- #112: Upload template from file -->
+          <input #templateUploadInput type="file"
+            accept=".txt,.md,.html,.htm,text/plain,text/markdown,text/html"
+            (change)="onTemplateFileSelected($event)"
+            hidden />
+            <button type="button" mat-stroked-button (click)="templateUploadInput.click()"
+              matTooltip="Upload a .txt, .md, or .html file to prefill a new template">
+              <mat-icon>upload_file</mat-icon> Upload
+            </button>
+            <button type="button" mat-raised-button color="primary" (click)="openAddTemplate()">
+              <mat-icon>add</mat-icon> New Template
+            </button>
+          </div>
+        }
+      </div>
+      <!-- Add / Edit form -->
+      @if (showTemplateForm && editingTemplate) {
+        <div class="xen-card template-form xen-section">
+          <h4 class="form-title">{{ editingTemplate.id ? 'Edit' : 'New' }} Appeal Letter Template</h4>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Template Name *</mat-label>
+              <input matInput [(ngModel)]="editingTemplate.template_name" placeholder="e.g. Medical Necessity Appeal" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Denial Category</mat-label>
+              <input matInput [(ngModel)]="editingTemplate.denial_category" placeholder="e.g. Medical Necessity" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>CARC Codes (comma-separated)</mat-label>
+              <input matInput [(ngModel)]="editingTemplate.carc_codes" placeholder="e.g. CO50,CO97" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Subject Line *</mat-label>
+              <input matInput [(ngModel)]="editingTemplate.subject_line" placeholder="Re: Appeal for Claim" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Body Template *</mat-label>
+              <textarea matInput [(ngModel)]="editingTemplate.body_template" rows="10"
+              placeholder="Dear payer, we are writing to appeal the denial..."></textarea>
+              <mat-hint>Available tokens: {{ TOKEN_HINTS }}</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Closing Text</mat-label>
+              <textarea matInput [(ngModel)]="editingTemplate.closing_text" rows="3"
+              placeholder="Sincerely, Provider Name"></textarea>
+            </mat-form-field>
+            <div class="form-checkbox">
+              <mat-checkbox [(ngModel)]="editingTemplate.is_active">Active (available for use)</mat-checkbox>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" mat-button (click)="cancelTemplateForm()">Cancel</button>
+            <button type="button" mat-raised-button color="primary" (click)="saveTemplate()"
+              [disabled]="templateSaving || !editingTemplate.template_name || !editingTemplate.subject_line || !editingTemplate.body_template">
+              {{ templateSaving ? 'Saving...' : 'Save Template' }}
+            </button>
+          </div>
+        </div>
+      }
+      @if (templatesLoading) {
+        <div class="xen-loading">Loading...</div>
+      }
+      @if (!templatesLoading && !showTemplateForm) {
+        <div class="xen-card xen-section">
+          @if (templates.length) {
+            <table class="xen-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>CARC Codes</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (t of templates; track t) {
+                  <tr>
+                    <td><strong>{{ t.template_name }}</strong></td>
+                    <td>{{ t.denial_category || '&#x2014;' }}</td>
+                    <td>
+                      @if (t.carc_codes) {
+                        @for (code of t.carc_codes.split(','); track code) {
+                          <span
+                            class="carc-chip"
+                            [matTooltip]="carcTooltip(code.trim())"
+                            matTooltipClass="carc-tooltip"
+                          >{{ code.trim() }}</span>
+                        }
+                      } @else {
+                        &#x2014;
+                      }
+                    </td>
+                    <td>
+                      <span class="xen-badge"
+                        [class.xen-badge--success]="t.is_active"
+                        [class.xen-badge--neutral]="!t.is_active">
+                        {{ t.is_active ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td class="row-actions-cell">
+                      <button type="button" mat-icon-button matTooltip="Edit" (click)="openEditTemplate(t)">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button type="button" mat-icon-button [matTooltip]="t.is_active ? 'Disable' : 'Enable'" (click)="toggleTemplate(t)">
+                        <mat-icon>{{ t.is_active ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                      </button>
+                      <button type="button" mat-icon-button color="warn" matTooltip="Delete" (click)="deleteTemplate(t)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="xen-empty">No appeal templates yet. Click <strong>New Template</strong> to create one.</p>
+          }
+        </div>
+      }
+    }
+
+
+    <!-- -- Denial IQ Config ----------------------------------------------- -->
+    @if (activeSubTab === 'denial-iq') {
+      <!-- Priority Algorithm -->
+      <div class="xen-section section-header-row">
+        <h3 class="section-title">Claim Priority Algorithm</h3>
+      </div>
+      <div class="xen-section">
+        <p class="role-profile-hint">
+          Every 5 minutes, a background job scores each open claim using a weighted composite formula.
+          Specialists see claims sorted by this score so the highest-risk work surfaces first.
+          Adjust the weights below to tune prioritization for your organization.
+          <strong>Weights must sum to 100.</strong>
+        </p>
+      </div>
+      @if (priorityLoading) {
+        <div class="xen-loading">Loading...</div>
+      }
+      @if (!priorityLoading) {
+        <!-- Stats row -->
+        @if (prioritySettings) {
+          <div class="priority-stats xen-section">
+            <div class="stat-card">
+              <span class="stat-card__label">Claims Scored</span>
+              <span class="stat-card__value">{{ prioritySettings.stats.totalScored | number }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__label">Avg Score</span>
+              <span class="stat-card__value">{{ prioritySettings.stats.avgScore }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__label">High Priority</span>
+              <span class="stat-card__value priority--high">{{ prioritySettings.distribution.high }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__label">Medium Priority</span>
+              <span class="stat-card__value priority--medium">{{ prioritySettings.distribution.medium }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__label">Low Priority</span>
+              <span class="stat-card__value priority--low">{{ prioritySettings.distribution.low }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__label">Last Recalculated</span>
+              <span class="stat-card__value stat-card__value--sm">
+                {{ prioritySettings.stats.lastRunAt ? (prioritySettings.stats.lastRunAt | date:'MMM d, y h:mm a') : '&#x2014;' }}
+              </span>
+            </div>
+          </div>
+        }
+        <!-- Weight editor -->
+        <div class="xen-card xen-section priority-editor">
+          <div class="priority-enable-row">
+            <mat-slide-toggle [(ngModel)]="priorityEnabled" color="primary">
+              Auto-recalculation enabled (every 5 minutes)
+            </mat-slide-toggle>
+          </div>
+          <div class="weight-grid">
+            <div class="weight-row">
+              <div class="weight-info">
+                <span class="weight-label">Aging</span>
+                <span class="weight-desc">Days since date of service, capped at 180 days. Older claims score higher.</span>
+              </div>
+              <mat-form-field appearance="outline" class="weight-field">
+                <mat-label>Weight %</mat-label>
+                <input matInput type="number" min="0" max="100" [(ngModel)]="editingWeights.aging" />
+              </mat-form-field>
+            </div>
+            <div class="weight-row">
+              <div class="weight-info">
+                <span class="weight-label">Value</span>
+                <span class="weight-desc">Charge amount, capped at $5,000. Higher-dollar claims score higher.</span>
+              </div>
+              <mat-form-field appearance="outline" class="weight-field">
+                <mat-label>Weight %</mat-label>
+                <input matInput type="number" min="0" max="100" [(ngModel)]="editingWeights.value" />
+              </mat-form-field>
+            </div>
+            <div class="weight-row">
+              <div class="weight-info">
+                <span class="weight-label">Deadline</span>
+                <span class="weight-desc">Timely filing urgency &#x2014; stepped at 60 / 90 / 120 / 150+ days. Claims near the filing cutoff score higher.</span>
+              </div>
+              <mat-form-field appearance="outline" class="weight-field">
+                <mat-label>Weight %</mat-label>
+                <input matInput type="number" min="0" max="100" [(ngModel)]="editingWeights.deadline" />
+              </mat-form-field>
+            </div>
+            <div class="weight-row">
+              <div class="weight-info">
+                <span class="weight-label">Workload</span>
+                <span class="weight-desc">Inverse of the assigned specialist's open claim count. Routes toward lighter-loaded staff.</span>
+              </div>
+              <mat-form-field appearance="outline" class="weight-field">
+                <mat-label>Weight %</mat-label>
+                <input matInput type="number" min="0" max="100" [(ngModel)]="editingWeights.workload" />
+              </mat-form-field>
+            </div>
+            <div class="weight-row">
+              <div class="weight-info">
+                <span class="weight-label">Proficiency</span>
+                <span class="weight-desc">
+                  Specialist's avg resolution time for this denial code vs. the team average (last 90 days, min. 3 resolved claims).
+                  Faster specialists score higher and receive more of that code; slower specialists score lower and receive fewer.
+                  Neutral (50) when there is not yet enough history for a code.
+                </span>
+              </div>
+              <mat-form-field appearance="outline" class="weight-field">
+                <mat-label>Weight %</mat-label>
+                <input matInput type="number" min="0" max="100" [(ngModel)]="editingWeights.proficiency" />
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="weight-total-row">
+            <span class="weight-total-label">Total:</span>
+            <span class="weight-total-value"
+              [class.weight-total--ok]="weightsTotal === 100"
+              [class.weight-total--error]="weightsTotal !== 100">
+              {{ weightsTotal }}%
+            </span>
+            @if (weightsTotal !== 100) {
+              <span class="weight-total-hint">Must equal 100%</span>
+            }
+          </div>
+          <div class="form-actions">
+            <button type="button" mat-stroked-button (click)="recalculatePriorities()" [disabled]="priorityRecalculating">
+              <mat-icon>refresh</mat-icon>
+              {{ priorityRecalculating ? 'Recalculating...' : 'Recalculate Now' }}
+            </button>
+            <button type="button" mat-raised-button color="primary" (click)="savePrioritySettings()"
+              [disabled]="prioritySaving || weightsTotal !== 100">
+              {{ prioritySaving ? 'Saving...' : 'Save Settings' }}
+            </button>
+          </div>
+        </div>
+      }
+      <!-- Pending Queue Hold Days -->
+      <div class="xen-section section-header-row" style="margin-top: 24px;">
+        <h3 class="section-title">Pending Queue Hold Days</h3>
+      </div>
+      <div class="xen-section">
+        <p class="role-profile-hint">
+          When a specialist closes a claim, it enters the <strong>Pending</strong> queue for a configurable number of days
+          before returning to <strong>Unassigned</strong>. Set the hold duration per customer below.
+          Claims marked <em>Fully Adjudicated</em> skip this queue entirely.
+        </p>
+      </div>
+      @if (pendingConfigLoading) {
+        <div class="xen-loading">Loading...</div>
+      }
+      @if (!pendingConfigLoading) {
+        <div class="xen-card xen-section">
+          @if (pendingConfigs.length) {
+            <table class="xen-table">
+              <thead>
+                <tr>
+                  <th>Customer ID</th>
+                  <th>Hold Days</th>
+                  <th>Last Updated By</th>
+                  <th>Last Updated</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cfg of pendingConfigs; track cfg) {
+                  <tr>
+                    <td><strong>{{ cfg.customer_id }}</strong></td>
+                    <td>
+                      <mat-form-field appearance="outline" class="days-field">
+                        <input matInput type="number" min="1" max="365"
+                          [(ngModel)]="editingPendingDays[cfg.customer_id]" />
+                        </mat-form-field>
+                      </td>
+                      <td>{{ cfg.updated_by || '&#x2014;' }}</td>
+                      <td>{{ cfg.updated_at ? (cfg.updated_at | date:'MMM d, y') : '&#x2014;' }}</td>
+                      <td>
+                        <button type="button" mat-stroked-button color="primary"
+                          (click)="savePendingConfig(cfg.customer_id)"
+                          [disabled]="editingPendingDays[cfg.customer_id] === cfg.pending_days">
+                          Save
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              <p class="xen-empty">No pending configurations found. Run migrations to seed defaults.</p>
+            }
+          </div>
+        }
+      }
+
+      <!-- -- Payer Follow-Up ------------------------------------------------ -->
+      @if (activeSubTab === 'payer-followup') {
+        <rp-payer-followup-admin></rp-payer-followup-admin>
+      }
+
+      <!-- -- Groups & Locations ---------------------------------------------- -->
+      @if (activeSubTab === 'groups') {
+        <div class="xen-section section-header-row">
+          <h3 class="section-title">Organization Hierarchy</h3>
+        </div>
+        <div class="xen-section">
+          <p class="role-profile-hint">
+            View your organization structure: Groups and their active Locations (locations with claim data).
+            Full management (create, rename, move, archive) is available in <strong>SuperAdmin &rarr; Organization</strong>.
+          </p>
+        </div>
+        @if (groupsLoading) {
+          <div class="xen-loading">Loading...</div>
+        }
+        @if (!groupsLoading) {
+          <!-- Summary -->
+          @if (orgTree.length > 0) {
+            <div class="org-tree-summary xen-section">
+              <span class="org-tree-summary__item org-tree-summary__item--group">{{ orgTree.length }} {{ orgTree.length === 1 ? 'Group' : 'Groups' }}</span>
+              <span class="org-tree-summary__dot">&bull;</span>
+              <span class="org-tree-summary__item org-tree-summary__item--location">{{ orgLocationCount }} {{ orgLocationCount === 1 ? 'Location' : 'Locations' }}</span>
+            </div>
+          }
+          <!-- Hierarchy tree: Group -> Locations (2-level) -->
+          @for (group of orgTree; track group) {
+            <div class="org-tree-node">
+              <div class="org-tree-row org-tree-row--group" (click)="group.expanded = !group.expanded">
+                <mat-icon class="org-tree-expand">{{ group.expanded ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                <mat-icon class="org-tree-type org-tree-type--group">business</mat-icon>
+                <span class="org-tree-name">{{ group.name }}</span>
+                <span class="org-tree-count">{{ group.locations?.length || 0 }} locations</span>
+              </div>
+              @if (group.expanded) {
+                <div class="org-tree-children">
+                  @for (loc of group.locations; track loc) {
+                    <div class="org-tree-row org-tree-row--location">
+                      <span class="org-tree-expand-spacer"></span>
+                      <mat-icon class="org-tree-type org-tree-type--location">place</mat-icon>
+                      <span class="org-tree-name">{{ loc.name }}</span>
+                    </div>
+                  }
+                  @if (!group.locations?.length) {
+                    <div class="org-tree-row org-tree-row--empty">
+                      <span class="org-tree-expand-spacer"></span>
+                      <span class="org-tree-empty-label">No locations with claim data</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          @if (orgTree.length === 0) {
+            <div class="xen-card xen-section">
+              <p class="xen-empty">No groups found. Configure groups in SuperAdmin.</p>
+            </div>
+          }
+        }
+      }
+
+    </div>

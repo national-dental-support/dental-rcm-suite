@@ -1,0 +1,186 @@
+<div class="xen-page compare-page">
+  <div class="xen-toolbar">
+    <h2>Side-by-Side Comparison</h2>
+  </div>
+
+  <p class="compare-intro">
+    Compare denial rates, denied charges, and recovery performance between any two practice groups or locations
+    to identify where your revenue cycle is strongest and where intervention is needed.
+  </p>
+
+  <!-- Side-by-side selectors + cards -->
+  <div class="compare-grid">
+    <!-- LEFT -->
+    <div class="compare-col">
+      <div class="compare-col__header">
+        <span class="compare-col__tag">A</span>
+        <mat-button-toggle-group
+          [value]="left.scopeKind"
+          (change)="onScopeChange(left, $event.value)">
+          <mat-button-toggle value="practice">Practice</mat-button-toggle>
+          <mat-button-toggle value="location">Location</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <mat-form-field appearance="outline" class="compare-select">
+        <mat-label>{{ left.scopeKind === 'practice' ? 'Practice Group' : 'Location' }}</mat-label>
+        <mat-select [(ngModel)]="left.value" (ngModelChange)="onValueChange(left)">
+          @for (o of optionsFor(left); track o) {
+            <mat-option [value]="o">{{ o }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (left.loading) {
+        <div class="kpi-card">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </div>
+      }
+
+      @if (!left.loading && left.value && left.kpis) {
+        <div class="kpi-card">
+          <h3 class="kpi-card__title">{{ left.value }}</h3>
+          <div class="kpi-row">
+            <span class="kpi-label">Denied Claims</span>
+            <span class="kpi-value">{{ formatCount(left.kpis.currentDeniedClaims) }}</span>
+          </div>
+          <div class="kpi-row">
+            <span class="kpi-label">Denied Charges</span>
+            <span class="kpi-value">{{ formatMoney(left.kpis.currentDeniedCharges) }}</span>
+          </div>
+          <div class="kpi-row">
+            <span class="kpi-label">Denial Rate</span>
+            <span class="kpi-value">{{ formatPct(left.kpis.denialRate) }}</span>
+          </div>
+          <div class="kpi-row">
+            <span class="kpi-label">Recovery Rate</span>
+            <span class="kpi-value">{{ formatPct(left.kpis.recoveryRate) }}</span>
+          </div>
+          @if (left.topReason) {
+            <div class="kpi-row kpi-row--top">
+              <span class="kpi-label">Top Preventable</span>
+              <span class="kpi-value">{{ left.topReason.Reason }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (!left.loading && left.value && !left.kpis) {
+        <div class="kpi-card kpi-card--empty"
+          >
+          No data available for this selection.
+        </div>
+      }
+    </div>
+
+    <!-- DELTA divider -->
+    <div class="compare-divider">
+      <mat-icon>swap_horiz</mat-icon>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="compare-col">
+      <div class="compare-col__header">
+        <span class="compare-col__tag compare-col__tag--b">B</span>
+        <mat-button-toggle-group
+          [value]="right.scopeKind"
+          (change)="onScopeChange(right, $event.value)">
+          <mat-button-toggle value="practice">Practice</mat-button-toggle>
+          <mat-button-toggle value="location">Location</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <mat-form-field appearance="outline" class="compare-select">
+        <mat-label>{{ right.scopeKind === 'practice' ? 'Practice Group' : 'Location' }}</mat-label>
+        <mat-select [(ngModel)]="right.value" (ngModelChange)="onValueChange(right)">
+          @for (o of optionsFor(right); track o) {
+            <mat-option [value]="o">{{ o }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (right.loading) {
+        <div class="kpi-card">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </div>
+      }
+
+      @if (!right.loading && right.value && right.kpis) {
+        <div class="kpi-card">
+          <h3 class="kpi-card__title">{{ right.value }}</h3>
+          <div class="kpi-row">
+            <span class="kpi-label">Denied Claims</span>
+            <span class="kpi-value">{{ formatCount(right.kpis.currentDeniedClaims) }}</span>
+          </div>
+          <div class="kpi-row">
+            <span class="kpi-label">Denied Charges</span>
+            <span class="kpi-value">{{ formatMoney(right.kpis.currentDeniedCharges) }}</span>
+          </div>
+          <div class="kpi-row">
+            <span class="kpi-label">Denial Rate</span>
+            <span class="kpi-value">{{ formatPct(right.kpis.denialRate) }}</span>
+          </div>
+          <div class="kpi-row">
+            <span class="kpi-label">Recovery Rate</span>
+            <span class="kpi-value">{{ formatPct(right.kpis.recoveryRate) }}</span>
+          </div>
+          @if (right.topReason) {
+            <div class="kpi-row kpi-row--top">
+              <span class="kpi-label">Top Preventable</span>
+              <span class="kpi-value">{{ right.topReason.Reason }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (!right.loading && right.value && !right.kpis) {
+        <div class="kpi-card kpi-card--empty"
+          >
+          No data available for this selection.
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Delta row -->
+  @if (left.kpis && right.kpis) {
+    <div class="delta-row"
+      >
+      <h3>Difference (B &#x2212; A)</h3>
+      <div class="delta-grid">
+        <div class="delta-tile">
+          <span class="delta-label">Denied Claims</span>
+          <span class="delta-value"
+            [class.delta-value--better]="(delta(left.kpis.currentDeniedClaims, right.kpis.currentDeniedClaims) ?? 0) < 0"
+            [class.delta-value--worse]="(delta(left.kpis.currentDeniedClaims, right.kpis.currentDeniedClaims) ?? 0) > 0">
+            {{ formatCount(delta(left.kpis.currentDeniedClaims, right.kpis.currentDeniedClaims)) }}
+          </span>
+        </div>
+        <div class="delta-tile">
+          <span class="delta-label">Denied Charges</span>
+          <span class="delta-value"
+            [class.delta-value--better]="(delta(left.kpis.currentDeniedCharges, right.kpis.currentDeniedCharges) ?? 0) < 0"
+            [class.delta-value--worse]="(delta(left.kpis.currentDeniedCharges, right.kpis.currentDeniedCharges) ?? 0) > 0">
+            {{ formatMoney(delta(left.kpis.currentDeniedCharges, right.kpis.currentDeniedCharges)) }}
+          </span>
+        </div>
+        <div class="delta-tile">
+          <span class="delta-label">Denial Rate</span>
+          <span class="delta-value"
+            [class.delta-value--better]="(delta(left.kpis.denialRate, right.kpis.denialRate) ?? 0) < 0"
+            [class.delta-value--worse]="(delta(left.kpis.denialRate, right.kpis.denialRate) ?? 0) > 0">
+            {{ formatPct(delta(left.kpis.denialRate, right.kpis.denialRate)) }}
+          </span>
+        </div>
+        <div class="delta-tile">
+          <span class="delta-label">Recovery Rate</span>
+          <span class="delta-value"
+            [class.delta-value--better]="(delta(left.kpis.recoveryRate, right.kpis.recoveryRate) ?? 0) > 0"
+            [class.delta-value--worse]="(delta(left.kpis.recoveryRate, right.kpis.recoveryRate) ?? 0) < 0">
+            {{ formatPct(delta(left.kpis.recoveryRate, right.kpis.recoveryRate)) }}
+          </span>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,21 @@
+<mat-card class="stat-card" [class.stat-card--no-data]="!hasData">
+  <div class="stat-card-content">
+    <div class="stat-icon" [style.backgroundColor]="color + '1a'" [style.color]="color">
+      <mat-icon>{{ icon }}</mat-icon>
+    </div>
+    <div class="stat-body">
+      @if (hasData) {
+        <span class="stat-value">{{ value }}{{ suffix }}</span>
+        <span class="stat-label">{{ label }}</span>
+      } @else {
+        <span class="stat-no-data">No data available at this time</span>
+        <span class="stat-label">{{ label }}</span>
+      }
+    </div>
+    @if (trend && hasData) {
+      <div class="stat-trend" [ngClass]="trendClass">
+        <mat-icon>{{ trendIcon }}</mat-icon>
+      </div>
+    }
+  </div>
+</mat-card>

@@ -1,0 +1,106 @@
+.analytics-page {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+
+  &.primary {
+    border-left: 4px solid var(--rcm-color-3);
+  }
+}
+
+.kpi-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 4px 0;
+}
+
+.kpi-unit {
+  font-size: var(--font-size-md);
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.kpi-sub {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 16px;
+}
+
+.chart-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.table-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.table-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.num {
+  text-align: right;
+}
+
+.rate-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+
+  &.rag-green { background: rgba(67, 160, 71, 0.12); color: var(--color-success); }
+  &.rag-amber { background: rgba(255, 152, 0, 0.12); color: var(--color-warning); }
+  &.rag-red   { background: rgba(211, 47, 47, 0.12); color: var(--color-danger); }
+}
+
+.err {
+  color: var(--warn);
+}

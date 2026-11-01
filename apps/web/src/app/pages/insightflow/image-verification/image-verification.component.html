@@ -1,0 +1,99 @@
+<div class="xen-page img-verify-page">
+  <div class="xen-toolbar">
+    <h2 class="page-title">Image Verification</h2>
+    <span class="spacer"></span>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Status</mat-label>
+      <mat-select [(value)]="filterStatus" (selectionChange)="onFilterChange($event.value)">
+        <mat-option value="">All</mat-option>
+        <mat-option value="pending">Pending</mat-option>
+        <mat-option value="verified">Verified</mat-option>
+        <mat-option value="rejected">Rejected</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="xen-loading" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading verification queue&#x2026;</p>
+  </div>
+
+  <div class="xen-empty" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <p>Failed to load. <button mat-button color="primary" (click)="load()">Retry</button></p>
+  </div>
+
+  <ng-container *ngIf="!loading && !error && stats">
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Pending Verification</div>
+          <div class="kpi-value warn">{{ stats.pendingVerification }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Verified Today</div>
+          <div class="kpi-value accent">{{ stats.verifiedToday }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Rejected Today</div>
+          <div class="kpi-value warn-red">{{ stats.rejectedToday }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Avg AI Confidence</div>
+          <div class="kpi-value">{{ stats.avgConfidence }}%</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Card Grid -->
+    <div class="card-grid">
+      <mat-card class="xen-card img-card" *ngFor="let item of filteredQueue; trackBy: trackById">
+        <mat-card-content>
+          <div class="img-card-header">
+            <mat-icon class="type-icon">{{ attachmentIcon(item.attachmentType) }}</mat-icon>
+            <div class="img-card-meta">
+              <div class="claim-id"><code>{{ item.claimId }}</code></div>
+              <div class="patient-name">{{ item.patientName }}</div>
+              <div class="att-type">{{ item.attachmentType | uppercase }}</div>
+            </div>
+            <span class="status-chip" [style.background]="statusColor(item.status)">{{ item.status | titlecase }}</span>
+          </div>
+
+          <div class="confidence-section" *ngIf="item.aiConfidence !== undefined">
+            <div class="conf-label">AI Confidence</div>
+            <div class="conf-bar-wrap">
+              <div class="conf-bar" [style.width.%]="item.aiConfidence"></div>
+              <span>{{ item.aiConfidence }}%</span>
+            </div>
+          </div>
+
+          <div class="img-actions" *ngIf="item.status === 'pending'">
+            <ng-container *ngIf="rejectingId !== item.claimId">
+              <button mat-stroked-button color="primary" (click)="verify(item)">Verify</button>
+              <button mat-stroked-button color="warn" (click)="startReject(item.claimId)">Reject</button>
+            </ng-container>
+            <ng-container *ngIf="rejectingId === item.claimId">
+              <mat-form-field appearance="outline" class="reason-field">
+                <mat-label>Rejection Reason</mat-label>
+                <input matInput [(ngModel)]="rejectReason" placeholder="Enter reason&#x2026;" />
+              </mat-form-field>
+              <button mat-raised-button color="warn" (click)="confirmReject(item)">Confirm</button>
+              <button mat-button (click)="cancelReject()">Cancel</button>
+            </ng-container>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="xen-empty" *ngIf="filteredQueue.length === 0">
+      <p>No items match the selected filter.</p>
+    </div>
+  </ng-container>
+</div>

@@ -1,0 +1,139 @@
+<div class="xen-page">
+  <!-- Toolbar -->
+  <div class="xen-toolbar">
+    <div class="toolbar-left">
+      <h1 class="toolbar-title">Denial Code Library</h1>
+      <span class="toolbar-subtitle">CARC codes with resolution guidance</span>
+    </div>
+  </div>
+
+  <!-- Search + filter bar -->
+  <div class="carc-filter-bar">
+    <div class="carc-search-wrap">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        class="carc-search-input"
+        placeholder="Search code, description, or category..."
+        [(ngModel)]="search"
+        (ngModelChange)="onSearchChange()"
+        />
+      </div>
+
+      <div class="carc-category-chips">
+        <button
+          class="carc-chip"
+          [class.active]="selectedCategory === ''"
+          (click)="selectedCategory = ''; onCategoryChange()"
+        >All</button>
+        @for (cat of categories; track cat) {
+          <button
+            class="carc-chip"
+            [class.active]="selectedCategory === cat"
+            (click)="selectedCategory = cat; onCategoryChange()"
+          >{{ cat }}</button>
+        }
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (loading) {
+      <div class="carc-loading">
+        <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error && !loading) {
+      <div class="xen-empty">
+        <mat-icon>error_outline</mat-icon>
+        <p>Failed to load denial codes. Please try again.</p>
+        <button mat-stroked-button (click)="load()">Retry</button>
+      </div>
+    }
+
+    <!-- Code list -->
+    @if (!loading && !error) {
+      <div class="carc-list">
+        <div class="carc-count">{{ total }} codes</div>
+        @for (item of codes; track trackByCode($index, item)) {
+          <div
+            class="carc-row"
+            [class.carc-row--expanded]="expandedCode === item.code"
+            >
+            <!-- Row header (always visible) -->
+            <div class="carc-row-header" (click)="toggleExpand(item.code)">
+              <span class="carc-code-badge">{{ item.code }}</span>
+              <span class="carc-category-badge" [attr.data-cat]="item.category">{{ item.category }}</span>
+              <span class="carc-description">{{ item.description || '(no description)' }}</span>
+              <mat-icon class="carc-expand-icon">{{ expandedCode === item.code ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </div>
+            <!-- Expanded detail -->
+            @if (expandedCode === item.code) {
+              <div class="carc-row-detail">
+                <div class="carc-detail-grid">
+                  @if (item.common_cause) {
+                    <div class="carc-detail-section">
+                      <div class="carc-detail-label">
+                        <mat-icon>help_outline</mat-icon>
+                        Common Cause
+                      </div>
+                      <p class="carc-detail-text">{{ item.common_cause }}</p>
+                    </div>
+                  }
+                  @if (item.resolution) {
+                    <div class="carc-detail-section">
+                      <div class="carc-detail-label">
+                        <mat-icon>build_circle</mat-icon>
+                        Resolution Steps
+                      </div>
+                      <p class="carc-detail-text">{{ item.resolution }}</p>
+                    </div>
+                  }
+                  @if (item.prevention) {
+                    <div class="carc-detail-section">
+                      <div class="carc-detail-label">
+                        <mat-icon>shield</mat-icon>
+                        Prevention
+                      </div>
+                      <p class="carc-detail-text">{{ item.prevention }}</p>
+                    </div>
+                  }
+                </div>
+                @if (item.filing_deadline_days) {
+                  <div class="carc-deadline-info">
+                    <mat-icon>schedule</mat-icon>
+                    <span>
+                      Filing deadline: <strong>{{ item.filing_deadline_days }} days</strong> from DOS
+                      @if (item.appeal_days) {
+                        &nbsp;&#x00B7;&nbsp; Appeal deadline: <strong>{{ item.appeal_days }} days</strong> from denial
+                      }
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+        <!-- Empty state -->
+        @if (codes.length === 0) {
+          <div class="xen-empty">
+            <mat-icon>search_off</mat-icon>
+            <p>No denial codes match your search.</p>
+          </div>
+        }
+        <!-- Pagination -->
+        @if (totalPages > 1) {
+          <div class="carc-pagination">
+            <button mat-icon-button [disabled]="currentPage === 1" (click)="prevPage()">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <span>Page {{ currentPage }} of {{ totalPages }}</span>
+            <button mat-icon-button [disabled]="currentPage === totalPages" (click)="nextPage()">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>

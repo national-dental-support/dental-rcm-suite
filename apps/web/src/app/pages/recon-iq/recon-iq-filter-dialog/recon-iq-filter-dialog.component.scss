@@ -1,0 +1,155 @@
+/* rp-filter-form - enterprise skin */
+.rp-filter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* each "row" in your config */
+.rp-filter-form .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+/* widths (your template uses w-md / w-lg) */
+.rp-filter-form .field.w-sm { flex: 1 1 180px; }
+.rp-filter-form .field.w-md { flex: 1 1 220px; }
+.rp-filter-form .field.w-lg { flex: 2 1 320px; }
+.rp-filter-form .field.w-xl { flex: 3 1 420px; }
+
+/* default mat-form-field sizing inside filter form */
+:host ::ng-deep .rp-filter-form .mat-mdc-form-field {
+  flex: 1 1 220px;
+}
+
+/* tighten Material spacing under fields */
+:host ::ng-deep .rp-filter-form .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* [ok] turn it back on only for the bankName/bankFeedId selects */
+:host ::ng-deep .rp-filter-form .mat-mdc-form-field:has(.bank-hint) .mat-mdc-form-field-subscript-wrapper {
+  display: block;
+  min-height: 0;
+  margin-top: 4px;
+}
+
+/* enterprise outline look */
+:host ::ng-deep .rp-filter-form .mdc-text-field--outlined {
+  background: var(--color-bg-subtle);               /* subtle tint */
+  border-radius: var(--radius-md);               /* enterprise roundness */
+}
+
+/* outline border default */
+:host ::ng-deep .rp-filter-form .mdc-notched-outline__leading,
+:host ::ng-deep .rp-filter-form .mdc-notched-outline__notch,
+:host ::ng-deep .rp-filter-form .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.14) !important;
+}
+
+/* hover */
+:host ::ng-deep .rp-filter-form .mat-mdc-form-field:hover .mdc-notched-outline__leading,
+:host ::ng-deep .rp-filter-form .mat-mdc-form-field:hover .mdc-notched-outline__notch,
+:host ::ng-deep .rp-filter-form .mat-mdc-form-field:hover .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.28) !important;
+}
+
+/* focus ring (enterprise = subtle but present) */
+:host ::ng-deep .rp-filter-form .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .rp-filter-form .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .rp-filter-form .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: rgba(59, 130, 246, 0.75) !important;
+}
+
+/* input text */
+:host ::ng-deep .rp-filter-form input.mat-mdc-input-element,
+:host ::ng-deep .rp-filter-form .mat-mdc-select-value-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+/* floating label */
+:host ::ng-deep .rp-filter-form .mat-mdc-floating-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* icon sizing (datepicker etc) */
+:host ::ng-deep .rp-filter-form .mat-mdc-icon-button mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
+/* date range: make the two fields sit nicely */
+.rp-filter-form .date-range {
+  display: flex;
+  gap: 12px;
+}
+.rp-filter-form .date-range mat-form-field {
+  flex: 1 1 220px;
+}
+
+/* actions row */
+.rp-filter-form .row.actions {
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+/* style Reset as enterprise "secondary" action */
+.rp-filter-form .row.actions button {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* Fix your hint styling (yours is huge + bad padding) */
+.bank-hint {
+  color: #b42318;      /* enterprise red */
+  font-size: var(--font-size-xs);     /* NOT 16 */
+  margin-top: 4px;
+}
+
+/* =========================
+   Reusable search styling
+   ========================= */
+.rp-filter-search {
+  display: flex;
+  align-items: center;
+}
+
+.rp-filter-search__field {
+  width: 100%;
+}
+
+/* remove extra subscript spacing */
+:host ::ng-deep .rp-filter-search__field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* match your enterprise outline look */
+:host ::ng-deep .rp-filter-search__field .mdc-text-field--outlined {
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+}
+
+:host ::ng-deep .rp-filter-search__field .mdc-notched-outline__leading,
+:host ::ng-deep .rp-filter-search__field .mdc-notched-outline__notch,
+:host ::ng-deep .rp-filter-search__field .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.14) !important;
+}
+
+:host ::ng-deep .rp-filter-search__field:hover .mdc-notched-outline__leading,
+:host ::ng-deep .rp-filter-search__field:hover .mdc-notched-outline__notch,
+:host ::ng-deep .rp-filter-search__field:hover .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.28) !important;
+}
+
+/* focus */
+:host ::ng-deep .rp-filter-search__field.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .rp-filter-search__field.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .rp-filter-search__field.mat-focused .mdc-notched-outline__trailing {
+  border-color: rgba(59, 130, 246, 0.75) !important;
+}
+

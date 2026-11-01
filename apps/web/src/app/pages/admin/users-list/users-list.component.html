@@ -1,0 +1,150 @@
+<app-section-card class="page" [title]="'Users'">
+  <header class="page-header">
+    <div class="header-actions">
+      @if (viewMode === 'active') {
+        <button
+          class="add-btn"
+          mat-raised-button
+          color="primary"
+          (click)="add()"
+          >
+          <mat-icon class="add-icon">person_add</mat-icon>
+          Add New User
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- View toggle tabs -->
+  <div class="view-toggle">
+    <button
+      class="view-toggle__btn"
+      [class.view-toggle__btn--active]="viewMode === 'active'"
+      (click)="switchView('active')"
+      >
+      Active Users
+    </button>
+
+    <button
+      class="view-toggle__btn"
+      [class.view-toggle__btn--active]="viewMode === 'archived'"
+      (click)="switchView('archived')"
+      >
+      Archived Users
+    </button>
+  </div>
+
+  <!-- The advanced table already shows its own progress bar + empty state -->
+  <rp-advanced-table
+    [data]="users"
+    [columns]="columns"
+    [loading]="loading"
+    [enablePagination]="true"
+    [pageSize]="10"
+    [pageSizeOptions]="[10, 25, 50]"
+    [enableExport]="true"
+    exportFileName="users.xlsx"
+    exportSheetName="Users"
+    [enableGlobalSearch]="true"
+    globalSearchPlaceholder="Search users"
+    [autoGenerateValueLists]="true"
+    idField="id"
+    >
+    <!-- STATUS CELL -->
+    <ng-template rpCell="status" let-row="row">
+      <span
+        class="status-chip"
+        [class.active]="viewMode === 'active' && isActive(row)"
+        [class.disabled]="viewMode === 'active' && !isActive(row)"
+        [class.archived]="viewMode === 'archived'"
+        >
+        {{ viewMode === 'archived' ? 'Archived' : (isActive(row) ? 'Active' : 'Disabled') }}
+      </span>
+    </ng-template>
+
+    <!-- LAST LOGIN / CREATED CELL -->
+    <ng-template rpCell="lastLogin" let-row="row">
+      @if (getLoginDisplay(row); as info) {
+        <div class="login-date-cell">
+          <span class="login-date-label" [class.login-date-label--login]="info.isLogin" [class.login-date-label--created]="!info.isLogin">
+            {{ info.isLogin ? 'Login:' : 'Created:' }}
+          </span>
+          <span class="login-date-value" [class.login-date-value--login]="info.isLogin" [class.login-date-value--created]="!info.isLogin">
+            {{ info.label }}
+          </span>
+          @if (!info.isLogin && info.label !== 'N/A') {
+            <span class="login-date-badge">Never logged in</span>
+          }
+        </div>
+      }
+    </ng-template>
+
+    <!-- ROLE CELL - inline editable select -->
+    <ng-template rpCell="role" let-row="row">
+      @if (viewMode === 'active') {
+        <mat-select
+          [value]="row.role"
+          (selectionChange)="updateRole(row, $event.value)"
+          class="role-select"
+          aria-label="Change role"
+          >
+          @for (r of roleOptions; track r) {
+            <mat-option [value]="r">{{ r }}</mat-option>
+          }
+        </mat-select>
+      } @else {
+        <span>{{ row.role }}</span>
+      }
+    </ng-template>
+
+    <!-- ACTIONS CELL -->
+    <ng-template rpCell="actions" let-row="row">
+      <div class="actions-cell">
+        @if (viewMode === 'active') {
+          <button mat-stroked-button class="edit-btn" (click)="edit(row)">Edit</button>
+          @if (!isActive(row)) {
+            <button
+              mat-stroked-button
+              color="primary"
+              (click)="toggleStatus(row)"
+              matTooltip="Re-enable this user's access"
+              >
+              Enable
+            </button>
+          }
+          @if (isActive(row)) {
+            <button
+              mat-stroked-button
+              (click)="toggleStatus(row)"
+              matTooltip="Disable access without archiving"
+              >
+              Disable
+            </button>
+          }
+          <button
+            mat-stroked-button
+            class="delete-btn"
+            color="warn"
+            (click)="confirmDelete(row)"
+            matTooltip="Delete user (can be restored later)"
+            >
+            Delete
+          </button>
+        }
+
+        @if (viewMode === 'archived') {
+          <button
+            mat-stroked-button
+            class="restore-btn"
+            color="primary"
+            (click)="confirmRestore(row)"
+            matTooltip="Restore user account"
+            >
+            <mat-icon>restore</mat-icon>
+            Restore
+          </button>
+        }
+      </div>
+    </ng-template>
+  </rp-advanced-table>
+</app-section-card>

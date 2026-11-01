@@ -1,0 +1,167 @@
+:host {
+  display: block;
+  width: min(720px, 92vw);
+  /* Let dialog content sit on a light surface */
+  background-color: var(--rp-surface, var(--color-surface));
+}
+
+/* Title */
+.dialog-title {
+  margin: 0;
+  padding: 16px 24px 8px;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+/* Content wrapper */
+.filter-dialog {
+  padding: 0 24px 8px 24px;
+  overflow: visible;
+}
+
+/* Footer actions */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px 20px;
+  border-top: 1px solid var(--rp-border-subtle, #e3eaf5);
+  margin-top: 16px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* GRID LAYOUT
+   -------------------------------------------------- */
+.filter-grid {
+  --cols: 12;
+  --gap: 16px;
+
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: var(--gap);
+  align-items: start;
+  margin-top: 8px;
+}
+
+/* Base: 1 column on narrow screens */
+.field {
+  grid-column: span 12;
+}
+
+/* Optional spans from TS */
+.field.span-6 {
+  grid-column: span 12;
+}
+.field.span-8 {
+  grid-column: span 12;
+}
+.field.span-12 {
+  grid-column: span 12;
+}
+
+/* 2 columns on small / tablet */
+@media (min-width: 600px) and (max-width: 959px) {
+  .filter-grid {
+    --cols: 12;
+  }
+  .field {
+    grid-column: span 6;
+  }
+  .field.span-6 {
+    grid-column: span 6;
+  }
+  .field.span-8 {
+    grid-column: span 12;
+  }
+}
+
+/* Desktop: 3-up layout, like the mock */
+@media (min-width: 960px) {
+  .filter-grid {
+    --cols: 12;
+  }
+  .field {
+    grid-column: span 4;
+  }
+  .field.span-6 {
+    grid-column: span 6;
+  }
+  .field.span-8 {
+    grid-column: span 8;
+  }
+  .field.span-12 {
+    grid-column: span 12;
+  }
+}
+
+/* RANGE GROUPS
+   -------------------------------------------------- */
+.date-range,
+.number-range {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 600px) {
+  .date-range,
+  .number-range {
+    grid-template-columns: 1fr 1fr; /* Start | End, Min | Max */
+  }
+}
+
+/* Checkbox alignment so it lines up with fields */
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  padding-top: 10px;
+}
+
+/* MATERIAL OVERRIDES (local to this dialog)
+   -------------------------------------------------- */
+
+/* Ensure all form fields stretch evenly */
+:host ::ng-deep .filter-grid .mat-mdc-form-field {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: block;
+  margin: 0;
+}
+
+/* Make the actual input box full-width */
+:host ::ng-deep .filter-grid .mdc-text-field,
+:host ::ng-deep .filter-grid .mat-mdc-text-field-wrapper {
+  width: 100% !important;
+}
+
+/* Slightly denser vertical padding than default Material */
+:host ::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* No extra hint space unless we actually show a hint */
+:host ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  height: 0;
+}
+
+/* Buttons */
+:host ::ng-deep .mat-mdc-stroked-button {
+  border-radius: 999px;
+}
+
+:host ::ng-deep .mat-mdc-unelevated-button.mat-primary {
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
+  text-transform: none;
+  font-weight: 600;
+}
+
+/* Optional: slightly lighter Cancel text */
+:host ::ng-deep .mat-mdc-button {
+  text-transform: none;
+}

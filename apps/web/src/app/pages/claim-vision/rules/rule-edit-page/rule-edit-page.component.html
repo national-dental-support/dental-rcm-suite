@@ -1,0 +1,17 @@
+@if (rule) {
+  <section class="page">
+    <h1 class="page-title">Edit Rule</h1>
+    <header class="page-header">
+      <button type="button" class="breadcrumbs__back" (click)="goBack()">
+        <mat-icon class="breadcrumbs__icon">arrow_back</mat-icon>
+        <span>Back to Rules</span>
+      </button>
+    </header>
+    <rp-rule-editor
+      mode="edit"
+      [rule]="rule"
+      (cancel)="onCancel()"
+      (save)="onSave($event)"
+    ></rp-rule-editor>
+  </section>
+}

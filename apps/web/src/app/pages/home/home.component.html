@@ -1,0 +1,47 @@
+<div class="home-page">
+  <div class="home-header">
+    <h1 class="home-title">Dental RCM Suite</h1>
+    <p class="home-subtitle">Select a product to get started</p>
+  </div>
+
+  @if (notSubscribedSlug) {
+    <div class="not-subscribed-banner">
+      <mat-icon>lock</mat-icon>
+      <span>Your organization is not subscribed to <strong>{{ notSubscribedSlug }}</strong>. Contact your administrator.</span>
+    </div>
+  }
+
+  <div class="product-grid">
+    @for (product of products; track product) {
+      <mat-card
+        class="product-tile"
+        [class.product-tile--superadmin]="product.slug === 'superadmin'"
+        [class.product-tile--locked]="product.subscribed === false"
+        (click)="navigate(product)"
+        [matTooltip]="productDescription(product)"
+        matTooltipPosition="below"
+        matTooltipClass="product-tooltip"
+        >
+        <mat-card-content>
+          @if (product.subscribed === false) {
+            <div class="lock-overlay">
+              <mat-icon>lock</mat-icon>
+            </div>
+          }
+          <mat-icon class="product-icon" [title]="product.name">{{ iconName(product) }}</mat-icon>
+          <div class="product-name">{{ product.name }}</div>
+        </mat-card-content>
+      </mat-card>
+    }
+    @for (app of externalApps; track app) {
+      <a [href]="app.url" target="_blank" rel="noopener" class="product-tile-link">
+        <mat-card class="product-tile">
+          <mat-card-content>
+            <mat-icon class="product-icon product-icon--mat">{{ app.icon }}</mat-icon>
+            <div class="product-name">{{ app.name }}</div>
+          </mat-card-content>
+        </mat-card>
+      </a>
+    }
+  </div>
+</div>

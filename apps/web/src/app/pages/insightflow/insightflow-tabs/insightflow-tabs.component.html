@@ -1,0 +1,56 @@
+<div class="tab-nav-row">
+  <nav mat-tab-nav-bar [tabPanel]="panel" class="primary-nav">
+    @for (t of primaryTabs; track trackByLabel($index, t)) {
+      <a
+        mat-tab-link
+        [routerLink]="t.link"
+        routerLinkActive
+        #rla="routerLinkActive"
+        [active]="rla.isActive"
+        (click)="trackTabClick(t)"
+      >{{ t.label }}</a>
+    }
+  </nav>
+
+  <!-- Locked tabs - unsubscribed modules, shown grayed out with lock icon -->
+  @for (t of lockedTabs; track trackByLabel($index, t)) {
+    <span
+      class="locked-tab"
+      [matTooltip]="t.label + ' &#x2014; contact your administrator to enable this module'"
+      matTooltipPosition="below"
+      >
+      <mat-icon class="lock-icon">lock</mat-icon>
+      {{ t.label }}
+    </span>
+  }
+
+  @if (toolsTabs.length) {
+    <button
+      mat-button
+      class="tools-btn"
+      [class.tools-active]="isToolsRouteActive()"
+      [matMenuTriggerFor]="toolsMenu"
+      >
+      <mat-icon title="Tools">tune</mat-icon>
+      Tools
+      <mat-icon class="drop-icon" title="Expand tools menu">arrow_drop_down</mat-icon>
+    </button>
+  }
+</div>
+
+<mat-menu #toolsMenu="matMenu">
+  @for (t of toolsTabs; track trackByLabel($index, t)) {
+    <a
+      mat-menu-item
+      [routerLink]="t.link"
+      (click)="trackTabClick(t)"
+      >
+      <mat-icon [attr.title]="t.label">{{ t.icon }}</mat-icon>
+      {{ t.label }}
+    </a>
+  }
+</mat-menu>
+
+<mat-tab-nav-panel #panel>
+  <router-outlet></router-outlet>
+</mat-tab-nav-panel>

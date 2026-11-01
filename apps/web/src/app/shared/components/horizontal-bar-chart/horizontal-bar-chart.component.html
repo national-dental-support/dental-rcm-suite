@@ -1,0 +1,20 @@
+@if (chartOptions; as opts) {
+  <div class="horizontal-bar-chart">
+    <apx-chart
+      [series]="opts.series"
+      [chart]="opts.chart"
+      [xaxis]="opts.xaxis"
+      [yaxis]="opts.yaxis"
+      [plotOptions]="opts.plotOptions"
+      [dataLabels]="opts.dataLabels"
+      [tooltip]="opts.tooltip"
+      [grid]="opts.grid"
+      [fill]="opts.fill"
+      [stroke]="opts.stroke"
+      [colors]="opts.colors || []">
+    </apx-chart>
+  </div>
+} @else {
+  <div class="hbar-no-data">No data available at this time</div>
+}
+

@@ -1,0 +1,148 @@
+<div class="xen-page consulting-page">
+  <div class="xen-toolbar">
+    <h2 class="page-title">RCM Consulting Portal</h2>
+  </div>
+
+  <div class="xen-loading" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading consulting data&#x2026;</p>
+  </div>
+
+  <div class="xen-empty" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <p>Failed to load. <button mat-button color="primary" (click)="load()">Retry</button></p>
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <!-- Consultant Header Card -->
+    <div class="consultant-banner" *ngIf="primaryConsultant() as c">
+      <div class="consultant-avatar">
+        <mat-icon>person</mat-icon>
+      </div>
+      <div class="consultant-info">
+        <div class="consultant-name">{{ c.name }}</div>
+        <div class="consultant-specialty">{{ c.specialty }}</div>
+        <div class="consultant-meta">
+          <span><mat-icon class="meta-icon">email</mat-icon>{{ c.email }}</span>
+          <span><mat-icon class="meta-icon">event</mat-icon>Next meeting: {{ c.nextMeeting | date:'MMM d, y h:mm a' }}</span>
+          <span class="last-contact">Last contact: {{ c.lastContact | date:'MMM d, y' }}</span>
+        </div>
+      </div>
+      <button mat-raised-button color="primary" class="schedule-btn">
+        <mat-icon>calendar_today</mat-icon> Schedule
+      </button>
+    </div>
+
+    <!-- Additional Consultants -->
+    <div class="extra-consultants" *ngIf="consultants.length > 1">
+      <mat-card class="xen-card extra-card" *ngFor="let c of consultants | slice:1; trackBy: trackById">
+        <mat-card-content class="extra-card-content">
+          <mat-icon class="extra-icon">person_outline</mat-icon>
+          <div>
+            <div class="extra-name">{{ c.name }}</div>
+            <div class="extra-spec">{{ c.specialty }}</div>
+          </div>
+          <span class="status-badge" [style.color]="c.status === 'active' ? '#66bb6a' : '#ffa726'">{{ c.status | titlecase }}</span>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tabs: Recommendations / Sessions / Metrics -->
+    <mat-tab-group [(selectedIndex)]="activeTab" class="sub-tabs">
+      <!-- Recommendations Tab -->
+      <mat-tab label="Action Items">
+        <mat-card class="xen-card tab-card">
+          <mat-card-content>
+            <table mat-table [dataSource]="recommendations" class="xen-table">
+              <ng-container matColumnDef="priority">
+                <th mat-header-cell *matHeaderCellDef>Priority</th>
+                <td mat-cell *matCellDef="let r">
+                  <span class="priority-dot" [style.background]="priorityColor(r.priority)"></span>
+                  <span class="priority-label" [style.color]="priorityColor(r.priority)">{{ r.priority | titlecase }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="title">
+                <th mat-header-cell *matHeaderCellDef>Title</th>
+                <td mat-cell *matCellDef="let r"><strong>{{ r.title }}</strong></td>
+              </ng-container>
+              <ng-container matColumnDef="category">
+                <th mat-header-cell *matHeaderCellDef>Category</th>
+                <td mat-cell *matCellDef="let r">{{ r.category }}</td>
+              </ng-container>
+              <ng-container matColumnDef="description">
+                <th mat-header-cell *matHeaderCellDef>Description</th>
+                <td mat-cell *matCellDef="let r" class="desc-cell">{{ r.description }}</td>
+              </ng-container>
+              <ng-container matColumnDef="dueDate">
+                <th mat-header-cell *matHeaderCellDef>Due</th>
+                <td mat-cell *matCellDef="let r">{{ r.dueDate | date:'MMM d' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let r">
+                  <span class="status-pill" [style.color]="statusColor(r.status)">{{ r.status | titlecase }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="assignedTo">
+                <th mat-header-cell *matHeaderCellDef>Owner</th>
+                <td mat-cell *matCellDef="let r">{{ r.assignedTo }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="['priority','title','category','description','dueDate','status','assignedTo']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['priority','title','category','description','dueDate','status','assignedTo']"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+
+      <!-- Sessions Tab -->
+      <mat-tab label="Past Sessions">
+        <div class="sessions-list">
+          <mat-card class="xen-card session-card" *ngFor="let s of sessions; trackBy: trackById">
+            <mat-card-content>
+              <div class="session-header" (click)="toggleSession(s.id)">
+                <mat-icon class="session-icon">event_note</mat-icon>
+                <div class="session-meta">
+                  <div class="session-date">{{ s.date | date:'MMMM d, y' }}</div>
+                  <div class="session-consultant">{{ s.consultant }}</div>
+                </div>
+                <div class="session-summary-preview">{{ s.summary | slice:0:80 }}&#x2026;</div>
+                <mat-icon class="expand-icon">{{ expandedSessionId === s.id ? 'expand_less' : 'expand_more' }}</mat-icon>
+              </div>
+              <div class="session-body" *ngIf="expandedSessionId === s.id">
+                <p class="summary-full">{{ s.summary }}</p>
+                <div class="action-items">
+                  <div class="ai-label">Action Items</div>
+                  <ul>
+                    <li *ngFor="let ai of s.actionItems">{{ ai }}</li>
+                  </ul>
+                </div>
+                <div *ngIf="s.recording" class="recording-link">
+                  <mat-icon>videocam</mat-icon>
+                  <a [href]="s.recording" target="_blank">View Recording</a>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Metrics Tab -->
+      <mat-tab label="Tracked Metrics">
+        <div class="metrics-grid" *ngIf="metrics">
+          <mat-card class="xen-card metric-card" *ngFor="let key of metricKeys()">
+            <mat-card-content>
+              <div class="metric-label">{{ metrics[key].label }}</div>
+              <div class="metric-value-row">
+                <span class="metric-value">{{ metrics[key].value }}{{ metrics[key].unit }}</span>
+                <mat-icon class="trend-icon" [class.up]="metrics[key].trend === 'up'" [class.down]="metrics[key].trend === 'down'">
+                  {{ metricTrendIcon(metrics[key].trend) }}
+                </mat-icon>
+              </div>
+              <div class="metric-target">Target: {{ metrics[key].target }}{{ metrics[key].unit }}</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </ng-container>
+</div>

@@ -1,0 +1,215 @@
+<div class="appeal-panel">
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="ap-loading">
+      <mat-progress-spinner diameter="32" mode="indeterminate"></mat-progress-spinner>
+    </div>
+  }
+
+  <!-- Generate Form / Letter Preview -->
+  @if (showGenerateForm && !loading) {
+    <div class="ap-generate-card">
+      <!-- Letter preview (post-generation) -->
+      @if (generatedLetter) {
+        <div class="ap-letter-header">
+          <mat-icon>description</mat-icon>
+          <span>Appeal Letter Generated</span>
+          <div class="spacer"></div>
+          <button mat-icon-button matTooltip="Copy letter" (click)="copyLetter()">
+            <mat-icon>content_copy</mat-icon>
+          </button>
+          <button mat-icon-button matTooltip="Print letter" (click)="printLetter()">
+            <mat-icon>print</mat-icon>
+          </button>
+        </div>
+        <textarea class="ap-letter-text" [(ngModel)]="generatedLetter" placeholder="Edit letter before sending..."></textarea>
+        <div class="ap-letter-actions">
+          <button mat-stroked-button (click)="doneWithLetter()">Done</button>
+        </div>
+      } @else {
+        <div class="ap-form-title">
+          <mat-icon>gavel</mat-icon>
+          Generate Appeal Letter
+        </div>
+        <div class="ap-form-row">
+          <mat-form-field appearance="outline" class="ap-field">
+            <mat-label>Template</mat-label>
+            <mat-select [(ngModel)]="selectedTemplateId">
+              <mat-option [value]="null">Auto-select</mat-option>
+              @for (t of templates; track t) {
+                <mat-option [value]="t.id">
+                  {{ t.template_name }}
+                  @if (t.denial_category) {
+                    <span class="ap-tpl-cat"> &#x00B7; {{ t.denial_category }}</span>
+                  }
+                </mat-option>
+              }
+            </mat-select>
+            @if (templates.length > 0) {
+              <mat-hint>Auto-selected by denial code if none chosen</mat-hint>
+            }
+            @if (templates.length === 0) {
+              <mat-hint class="ap-no-templates-hint">
+                No templates configured &#x2014; ask your admin to add one in Admin Settings.
+              </mat-hint>
+            }
+          </mat-form-field>
+        </div>
+        <div class="ap-form-row">
+          <mat-form-field appearance="outline" class="ap-field">
+            <mat-label>Custom Notes (optional)</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="customNotes"
+              rows="3"
+              placeholder="Add any additional context or notes to include in the letter..."
+            ></textarea>
+          </mat-form-field>
+        </div>
+        <div class="ap-form-actions">
+          <button type="button" mat-button (click)="cancelGenerate()">Cancel</button>
+          <button type="button" mat-raised-button color="primary" [disabled]="generating" (click)="generate()">
+            @if (generating) {
+              <mat-spinner diameter="16" class="btn-spinner"></mat-spinner>
+            }
+            @if (!generating) {
+              <mat-icon>auto_awesome</mat-icon>
+            }
+            {{ generating ? 'Generating&#x2026;' : 'Generate from Template' }}
+          </button>
+          <button type="button" mat-raised-button color="accent" [disabled]="generating" (click)="generateAi()">
+            @if (generating) {
+              <mat-spinner diameter="16" class="btn-spinner"></mat-spinner>
+            }
+            @if (!generating) {
+              <mat-icon>psychology</mat-icon>
+            }
+            {{ generating ? 'AI Generating&#x2026;' : 'Generate with AI' }}
+          </button>
+        </div>
+      }
+      <!-- Generate form -->
+    </div>
+  }
+
+  <!-- Appeals list or empty state -->
+  @if (!loading) {
+    <!-- Header bar -->
+    <div class="ap-header">
+      <span class="ap-title">Appeal History</span>
+      @if (appeals.length) {
+        <span class="ap-count">{{ appeals.length }}</span>
+      }
+      <div class="spacer"></div>
+      @if (!showGenerateForm) {
+        <button
+          type="button"
+          mat-raised-button color="primary"
+          (click)="openGenerateForm()"
+          >
+          <mat-icon>add</mat-icon>
+          Generate Appeal Letter
+        </button>
+      }
+    </div>
+    <!-- Empty state -->
+    @if (appeals.length === 0 && !showGenerateForm) {
+      <div class="ap-empty">
+        <mat-icon>gavel</mat-icon>
+        <p>No appeals filed yet for this claim.</p>
+        <p class="ap-empty-hint">Click "Generate Appeal Letter" to draft your first appeal.</p>
+      </div>
+    }
+    <!-- Appeal cards -->
+    @for (a of appeals; track trackById($index, a)) {
+      <div class="ap-card">
+        <div class="ap-card-header">
+          <span class="ap-level-badge">Level {{ a.appeal_level }}</span>
+          <span class="ap-status-chip" [attr.data-status]="a.status">
+            {{ statusLabel(a.status) }}
+          </span>
+          @if (a.denial_reason) {
+            <span class="ap-denial-code">
+              <mat-icon>code</mat-icon>{{ a.denial_reason }}
+            </span>
+          }
+          <div class="spacer"></div>
+          @if (a.due_date) {
+            <span class="ap-due" [class.ap-due--overdue]="isOverdue(a.due_date)">
+              <mat-icon>{{ isOverdue(a.due_date) ? 'warning' : 'schedule' }}</mat-icon>
+              Due {{ a.due_date | date: 'MMM d, y' }}
+            </span>
+          }
+        </div>
+        <div class="ap-card-meta">
+          @if (a.submitted_date) {
+            <span><strong>Sent:</strong> {{ a.submitted_date | date: 'MMM d, y h:mm a' }}</span>
+          }
+          @if (!a.submitted_date) {
+            <span>Created {{ a.created_at | date: 'MMM d, y' }}</span>
+          }
+          @if (a.status === 'won' || a.status === 'lost') {
+            <span class="ap-outcome" [attr.data-outcome]="a.status">
+              <strong>Outcome:</strong> {{ a.status === 'won' ? 'Won' : 'Lost' }}
+            </span>
+          }
+          @if (a.template_name) {
+            <span> &#x00B7; {{ a.template_name }}</span>
+          }
+        </div>
+        <!-- Letter preview (truncated) -->
+        @if (a.generated_letter) {
+          <div class="ap-letter-preview">
+            {{ a.generated_letter | slice: 0:280 }}@if (a.generated_letter.length > 280) {
+            <span>&#x2026;</span>
+          }
+        </div>
+      }
+      <!-- Notes -->
+      @if (a.notes) {
+        <div class="ap-notes-text">
+          <mat-icon>sticky_note_2</mat-icon>{{ a.notes }}
+        </div>
+      }
+      <!-- Status actions -->
+      @if (a.status === 'draft' || a.status === 'pending' || a.status === 'submitted') {
+        <div class="ap-card-actions">
+          @if (a.status === 'draft' || a.status === 'pending') {
+            <button
+              type="button"
+              mat-stroked-button
+              [disabled]="updatingId === a.id"
+              (click)="updateStatus(a, 'submitted')"
+              >
+              <mat-icon>send</mat-icon> Mark Submitted
+            </button>
+          }
+          @if (a.status === 'submitted') {
+            <button
+              type="button"
+              mat-stroked-button
+              color="primary"
+              [disabled]="updatingId === a.id"
+              (click)="updateStatus(a, 'won')"
+              >
+              <mat-icon>check_circle</mat-icon> Won
+            </button>
+          }
+          @if (a.status === 'submitted') {
+            <button
+              type="button"
+              mat-stroked-button
+              color="warn"
+              [disabled]="updatingId === a.id"
+              (click)="updateStatus(a, 'lost')"
+              >
+              <mat-icon>cancel</mat-icon> Lost
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+}
+</div>

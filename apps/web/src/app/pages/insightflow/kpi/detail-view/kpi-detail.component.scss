@@ -1,0 +1,77 @@
+.info-tip {
+  font-size: var(--font-size-md);
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  color: var(--color-text-subtle);
+  cursor: help;
+  flex-shrink: 0;
+  vertical-align: middle;
+
+  &:hover { color: var(--color-text-muted); }
+}
+
+.kpi-detail-page {
+  padding: 24px 32px;
+  background: var(--rcm-bg, var(--color-bg-subtle));
+  min-height: calc(100vh - 64px);
+}
+
+.breadcrumb {
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+}
+
+.heading {
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  margin-bottom: 8px;
+}
+
+.value {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.muted { color: var(--color-text-muted); }
+
+.content > div { margin-bottom: 4px; }
+
+ul {
+  margin: 4px 0 12px;
+  padding-left: 20px;
+  li { margin-bottom: 4px; }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "month  trend"
+      "benchmark interpretation"
+      "definition improve"
+      "factors factors";
+  }
+}
+
+.card.month      { grid-area: month; }
+.card.trend      { grid-area: trend; }
+.card.benchmark  { grid-area: benchmark; }
+.card.interpret  { grid-area: interpretation; }
+.card.definition { grid-area: definition; }
+.card.improve    { grid-area: improve; }
+.card.factors    { grid-area: factors; }

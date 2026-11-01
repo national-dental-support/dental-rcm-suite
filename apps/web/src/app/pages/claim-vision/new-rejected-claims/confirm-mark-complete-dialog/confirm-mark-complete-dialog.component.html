@@ -1,0 +1,22 @@
+<div class="cv-dialog">
+  <h2 mat-dialog-title>Mark as Complete?</h2>
+
+  <mat-dialog-content>
+    <p>
+      Are you sure you want to mark
+      <strong>{{ data.patientName }}</strong>&#x2019;s claim as complete?
+    </p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button (click)="cancel()">Cancel</button>
+    <button
+      mat-flat-button
+      color="primary"
+      class="confirm-btn"
+      (click)="confirm()"
+    >
+      Yes, mark as complete
+    </button>
+  </mat-dialog-actions>
+</div>

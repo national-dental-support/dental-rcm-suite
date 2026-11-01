@@ -1,0 +1,104 @@
+<div class="sr-root">
+
+  <div class="sr-header">
+    <div>
+      <h3 class="sr-title">Scheduled Reports</h3>
+      <p class="sr-subtitle">Configure recurring reports delivered via email</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="addReport()" [disabled]="!!editingReport">
+      <mat-icon>add</mat-icon> New Schedule
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="sr-loading">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  }
+
+  <!-- Empty -->
+  @if (!loading && reports.length === 0 && !editingReport) {
+    <div class="sr-empty">
+      <mat-icon>schedule_send</mat-icon>
+      <p>No scheduled reports yet.</p>
+      <button mat-flat-button color="primary" (click)="addReport()">Create Your First Schedule</button>
+    </div>
+  }
+
+  <!-- List -->
+  @if (!loading && reports.length > 0 && !editingReport) {
+    <div class="sr-list">
+      @for (r of reports; track r) {
+        <div class="sr-card">
+          <div class="sr-card-left">
+            <mat-slide-toggle [checked]="r.isActive" (change)="toggleActive(r)" color="primary"></mat-slide-toggle>
+            <div class="sr-card-info">
+              <span class="sr-card-name">{{ r.name }}</span>
+              <div class="sr-card-meta">
+                <span class="sr-chip">{{ getTypeLabel(r.reportType) }}</span>
+                <span class="sr-chip sr-chip--freq">{{ getFreqLabel(r.frequency) }}</span>
+                <span class="sr-card-recipients">{{ r.recipients }}</span>
+              </div>
+              @if (r.lastRunAt || r.nextRunAt) {
+                <span class="sr-card-dates">
+                  @if (r.lastRunAt) {
+                    <span>Last: {{ r.lastRunAt | date:'short' }}</span>
+                  }
+                  @if (r.nextRunAt) {
+                    <span> | Next: {{ r.nextRunAt | date:'short' }}</span>
+                  }
+                </span>
+              }
+            </div>
+          </div>
+          <div class="sr-card-actions">
+            <button mat-icon-button matTooltip="Run Now" (click)="runNow(r)"><mat-icon>play_arrow</mat-icon></button>
+            <button mat-icon-button matTooltip="Edit" (click)="editReport(r)"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button color="warn" matTooltip="Delete" (click)="deleteReport(r)"><mat-icon>delete_outline</mat-icon></button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Editor -->
+  @if (editingReport) {
+    <div class="sr-editor">
+      <h4>{{ isNew ? 'New Schedule' : 'Edit Schedule' }}</h4>
+      <mat-form-field appearance="outline" class="sr-field-full">
+        <mat-label>Schedule Name</mat-label>
+        <input matInput [(ngModel)]="editingReport.name" placeholder="e.g. Weekly Denial Summary">
+      </mat-form-field>
+      <div class="sr-form-row">
+        <mat-form-field appearance="outline" class="sr-field">
+          <mat-label>Report Type</mat-label>
+          <mat-select [(ngModel)]="editingReport.reportType">
+            @for (t of reportTypes; track t) {
+              <mat-option [value]="t.value">{{ t.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="sr-field">
+          <mat-label>Frequency</mat-label>
+          <mat-select [(ngModel)]="editingReport.frequency">
+            @for (f of frequencies; track f) {
+              <mat-option [value]="f.value">{{ f.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="sr-field-full">
+        <mat-label>Recipients (comma-separated emails)</mat-label>
+        <input matInput [(ngModel)]="editingReport.recipients" placeholder="admin@example.com, manager@example.com">
+      </mat-form-field>
+      <div class="sr-form-buttons">
+        <button mat-button (click)="cancelEdit()">Cancel</button>
+        <button mat-flat-button color="primary" (click)="saveReport()"
+          [disabled]="saving || !editingReport.name.trim() || !editingReport.recipients.trim()">
+          {{ saving ? 'Saving...' : (isNew ? 'Create' : 'Update') }}
+        </button>
+      </div>
+    </div>
+  }
+
+</div>

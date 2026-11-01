@@ -1,0 +1,43 @@
+<div class="xen-page">
+  @if (loading) {
+    <mat-progress-bar mode="indeterminate" class="rf-progress"></mat-progress-bar>
+  }
+
+  @if (error && !loading) {
+    <div class="xen-empty">
+      <mat-icon>error_outline</mat-icon>
+      <p>Unable to load forecast data.</p>
+      <button type="button" mat-raised-button color="primary" (click)="loadData()">Retry</button>
+    </div>
+  }
+
+  @if (!loading && !error) {
+    <app-section-card
+      title="Collections Forecast"
+      [tooltip]="'Predicted collections for the next 3 months using a moving-average trend model. Forecast rows are highlighted.'">
+      <rp-advanced-table
+        [data]="collectionsRows"
+        [columns]="collectionsColumns"
+        [enableGlobalSearch]="false">
+      </rp-advanced-table>
+    </app-section-card>
+    <app-section-card
+      title="AR Aging Projection"
+      [tooltip]="'Projected movement of accounts receivable across aging buckets over the next 30 and 60 days, based on historical collection velocity.'">
+      <rp-advanced-table
+        [data]="arAgingRows"
+        [columns]="arAgingColumns"
+        [enableGlobalSearch]="false">
+      </rp-advanced-table>
+    </app-section-card>
+    <app-section-card
+      title="Denial Trend by Payer"
+      [tooltip]="'Top payers ranked by at-risk revenue. Denial rate is shortfall (charges minus insurance payments) divided by charges.'">
+      <rp-advanced-table
+        [data]="denialRows"
+        [columns]="denialColumns"
+        [enableGlobalSearch]="true">
+      </rp-advanced-table>
+    </app-section-card>
+  }
+</div>

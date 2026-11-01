@@ -1,0 +1,402 @@
+// src/app/pages/claim-vision/rules/rules-list-card/rules-list-card.component.scss
+
+/* Outer white card */
+.rules-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px 16px;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Card header row: title left, search + filter right */
+.rules-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.rules-card__title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  color: var(--color-gray-800);
+}
+
+.rules-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* SEARCH INPUT ------------------------------------------------*/
+.rules-card__search {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 14px 0 16px;
+  border: 1.5px solid var(--color-border-strong);
+  background-color: var(--color-surface);
+
+  min-width: 260px;
+  max-width: 320px;
+}
+
+.rules-card__search-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  color: var(--color-text-muted);
+}
+
+.rules-card__search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+
+  font-size: var(--font-size-md);
+  color: var(--color-gray-700);
+
+  &::placeholder {
+    color: var(--color-text-subtle);
+  }
+}
+
+/* FILTER PILL -------------------------------------------------*/
+.rules-card__filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  height: 44px;
+  padding: 0 20px;
+
+  border: 1.5px solid var(--color-text);
+  background-color: var(--color-surface);
+  cursor: pointer;
+
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text);
+
+  /* remove native button styles that might leak through */
+  appearance: none;
+}
+
+.rules-card__filter-icon {
+  font-size: 20px;
+  color: var(--color-text);
+}
+
+.rules-card__filter-btn:hover {
+  background-color: var(--color-bg-subtle);
+}
+
+/* TABLE WRAPPER ----------------------------------------------*/
+.rules-card__table-wrapper {
+  border-radius: px;
+  border: 1px solid #e4e7f3; // slightly lighter border
+  overflow: hidden;
+  background-color: var(--color-surface); // white body, header tinted separately
+}
+
+/* TABLE ------------------------------------------------------*/
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+/* Header row: light blue-gray bg */
+.rules-table thead {
+  background-color: var(--color-primary-light);
+}
+
+.rules-table th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 12px 18px; // tighter than before
+  border-bottom: 1px solid #e4e7f3;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Body cells / rows ------------------------------------------*/
+.rules-table td {
+  padding: 8px 18px; // same vertical padding for rows
+  border-bottom: 1px solid #edf0fb;
+  vertical-align: middle;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.rules-table tbody tr:nth-child(even) {
+  background-color: var(--color-bg-subtle); // light grey-blue
+}
+/* Remove bottom border from last row for cleaner edge */
+.rules-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Row hover: subtle highlight */
+.rules-table tbody tr:hover {
+  background-color: #f9fafc;
+}
+
+/* First column: bolder text */
+.rules-table__rule-name {
+  font-weight: 300;
+  color: var(--color-text);
+}
+
+.rules-table__description {
+  max-width: 380px;
+}
+
+/* Created/Modified: stacked lines */
+.rules-table__multi-line span {
+  display: block;
+}
+
+/* Actions column */
+.rules-table__actions-col {
+  text-align: right;
+  white-space: nowrap;
+  width: 1%;
+}
+
+/* Rounded corners on table itself */
+// .rules-table thead tr th:first-child {
+//   border-top-left-radius: 12px;
+// }
+
+// .rules-table thead tr th:last-child {
+//   border-top-right-radius: 12px;
+// }
+
+// .rules-table tbody tr:last-child td:first-child {
+//   border-bottom-left-radius: 12px;
+// }
+
+// .rules-table tbody tr:last-child td:last-child {
+//   border-bottom-right-radius: 12px;
+// }
+
+/* Empty state */
+.rules-table__empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-text-subtle);
+}
+
+/* Status pill: green for active, gray for disabled */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.status-pill--active {
+  background-color: #e6f9f0;
+  color: var(--color-success);
+  border-color: #a7f3d0;
+}
+
+.status-pill--disabled {
+  background-color: var(--color-bg-muted);
+  color: var(--color-text-muted);
+  border-color: var(--color-border-strong);
+}
+
+/* Priority / execution order column */
+.rules-table__priority-col {
+  text-align: center;
+  width: 40px;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+}
+
+/* Actions cell layout */
+.actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+/* Small icon buttons for up/down/delete */
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+  color: var(--color-text-subtle);
+
+  mat-icon {
+    font-size: var(--font-size-base);
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    background: #f0f3f9;
+    color: var(--color-gray-700);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  &--danger:hover:not(:disabled) {
+    background: var(--color-danger-light);
+    color: var(--color-danger);
+  }
+}
+
+/* Inline delete confirm */
+.confirm-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+
+  &__label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-danger);
+  }
+
+  &__yes {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-danger);
+    background: var(--color-danger);
+    color: var(--color-surface);
+    cursor: pointer;
+  }
+
+  &__no {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    color: var(--color-gray-700);
+    cursor: pointer;
+  }
+}
+
+/* DETAILS button: small rounded outline */
+.details-btn {
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  height: 32px;
+  padding: 0 18px;
+  border: 2px solid #0ba5ec;
+  background-color: white;
+  color:#0ba5ec;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Footer: rows per page + pagination */
+.rules-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  padding-right: 8px;
+  padding-left: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Rows per page selector on left */
+.rows-per-page {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  select {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-strong);
+    padding: 2px 14px 2px 8px;
+    font-size: 11px;
+    background-color: var(--color-surface);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 8L10 12L14 8' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 12px 12px;
+  }
+}
+
+/* Right side pagination controls */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.range-label {
+  min-width: 80px;
+  text-align: right;
+}
+
+/* Circle arrow buttons like Figma */
+.pagination-btn {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  width: 26px;
+  height: 26px;
+  line-height: 1;
+  padding: 0;
+  background-color: var(--color-surface);
+  font-size: 15px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.rules-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.rules-table th.sorted {
+  font-weight: 600;
+}
+
+.rules-table th .sort-icon {
+  margin-left: 4px;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}

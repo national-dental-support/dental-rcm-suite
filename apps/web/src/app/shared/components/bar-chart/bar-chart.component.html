@@ -1,0 +1,11 @@
+@if (hasData) {
+  <apx-chart
+    [series]="series"
+    [chart]="chart"
+    [xaxis]="xaxis"
+    [dataLabels]="dataLabels"
+  ></apx-chart>
+} @else {
+  <div class="rp-no-data">No data available at this time</div>
+}
+

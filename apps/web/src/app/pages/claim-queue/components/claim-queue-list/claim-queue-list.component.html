@@ -1,0 +1,303 @@
+<header class="page-header">
+  <h2>Claim Queue</h2>
+
+  <div class="toolbar-card" role="group" aria-label="Claim queue tools">
+    <nav class="tabs" role="tablist" aria-label="Queues">
+      <button
+        class="tab"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'my'"
+        [class.active]="activeTab === 'my'"
+        (click)="setTab('my')"
+        type="button"
+        >
+        MY QUEUE
+      </button>
+
+      <button
+        class="tab"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'all'"
+        [class.active]="activeTab === 'all'"
+        (click)="setTab('all')"
+        type="button"
+        >
+        ALL CLAIMS
+      </button>
+
+      <button
+        class="tab"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'escalated'"
+        [class.active]="activeTab === 'escalated'"
+        (click)="setTab('escalated')"
+        type="button"
+        >
+        ESCALATED
+      </button>
+
+      <button
+        class="tab"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'pending'"
+        [class.active]="activeTab === 'pending'"
+        (click)="setTab('pending')"
+        type="button"
+        >
+        PENDING
+      </button>
+
+      <button
+        class="tab"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'unassigned'"
+        [class.active]="activeTab === 'unassigned'"
+        (click)="setTab('unassigned')"
+        type="button"
+        >
+        UNASSIGNED
+      </button>
+
+      <button
+        class="tab"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'awaiting-adjudication'"
+        [class.active]="activeTab === 'awaiting-adjudication'"
+        (click)="setTab('awaiting-adjudication')"
+        type="button"
+        >
+        AWAITING ADJ.
+      </button>
+
+      <button
+        class="tab"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'not-submitted'"
+        [class.active]="activeTab === 'not-submitted'"
+        (click)="setTab('not-submitted')"
+        type="button"
+        >
+        NOT SUBMITTED
+      </button>
+
+      <div class="tools">
+        <label class="soft-search" aria-label="Search claims">
+          <mat-icon class="search-icon" aria-hidden="true">search</mat-icon>
+          <input
+            class="search-input"
+            type="text"
+            [value]="filterValue"
+            (input)="applyFilter($any($event.target).value)"
+            placeholder="patient, claim/acct #, payer, provider, denial code, assignee, status, location"
+            />
+          </label>
+
+          <button type="button" class="filter-btn" [class.open]="showFilters" (click)="toggleFilters()">
+            <mat-icon>tune</mat-icon>
+            <span>FILTER</span>
+            <mat-icon class="caret" aria-hidden="true">arrow_drop_down</mat-icon>
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    @if (showFilters) {
+      <div class="filters-card">
+        <app-claim-queue-filter
+          [initialFilters]="currentFilters"
+          [options]="filterOptions"
+          (filtersChange)="onFiltersChange($event)"
+          (reset)="onFilterReset()"
+        ></app-claim-queue-filter>
+      </div>
+    }
+  </header>
+
+  <!-- Timely filing SLA alert banner -->
+  @if (criticalSlaCount > 0 && !slaAlertDismissed) {
+    <div class="sla-alert-banner">
+      <mat-icon>warning</mat-icon>
+      <span>
+        <strong>{{ criticalSlaCount }} claim{{ criticalSlaCount === 1 ? '' : 's' }}</strong>
+        {{ criticalSlaCount === 1 ? 'is' : 'are' }} approaching or past the timely filing deadline.
+      </span>
+      <button mat-button (click)="reviewSlaCritical()">Review Now</button>
+      <button mat-icon-button (click)="slaAlertDismissed = true" aria-label="Dismiss">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
+
+  <app-active-filter-pills
+    [filters]="currentFilters"
+    (clearKey)="onClearFilterKey($event)"
+    (clearAll)="clearAllFilters()"
+  ></app-active-filter-pills>
+
+  <!-- Auto-assign button (manager unassigned tab) -->
+  @if (queueType === 'manager' && activeTab === 'unassigned') {
+    <div class="auto-assign-bar">
+      <button type="button" mat-stroked-button color="primary" (click)="autoAssign()" [disabled]="bulkLoading">
+        <mat-icon>auto_fix_high</mat-icon> Auto-Assign All
+      </button>
+    </div>
+  }
+
+  <!-- Permanent table action toolbar -->
+  <div class="table-action-bar">
+    <div class="table-action-bar__left">
+      @if (selectedClaimIds.size > 0) {
+        <span class="selection-badge">
+          {{ selectedClaimIds.size }} selected
+          <button type="button" mat-icon-button class="clear-selection-btn" (click)="clearSelection()" aria-label="Clear selection">
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
+      }
+    </div>
+    <div class="table-action-bar__actions">
+      <button type="button" mat-stroked-button (click)="bulkAssign()" [disabled]="bulkLoading || selectedClaimIds.size === 0">
+        <mat-icon>person_add</mat-icon> Take
+      </button>
+      <button type="button" mat-stroked-button (click)="bulkAssignTo()" [disabled]="bulkLoading || selectedClaimIds.size === 0">
+        <mat-icon>manage_accounts</mat-icon> Assign To...
+      </button>
+      <button type="button" mat-stroked-button (click)="bulkEscalate()" [disabled]="bulkLoading || selectedClaimIds.size === 0">
+        <mat-icon>arrow_upward</mat-icon> Escalate
+      </button>
+      <button type="button" mat-stroked-button (click)="bulkUnassign()" [disabled]="bulkLoading || selectedClaimIds.size === 0">
+        <mat-icon>person_remove</mat-icon> Unassign
+      </button>
+      <button type="button" mat-stroked-button color="warn" (click)="bulkClose()" [disabled]="bulkLoading || selectedClaimIds.size === 0">
+        <mat-icon>check_circle</mat-icon> Close
+      </button>
+      <button type="button" mat-stroked-button (click)="exportCsv()" [disabled]="bulkLoading">
+        <mat-icon>download</mat-icon> Export
+      </button>
+    </div>
+    @if (bulkLoading) {
+      <mat-progress-bar mode="indeterminate" class="table-action-bar__progress"></mat-progress-bar>
+    }
+  </div>
+
+  @if (!((loading$ | async) && totalCount === 0)) {
+    <section class="table-card">
+      <rp-advanced-table
+        [columns]="columns"
+        [data]="(rowsVm$ | async) ?? []"
+        [loading]="(loading$ | async) ?? false"
+        [pageSize]="currentPageSize"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [serverSideTotalCount]="currentFilters.slaStatus ? ((rowsVm$ | async) ?? []).length : totalCount"
+        [enableGlobalSearch]="false"
+        [enableExport]="false"
+        [enableMultiSelect]="true"
+        idField="id"
+        [multiSelectedIds]="selectedClaimIds"
+        (multiSelectionChange)="onMultiSelectionChange($event)"
+        (actionClicked)="onAction($event)"
+        (rowClicked)="view($event)"
+        (pageChanged)="onPageChanged($event)"
+        >
+        <!-- Patient cell: two-line formatting -->
+        <ng-template rpCell="patient" let-row>
+          <div class="patient-cell">
+            <div class="patient-name">{{ row.patient }}</div>
+            @if (queueType === 'manager') {
+              <div class="patient-subtext">
+                Claim {{ row.id }}
+              </div>
+            }
+          </div>
+        </ng-template>
+        <!-- Aging pill -->
+        <ng-template rpCell="aging" let-row>
+          <span
+            class="aging-pill"
+        [ngClass]="{
+          'aging--danger': row.agingDays && row.agingDays >= 30,
+          'aging--warning': row.agingDays && row.agingDays >= 15 && row.agingDays < 30,
+          'aging--ok': row.agingDays && row.agingDays < 15
+        }"
+            >
+            {{ row.agingDays }} Days
+          </span>
+        </ng-template>
+        <!-- Progress bar -->
+        <ng-template rpCell="progress" let-row>
+          <div class="progress-cell">
+            <mat-progress-bar mode="determinate" [value]="effectiveProgress(row)"></mat-progress-bar>
+            <span class="progress-label">{{ effectiveProgress(row) }}%</span>
+          </div>
+        </ng-template>
+        <!-- Claim status badge -->
+        <ng-template rpCell="claimStatusBadge" let-row>
+          <span [class]="claimStatusClass(row.status)">{{ row.status || '&#x2014;' }}</span>
+        </ng-template>
+        <!-- SLA badge: only show OVERDUE/URGENT when actually assigned -->
+        <ng-template rpCell="slaStatusBadge" let-row>
+          @if (row.SlaStatus && (row.assignedTo || (row.SlaStatus !== 'OVERDUE' && row.SlaStatus !== 'URGENT'))) {
+            <span [class]="slaBadgeClass(row.SlaStatus)">{{ row.SlaStatus }}</span>
+          } @else {
+            <span>&#x2014;</span>
+          }
+        </ng-template>
+      </rp-advanced-table>
+    </section>
+  } @else {
+    <section class="table-card">
+      <rp-table-skeleton [rows]="10" [columns]="columns.length || 8"></rp-table-skeleton>
+    </section>
+  }
+
+  <ng-template #tableSkeleton>
+    <section class="table-card">
+      <rp-table-skeleton [rows]="10" [columns]="columns.length || 8"></rp-table-skeleton>
+    </section>
+  </ng-template>
+
+  <!-- Close reason dialog template -->
+  <ng-template #closeReasonTmpl>
+    <div class="dialog-form-body">
+      <mat-form-field appearance="outline" class="dialog-form-field">
+        <mat-label>Reason for closing</mat-label>
+        <mat-select [(ngModel)]="closeReason" disableOptionCentering>
+          <mat-option value="Paid in Full">Paid in Full</mat-option>
+          <mat-option value="Adjusted / Written Off">Adjusted / Written Off</mat-option>
+          <mat-option value="Patient Responsible">Patient Responsible</mat-option>
+          <mat-option value="Duplicate Claim">Duplicate Claim</mat-option>
+          <mat-option value="Unable to Collect">Unable to Collect</mat-option>
+          <mat-option value="Other">Other</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </ng-template>
+
+  <!-- Assign-To dialog template -->
+  <ng-template #assignToTmpl>
+    <div class="dialog-form-body">
+      <mat-form-field appearance="outline" class="dialog-form-field">
+        <mat-label>Assign to</mat-label>
+        <mat-select [(ngModel)]="assignTargetUserId" disableOptionCentering panelClass="assign-select-panel">
+          @if (specialistUsers.length) {
+            <mat-optgroup label="AR Specialists">
+              @for (u of specialistUsers; track u) {
+                <mat-option [value]="u.id">
+                  {{ u.name }}
+                </mat-option>
+              }
+            </mat-optgroup>
+          }
+          @if (managerUsers.length) {
+            <mat-optgroup label="Managers">
+              @for (u of managerUsers; track u) {
+                <mat-option [value]="u.id">
+                  {{ u.name }}
+                </mat-option>
+              }
+            </mat-optgroup>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </ng-template>

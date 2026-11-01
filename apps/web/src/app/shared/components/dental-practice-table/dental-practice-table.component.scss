@@ -1,0 +1,47 @@
+.table-wrapper {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  thead th {
+    text-align: left;
+    padding: 12px 16px;
+    color: #475467;
+    font-weight: 600;
+    font-size: var(--font-size-xs);
+    background: var(--color-surface);
+    border-bottom: 1px solid #EAECF0;
+  }
+
+  tbody td {
+    padding: 12px 16px;
+    color: var(--color-gray-700);
+    font-size: var(--font-size-md);
+    border-bottom: 1px solid #F2F4F7;
+  }
+
+  .num { text-align: right; }
+
+  .practice-row { cursor: pointer; }
+
+  .practice-name.bold,
+  .practice-row .num.bold { font-weight: 600; }
+
+  .location-row { background: var(--color-bg-subtle); }
+
+  .indent {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 32px;
+    color: var(--color-text-muted);
+  }
+
+  .chevron { color: var(--color-text-subtle); }
+}

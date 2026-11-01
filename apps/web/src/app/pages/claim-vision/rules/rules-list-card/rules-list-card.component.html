@@ -1,0 +1,348 @@
+<!-- src/app/pages/claim-vision/rules/rules-list-card/rules-list-card.component.html -->
+<section class="rules-card">
+  <header class="rules-card__header">
+    <h1 class="rules-card__title">{{ title }}</h1>
+
+    <div class="rules-card__actions">
+      <!-- Figma-style search input (no mat-form-field) -->
+      <div class="rules-card__search">
+        <mat-icon class="rules-card__search-icon">search</mat-icon>
+        <input
+          class="rules-card__search-input"
+          type="text"
+          placeholder="Search"
+          [value]="searchTerm"
+          aria-label="Search rules"
+          #searchInput
+          (input)="onSearch(searchInput.value)"
+          />
+        </div>
+
+        <!-- Figma-style FILTER pill -->
+        <button
+          class="rules-card__filter-btn"
+          type="button"
+          (click)="openFilter()"
+          >
+          <span class="rules-card__filter-icon material-icons">tune</span>
+          <span>Filter</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="rules-card__table-wrapper">
+      <table class="rules-table">
+        <thead>
+          <tr>
+            @if (allowReorder) {
+              <th class="rules-table__priority-col" title="Execution order">
+                #
+                @if (!canReorder) {
+                  <span class="sort-icon" title="Clear search/filters to reorder">&#x26A0;</span>
+                }
+              </th>
+            }
+            <th
+              (click)="setSort('name')"
+              [class.sortable]="true"
+              [class.sorted]="sortColumn === 'name'"
+              [class.sorted--asc]="sortColumn === 'name' && sortDirection === 'asc'"
+              [class.sorted--desc]="sortColumn === 'name' && sortDirection === 'desc'"
+      [attr.aria-sort]="
+        sortColumn === 'name'
+          ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+          : 'none'
+      "
+              >
+              Rule name
+              @if (sortColumn === 'name') {
+                <span class="sort-icon">
+                  {{ sortDirection === 'asc' ? '&#x25B2;' : '&#x25BC;' }}
+                </span>
+              }
+            </th>
+
+            <th
+              (click)="setSort('category')"
+              [class.sortable]="true"
+              [class.sorted]="sortColumn === 'category'"
+              [class.sorted--asc]="sortColumn === 'category' && sortDirection === 'asc'"
+              [class.sorted--desc]="sortColumn === 'category' && sortDirection === 'desc'"
+      [attr.aria-sort]="
+        sortColumn === 'category'
+          ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+          : 'none'
+      "
+              >
+              Category
+              @if (sortColumn === 'category') {
+                <span class="sort-icon">
+                  {{ sortDirection === 'asc' ? '&#x25B2;' : '&#x25BC;' }}
+                </span>
+              }
+            </th>
+
+            <th
+              (click)="setSort('description')"
+              [class.sortable]="true"
+              [class.sorted]="sortColumn === 'description'"
+              [class.sorted--asc]="sortColumn === 'description' && sortDirection === 'asc'"
+              [class.sorted--desc]="sortColumn === 'description' && sortDirection === 'desc'"
+      [attr.aria-sort]="
+        sortColumn === 'description'
+          ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+          : 'none'
+      "
+              >
+              Description
+              @if (sortColumn === 'description') {
+                <span class="sort-icon">
+                  {{ sortDirection === 'asc' ? '&#x25B2;' : '&#x25BC;' }}
+                </span>
+              }
+            </th>
+
+            <th
+              (click)="setSort('expiresOn')"
+              [class.sortable]="true"
+              [class.sorted]="sortColumn === 'expiresOn'"
+              [class.sorted--asc]="sortColumn === 'expiresOn' && sortDirection === 'asc'"
+              [class.sorted--desc]="sortColumn === 'expiresOn' && sortDirection === 'desc'"
+      [attr.aria-sort]="
+        sortColumn === 'expiresOn'
+          ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+          : 'none'
+      "
+              >
+              Expires
+              @if (sortColumn === 'expiresOn') {
+                <span class="sort-icon">
+                  {{ sortDirection === 'asc' ? '&#x25B2;' : '&#x25BC;' }}
+                </span>
+              }
+            </th>
+
+            <th
+              (click)="setSort('createdLabel')"
+              [class.sortable]="true"
+              [class.sorted]="sortColumn === 'createdLabel'"
+              [class.sorted--asc]="sortColumn === 'createdLabel' && sortDirection === 'asc'"
+              [class.sorted--desc]="sortColumn === 'createdLabel' && sortDirection === 'desc'"
+      [attr.aria-sort]="
+        sortColumn === 'createdLabel'
+          ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+          : 'none'
+      "
+              >
+              Created
+              @if (sortColumn === 'createdLabel') {
+                <span class="sort-icon">
+                  {{ sortDirection === 'asc' ? '&#x25B2;' : '&#x25BC;' }}
+                </span>
+              }
+            </th>
+
+            <th
+              (click)="setSort('modifiedLabel')"
+              [class.sortable]="true"
+              [class.sorted]="sortColumn === 'modifiedLabel'"
+              [class.sorted--asc]="sortColumn === 'modifiedLabel' && sortDirection === 'asc'"
+              [class.sorted--desc]="sortColumn === 'modifiedLabel' && sortDirection === 'desc'"
+      [attr.aria-sort]="
+        sortColumn === 'modifiedLabel'
+          ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+          : 'none'
+      "
+              >
+              Modified
+              @if (sortColumn === 'modifiedLabel') {
+                <span class="sort-icon">
+                  {{ sortDirection === 'asc' ? '&#x25B2;' : '&#x25BC;' }}
+                </span>
+              }
+            </th>
+
+            <th
+              (click)="setSort('status')"
+              [class.sortable]="true"
+              [class.sorted]="sortColumn === 'status'"
+              [class.sorted--asc]="sortColumn === 'status' && sortDirection === 'asc'"
+              [class.sorted--desc]="sortColumn === 'status' && sortDirection === 'desc'"
+      [attr.aria-sort]="
+        sortColumn === 'status'
+          ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+          : 'none'
+      "
+              >
+              Activation status
+              @if (sortColumn === 'status') {
+                <span class="sort-icon">
+                  {{ sortDirection === 'asc' ? '&#x25B2;' : '&#x25BC;' }}
+                </span>
+              }
+            </th>
+
+            <th
+              (click)="setSort('claimsImpacted')"
+              [class.sortable]="true"
+              [class.sorted]="sortColumn === 'claimsImpacted'"
+              [class.sorted--asc]="sortColumn === 'claimsImpacted' && sortDirection === 'asc'"
+              [class.sorted--desc]="sortColumn === 'claimsImpacted' && sortDirection === 'desc'"
+      [attr.aria-sort]="
+        sortColumn === 'claimsImpacted'
+          ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+          : 'none'
+      "
+              >
+              Claims impacted
+              @if (sortColumn === 'claimsImpacted') {
+                <span class="sort-icon">
+                  {{ sortDirection === 'asc' ? '&#x25B2;' : '&#x25BC;' }}
+                </span>
+              }
+            </th>
+
+            <th class="rules-table__actions-col"></th>
+          </tr>
+        </thead>
+
+
+        <tbody>
+          @for (rule of pagedRules; track rule) {
+            <tr>
+              @if (allowReorder) {
+                <td class="rules-table__priority-col">{{ getRulePosition(rule) }}</td>
+              }
+              <td class="rules-table__rule-name">{{ rule.name }}</td>
+              <td>{{ rule.category }}</td>
+              <td class="rules-table__description">
+                {{ rule.description }}
+              </td>
+              <td>{{ rule.expiresOn || '&#x2014;' }}</td>
+              <td class="rules-table__multi-line">
+                @for (line of rule.createdLabel.split('\n'); track line) {
+                  <span>
+                    {{ line }}
+                  </span>
+                }
+              </td>
+              <td class="rules-table__multi-line">
+                @for (line of rule.modifiedLabel.split('\n'); track line) {
+                  <span>
+                    {{ line }}
+                  </span>
+                }
+              </td>
+              <td>
+                <span
+                  class="status-pill"
+                [ngClass]="{
+                'status-pill--active': rule.status === 'Active',
+                'status-pill--disabled': rule.status === 'Inactive'
+                }"
+                  >
+                  <!-- show "Disabled" in the UI, but keep the typed status as 'Inactive' -->
+                  {{ rule.status === 'Inactive' ? 'Disabled' : rule.status }}
+                </span>
+              </td>
+              <td>{{ rule.claimsImpacted | number }}</td>
+              <td class="rules-table__actions-col">
+                <div class="actions-cell">
+                  @if (allowReorder) {
+                    <button
+                      type="button"
+                      class="action-icon-btn"
+                      [disabled]="!canReorder || isFirst(rule)"
+                      [title]="canReorder ? 'Move up' : 'Clear search/filters to reorder'"
+                      (click)="moveUp(rule)"
+                      >
+                      <mat-icon>arrow_upward</mat-icon>
+                    </button>
+                    <button
+                      type="button"
+                      class="action-icon-btn"
+                      [disabled]="!canReorder || isLast(rule)"
+                      [title]="canReorder ? 'Move down' : 'Clear search/filters to reorder'"
+                      (click)="moveDown(rule)"
+                      >
+                      <mat-icon>arrow_downward</mat-icon>
+                    </button>
+                  }
+                  @if (allowDelete) {
+                    @if (confirmDeleteId !== rule.id) {
+                      <button
+                        type="button"
+                        class="action-icon-btn action-icon-btn--danger"
+                        title="Delete rule"
+                        (click)="onDeleteClick(rule)"
+                        >
+                        <mat-icon>delete_outline</mat-icon>
+                      </button>
+                    } @else {
+                      <span class="confirm-inline">
+                        <span class="confirm-inline__label">Delete?</span>
+                        <button type="button" class="confirm-inline__yes" (click)="onDeleteConfirm(rule)">Yes</button>
+                        <button type="button" class="confirm-inline__no" (click)="onDeleteCancel()">No</button>
+                      </span>
+                    }
+                  }
+                  <button
+                    type="button"
+                    class="details-btn"
+                    (click)="onViewDetails(rule)"
+                    >
+                    Details
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+
+          @if (pagedRules.length === 0) {
+            <tr>
+              <td [attr.colspan]="allowReorder ? 10 : 9" class="rules-table__empty">
+                No rules match your current search.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalCount > 0) {
+      <footer class="rules-card__footer">
+        <div class="rows-per-page">
+          <span>Rows per page</span>
+          <select
+            [ngModel]="pageSize"
+            (ngModelChange)="changePageSize($event)"
+            >
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size">
+                {{ size }}
+              </option>
+            }
+          </select>
+        </div>
+        <div class="pagination-controls">
+          <span class="range-label">{{ rangeLabel }}</span>
+          <button
+            class="pagination-btn"
+            type="button"
+            [disabled]="pageIndex === 0"
+            (click)="prevPage()"
+            >
+            &#x2039;
+          </button>
+          <button
+            class="pagination-btn"
+            type="button"
+            [disabled]="(pageIndex + 1) * pageSize >= totalCount"
+            (click)="nextPage()"
+            >
+            &#x203A;
+          </button>
+        </div>
+      </footer>
+    }
+  </section>

@@ -1,0 +1,10 @@
+:host { display:block; }
+nav[mat-tab-nav-bar] {
+  background-color: var(--rcm-bg, var(--color-bg-subtle));
+}
+
+.detail-tab {
+  pointer-events: none; // it's an indicator, not a nav action
+  font-weight: 600;
+  opacity: 0.9;
+}

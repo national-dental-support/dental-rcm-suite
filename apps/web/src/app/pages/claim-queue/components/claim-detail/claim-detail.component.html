@@ -1,0 +1,1489 @@
+@if (loading && !claim) {
+  <div class="detail-loading">
+    <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+  </div>
+}
+
+@if (error && !claim) {
+  <div class="detail-error">
+    <mat-icon>error_outline</mat-icon>
+    <p>Unable to load claim details. Please go back and try again.</p>
+    <button mat-stroked-button (click)="saveClose()">Go Back</button>
+  </div>
+}
+
+@if (claim; as c) {
+  <section class="page">
+    <!-- Top header -->
+    <header class="detail-header">
+      <div class="header-left">
+        <p class="claim-id">
+          Claim # {{ c.id }}
+          @if (riskScore) {
+            <span class="risk-badge"
+              [class.risk-high]="riskScore.riskTier === 'High'"
+              [class.risk-medium]="riskScore.riskTier === 'Medium'"
+              [class.risk-low]="riskScore.riskTier === 'Low'"
+              [matTooltip]="'Risk Score: ' + riskScore.riskScore + '/100 &#x2014; ' + riskScore.riskFactors.join(', ')">
+              {{ riskScore.riskTier }} Risk ({{ riskScore.riskScore }})
+            </span>
+          }
+        </p>
+        <h1>{{ c.patient }}</h1>
+        <p class="meta">
+          @if (c.dob) {
+            <span>DOB: {{ c.dob | date: 'MMM d, y' }}</span>
+          }
+        </p>
+      </div>
+      <div class="header-right">
+        @if (c.assignedUserName) {
+          <div class="user-pill">
+            <div class="avatar">{{ c.assignedUserName.charAt(0).toUpperCase() }}</div>
+            <span class="user-name">{{ c.assignedUserName }}</span>
+          </div>
+        } @else {
+          <div class="user-pill user-pill--unassigned">
+            <mat-icon class="avatar-icon">person_outline</mat-icon>
+            <span class="user-name">Unassigned</span>
+          </div>
+          <button
+            mat-stroked-button
+            color="primary"
+            class="ghost"
+            (click)="assignToMe()"
+            [disabled]="loading"
+            >
+            <mat-icon>person_add</mat-icon>
+            Assign to Me
+          </button>
+        }
+        @if (c.assignedUserName && isAssignedToMe) {
+          <button
+            mat-stroked-button
+            class="ghost"
+            (click)="unassignClaim()"
+            [disabled]="loading"
+            matTooltip="Release this claim back to the unassigned queue"
+            >
+            <mat-icon>person_remove</mat-icon>
+            Unassign
+          </button>
+        }
+        <button
+          mat-stroked-button
+          color="primary"
+          class="ghost"
+          (click)="openDocumentsDialog()"
+          >
+          <mat-icon>folder_open</mat-icon>
+          Documents
+        </button>
+        @if (nextClaimId) {
+          <button
+            type="button"
+            mat-stroked-button
+            color="primary"
+            class="ghost"
+            (click)="goToNextClaim()"
+            matTooltip="Next claim in queue"
+            >
+            <mat-icon>navigate_next</mat-icon>
+            Next
+          </button>
+        }
+        <!-- Escalate: available to all roles -->
+        <button
+          mat-stroked-button
+          color="warn"
+          class="ghost"
+          (click)="escalate()"
+          >
+          <mat-icon>priority_high</mat-icon>
+          Escalate
+        </button>
+        <!-- Request Transactional Adjustment -->
+        <button
+          mat-stroked-button
+          class="ghost"
+          (click)="requestTransactionalAdjustment()"
+          matTooltip="Submit an adjustment for manager approval"
+          >
+          <mat-icon>request_quote</mat-icon>
+          Request Adjustment
+        </button>
+      </div>
+    </header>
+    @if (loading) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+    <!-- 4 summary cards -->
+    <section class="summary-grid">
+      <!-- Subscriber card -->
+      <article class="summary-card">
+        <div class="field-row">
+          <h3 class="label">Subscriber name</h3>
+          <p class="value" matTooltip="Guarantor" matTooltipPosition="above">{{ c.subscriberName || '--' }}</p>
+        </div>
+        <div class="field-row">
+          <span class="label">Subscriber ID</span>
+          <span class="value">{{ c.subscriberId || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Practice/Location</span>
+          <span class="value">{{ c.practiceLocation || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Provider</span>
+          <span class="value">{{ c.providerName || c.provider || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">NPI</span>
+          <span class="value">{{ c.npi || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Tax ID</span>
+          <span class="value">{{ c.taxId || '--' }}</span>
+        </div>
+      </article>
+      <!-- DOS / payment card -->
+      <article class="summary-card">
+        <div class="field-row">
+          <span class="label">Date of Service</span>
+          <span class="value">
+            {{ c.dateOfService
+            ? (c.dateOfService | date: 'MMM d, y' : 'UTC')
+            : (c.dos ? (c.dos | date: 'MMM d, y' : 'UTC') : '--')
+            }}
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="label">Received</span>
+          <span class="value">
+            {{ c.receivedDate ? (c.receivedDate | date: 'MMM d, y' : 'UTC') : '--' }}
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="label">Aging</span>
+          <span class="value">
+            {{ c.agingDays != null ? c.agingDays + ' Days' : '--' }}
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="label">Payment Date</span>
+          <span class="value">
+            {{ c.paymentDate ? (c.paymentDate | date: 'MMM d, y' : 'UTC') : '--' }}
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="label">Deposit Amount</span>
+          <span class="value">
+            {{ c.depositAmount != null ? (c.depositAmount | currency) : '--' }}
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="label">Deposit Cleared</span>
+          <span class="value">
+            {{ c.depositCleared ? (c.depositCleared | date:'MMM d, y':'UTC') : '--' }}
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="label">Deposit Check #</span>
+          <span class="value">
+            {{ c.depositCheckNumber || '--' }}
+          </span>
+        </div>
+      </article>
+      <!-- Payer card -->
+      <article class="summary-card">
+        <div class="field-row">
+          <span class="label">Payer</span>
+          <span class="value">{{ c.payer || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Remittance Method</span>
+          <span class="value">{{ c.remitMethod || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Payment Method</span>
+          <span class="value">{{ c.paymentMethod || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Network</span>
+          <span class="value">{{ c.network || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Place of Service</span>
+          <span class="value">{{ c.placeOfService || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Reason Code</span>
+          <span class="value">
+            @if (c.reasonCode) {
+              <span class="reason-pill"
+                [matTooltip]="carcDescMap[c.reasonCode] || c.reasonCode">
+                {{ c.reasonCode }}
+                @if (carcLoadingCodes.has(c.reasonCode)) {
+                  <mat-spinner diameter="12"></mat-spinner>
+                } @else {
+                  <mat-icon>info</mat-icon>
+                }
+              </span>
+            }
+            @if (!c.reasonCode) {
+              <span>--</span>
+            }
+          </span>
+        </div>
+      </article>
+      <!-- Insurance card -->
+      <article class="summary-card">
+        <div class="field-row">
+          <span class="label">Insurance Bal. Due</span>
+          <span class="value">
+            {{
+            c.insuranceBalanceDue != null
+            ? (c.insuranceBalanceDue | currency)
+            : '--'
+            }}
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="label">Patient Bal. Due</span>
+          <span class="value">
+            {{
+            c.patientBalanceDue != null
+            ? (c.patientBalanceDue | currency)
+            : '--'
+            }}
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="label">Primary Ins.</span>
+          <span class="value">{{ c.primaryIns || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Secondary Ins.</span>
+          <span class="value">{{ c.secondaryIns || '--' }}</span>
+        </div>
+        <div class="field-row">
+          <span class="label">Tertiary Ins.</span>
+          <span class="value">{{ c.tertiaryIns || '--' }}</span>
+        </div>
+      </article>
+    </section>
+    <!-- Line items table -->
+    <section class="panel panel-table">
+      <table
+        mat-table
+        [dataSource]="c.lineItems"
+        matSort
+        class="line-items"
+        >
+        <!-- DOS -->
+        <ng-container matColumnDef="dos">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>DOS</th>
+          <td mat-cell *matCellDef="let li">
+            {{ li.dos ? (li.dos | date: 'MMM d, y' : 'UTC') : '--' }}
+          </td>
+        </ng-container>
+        <!-- Proc. Code -->
+        <ng-container matColumnDef="cpt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Proc. Code</th>
+          <td mat-cell *matCellDef="let li">
+            <span [matTooltip]="li.cptDescription || ''" [matTooltipDisabled]="!li.cptDescription">
+              {{ li.cpt }}
+            </span>
+          </td>
+        </ng-container>
+        <!-- Charge -->
+        <ng-container matColumnDef="charge">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Charge</th>
+          <td mat-cell *matCellDef="let li">{{ li.charge | currency }}</td>
+        </ng-container>
+        <!-- Ins. Paid -->
+        <ng-container matColumnDef="insurancePaid">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Ins. Paid</th>
+          <td mat-cell *matCellDef="let li">
+            {{ li.insurancePaid != null ? (li.insurancePaid | currency) : '--' }}
+          </td>
+        </ng-container>
+        <!-- Allowed -->
+        <ng-container matColumnDef="allowed">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Allowed</th>
+          <td mat-cell *matCellDef="let li">{{ li.allowed | currency }}</td>
+        </ng-container>
+        <!-- Contractual Adjustment -->
+        <ng-container matColumnDef="contractualAdj">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Contractual Adjustment
+          </th>
+          <td mat-cell *matCellDef="let li">
+            {{ li.contractualAdj != null ? (li.contractualAdj | currency) : '--' }}
+          </td>
+        </ng-container>
+        <!-- Transaction Adj. -->
+        <ng-container matColumnDef="transactionAdj">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Transaction Adj.
+          </th>
+          <td mat-cell *matCellDef="let li">
+            {{ li.transactionAdj != null ? (li.transactionAdj | currency) : '--' }}
+          </td>
+        </ng-container>
+        <!-- Patient Resp. -->
+        <ng-container matColumnDef="patientResp">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Patient Resp.
+          </th>
+          <td mat-cell *matCellDef="let li">
+            {{ li.patientResp != null ? (li.patientResp | currency) : '--' }}
+          </td>
+        </ng-container>
+        <!-- Deductible -->
+        <ng-container matColumnDef="deductible">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Deductible</th>
+          <td mat-cell *matCellDef="let li">
+            {{ li.deductible != null ? (li.deductible | currency) : '--' }}
+          </td>
+        </ng-container>
+        <!-- Co-pay -->
+        <ng-container matColumnDef="copay">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Co-pay</th>
+          <td mat-cell *matCellDef="let li">
+            {{ li.copay != null ? (li.copay | currency) : '--' }}
+          </td>
+        </ng-container>
+        <!-- Co-ins -->
+        <ng-container matColumnDef="coins">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Co-ins</th>
+          <td mat-cell *matCellDef="let li">
+            {{ li.coins != null ? (li.coins | currency) : '--' }}
+          </td>
+        </ng-container>
+        <!-- Reason Code -->
+        <ng-container matColumnDef="reasonCode">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Reason Code</th>
+          <td mat-cell *matCellDef="let li">
+            @if (li.reasonCode) {
+              <span
+                class="reason-pill reason-pill--sm"
+                [matTooltip]="carcDescMap[li.reasonCode] || li.reasonCode">
+                {{ li.reasonCode }}
+                @if (carcLoadingCodes.has(li.reasonCode)) {
+                  <mat-spinner diameter="12"></mat-spinner>
+                } @else {
+                  <mat-icon>info</mat-icon>
+                }
+              </span>
+            }
+            @if (!li.reasonCode) {
+              <span>--</span>
+            }
+          </td>
+        </ng-container>
+        <!-- Header & row defs -->
+        <tr mat-header-row *matHeaderRowDef="lineItemColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: lineItemColumns"></tr>
+      </table>
+    </section>
+    <!-- Workspace Panel: tabbed SOP / Notes / Activity / Comments / Appeals -->
+    <section class="panel workspace-panel">
+      <!-- Remediation updated banner (above tabs) -->
+      @if (sopBannerVisible) {
+        <div class="sop-banner">
+          <mat-icon>new_releases</mat-icon>
+          <span>The remediation steps for this reason code have been updated. Please review the new steps.</span>
+          <button mat-stroked-button (click)="sopBannerVisible = false">Acknowledge</button>
+        </div>
+      }
+      <!-- Workspace tab bar -->
+      <mat-tab-group
+        [selectedIndex]="activeWorkspaceTab"
+        (selectedIndexChange)="onWorkspaceTabChange($event)"
+        animationDuration="150ms"
+        class="workspace-tabs"
+        >
+        <!-- -- Tab 1: Remediation Steps ------------------------------------------------ -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">checklist</mat-icon>
+            Remediation Steps
+            @if (claimRemediation?.steps?.length) {
+              <span class="tab-badge">
+                {{ claimRemediation!.steps.length }}
+              </span>
+            }
+          </ng-template>
+          <div class="tab-body">
+            <!-- Remediation meta row -->
+            <div class="remediation-meta">
+              <span class="meta-label">Reason Code:</span>
+              @if (c.reasonCode) {
+                <span class="reason-pill"
+                  [matTooltip]="carcDescMap[c.reasonCode] || c.reasonCode">
+                  {{ c.reasonCode }}
+                  @if (carcLoadingCodes.has(c.reasonCode)) {
+                    <mat-spinner diameter="12"></mat-spinner>
+                  } @else {
+                    <mat-icon>info</mat-icon>
+                  }
+                </span>
+              }
+              @if (claimRemediation?.version) {
+                <span class="meta-divider"></span>
+              }
+              @if (claimRemediation?.version) {
+                <span class="meta-label">Remediation v{{ claimRemediation!.version }}</span>
+              }
+              <span class="meta-spacer"></span>
+              @if (isSuperAdmin) {
+                <button type="button" mat-stroked-button class="edit-sop-btn"
+                  (click)="editRemediationSteps()"
+                  matTooltip="Edit remediation steps for this reason code">
+                  <mat-icon>edit</mat-icon>
+                  Edit Steps
+                </button>
+              }
+            </div>
+            <!-- No SOP available -->
+            @if (!claimRemediation) {
+              <div class="no-sop-message">
+                <mat-icon>info_outline</mat-icon>
+                <span>No remediation steps configured for this reason code. Contact your admin.</span>
+              </div>
+            }
+            <!-- Step cards -->
+            @if (claimRemediation) {
+              @for (step of claimRemediation.steps; track trackByStepId($index, step)) {
+                <article
+                  class="next-step-card"
+                  [class.step-complete]="step.completed"
+                  [class.step-incomplete]="showIncompleteHighlight && step.required && !step.completed"
+                  >
+                  <div class="next-step-header">
+                    <span class="next-step-title">
+                      @if (step.required) {
+                        <span class="required-badge" title="Required step">*</span>
+                      }
+                      {{ step.title }}
+                    </span>
+                    <div class="step-meta-actions">
+                      <button mat-icon-button class="step-action-btn" title="Add note to this step"
+                        (click)="openNoteForm(step.id, step.title)">
+                        <mat-icon>note_add</mat-icon>
+                      </button>
+                      <button mat-icon-button class="step-action-btn" title="Suggest improvement"
+                        (click)="openFeedbackForm(step.id, step.title)">
+                        <mat-icon>feedback</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                  @if (step.body) {
+                    <p class="next-step-body">{{ step.body }}</p>
+                  }
+                  @if (step.checklist?.length) {
+                    <ul class="next-step-list">
+                      @for (item of step.checklist; track item) {
+                        <li>{{ item.item_text }}</li>
+                      }
+                    </ul>
+                  }
+                  <!-- Per-step notes -->
+                  @if (notesForStep(step.id).length) {
+                    <div class="step-notes">
+                      @for (n of notesForStep(step.id); track trackByNoteId($index, n)) {
+                        <div class="note-item">
+                          <div class="note-header">
+                            <span class="note-author">{{ n.author_name || n.author_user_id }}</span>
+                            <span class="note-date">{{ n.created_at | date:'MMM d, y HH:mm' }}</span>
+                            <span class="note-type-chip">{{ n.note_type }}</span>
+                            @if (n.step_id) {
+                              <span class="note-step-chip">Step note</span>
+                            }
+                            <span class="spacer"></span>
+                            @if (isManager) {
+                              <button mat-icon-button class="note-edit-btn"
+                                (click)="openEditNote(n)" matTooltip="Edit note" matTooltipPosition="above">
+                                <mat-icon>edit</mat-icon>
+                              </button>
+                            }
+                            <button mat-icon-button class="note-delete-btn" (click)="deleteNote(n)">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          </div>
+                          @if (n.contact_method || n.contact_person || n.phone_number || n.case_number || n.reference_number || n.action_taken || n.appeal_level) {
+                            <div class="note-structured">
+                              @if (n.contact_method) {
+                                <div class="note-structured__field">
+                                  <span class="note-structured__label">Contact Method</span>
+                                  <span class="note-structured__value">{{ n.contact_method }}</span>
+                                </div>
+                              }
+                              @if (n.contact_person) {
+                                <div class="note-structured__field">
+                                  <span class="note-structured__label">Who</span>
+                                  <span class="note-structured__value">{{ n.contact_person }}</span>
+                                </div>
+                              }
+                              @if (n.phone_number) {
+                                <div class="note-structured__field">
+                                  <span class="note-structured__label">Phone</span>
+                                  <span class="note-structured__value">{{ n.phone_number }}</span>
+                                </div>
+                              }
+                              @if (n.case_number) {
+                                <div class="note-structured__field">
+                                  <span class="note-structured__label">Case #</span>
+                                  <span class="note-structured__value">{{ n.case_number }}</span>
+                                </div>
+                              }
+                              @if (n.reference_number) {
+                                <div class="note-structured__field">
+                                  <span class="note-structured__label">Ref #</span>
+                                  <span class="note-structured__value">{{ n.reference_number }}</span>
+                                </div>
+                              }
+                              @if (n.action_taken) {
+                                <div class="note-structured__field">
+                                  <span class="note-structured__label">Action</span>
+                                  <span class="note-structured__value">{{ n.action_taken }}</span>
+                                </div>
+                              }
+                              @if (n.appeal_level) {
+                                <div class="note-structured__field">
+                                  <span class="note-structured__label">Appeal Level</span>
+                                  <span class="note-structured__value">{{ n.appeal_level }}</span>
+                                </div>
+                              }
+                            </div>
+                          }
+                          <p class="note-text">{{ n.note_text }}</p>
+                          @if (n.updated_at) {
+                            <div class="note-edit-stamp">
+                              Edited by {{ n.updated_by }} &bull; {{ n.updated_at | date:'MMM d, y HH:mm' }}
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                  <mat-checkbox [ngModel]="step.completed" (ngModelChange)="onStepToggle(step, $event)">
+                    Step complete
+                  </mat-checkbox>
+                </article>
+              }
+            }
+            <!-- Inline note form (triggered from SOP step) -->
+            @if (showNoteForm) {
+              <div class="inline-form-card">
+                <p class="inline-form-title">
+                  <mat-icon>{{ editingNoteId ? 'edit_note' : 'note_add' }}</mat-icon>
+                  {{ editingNoteId ? 'Edit Note' : 'Add Note' }}@if (noteStepTitle) {
+                  <span> &mdash; {{ noteStepTitle }}</span>
+                }
+              </p>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Note type</mat-label>
+                <mat-select [(ngModel)]="noteType">
+                  <mat-option value="general">General</mat-option>
+                  <mat-option value="follow-up">Follow-up</mat-option>
+                  <mat-option value="escalation">Escalation</mat-option>
+                  <mat-option value="insurance">Insurance</mat-option>
+                  <mat-option value="internal">Internal</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <!-- Structured follow-up fields - always shown -->
+              <div class="note-form-row">
+                <mat-form-field appearance="outline" class="flex-1">
+                  <mat-label>Contact Method</mat-label>
+                  <mat-select [(ngModel)]="noteContactMethod">
+                    <mat-option value="">-- Select --</mat-option>
+                    <mat-option value="Voice">Voice</mat-option>
+                    <mat-option value="Email">Email</mat-option>
+                    <mat-option value="Payer Website">Payer Website</mat-option>
+                    <mat-option value="Text">Text</mat-option>
+                    <mat-option value="Fax">Fax</mat-option>
+                    <mat-option value="Mail">Mail</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="flex-1">
+                  <mat-label>Who was Contacted</mat-label>
+                  <mat-select [(ngModel)]="noteContactPerson">
+                    <mat-option value="">-- Select --</mat-option>
+                    <mat-option value="Person at Insurance">Person at Insurance</mat-option>
+                    <mat-option value="Guarantor">Guarantor</mat-option>
+                    <mat-option value="Patient">Patient</mat-option>
+                    <mat-option value="Responsible Party">Responsible Party</mat-option>
+                    <mat-option value="Provider Office">Provider Office</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="note-form-row">
+                <mat-form-field appearance="outline" class="flex-1">
+                  <mat-label>Phone Number Called</mat-label>
+                  <input matInput [(ngModel)]="notePhoneNumber" placeholder="e.g. (800) 555-1234" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="flex-1">
+                  <mat-label>Case Number</mat-label>
+                  <input matInput [(ngModel)]="noteCaseNumber" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="flex-1">
+                  <mat-label>Reference Number</mat-label>
+                  <input matInput [(ngModel)]="noteReferenceNumber" />
+                </mat-form-field>
+              </div>
+              <div class="note-form-row">
+                <mat-form-field appearance="outline" class="flex-1">
+                  <mat-label>Action Taken</mat-label>
+                  <mat-select [(ngModel)]="noteActionTaken">
+                    <mat-option value="">-- Select --</mat-option>
+                    <mat-option value="Corrected Claim">Corrected Claim</mat-option>
+                    <mat-option value="Attached Notes">Attached Notes</mat-option>
+                    <mat-option value="Appealed">Appealed</mat-option>
+                    <mat-option value="Submitted Additional Documentation">Submitted Additional Documentation</mat-option>
+                    <mat-option value="Requested Reconsideration">Requested Reconsideration</mat-option>
+                    <mat-option value="Escalated to Manager">Escalated to Manager</mat-option>
+                    <mat-option value="No Action Required">No Action Required</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                @if (noteActionTaken === 'Appealed') {
+                  <mat-form-field appearance="outline" class="flex-1">
+                    <mat-label>Appeal Level</mat-label>
+                    <mat-select [(ngModel)]="noteAppealLevel">
+                      <mat-option value="Level 1">Level 1</mat-option>
+                      <mat-option value="Level 2">Level 2</mat-option>
+                      <mat-option value="Level 3">Level 3</mat-option>
+                      <mat-option value="External Review">External Review</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                }
+              </div>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Detailed Interaction</mat-label>
+                <textarea matInput [(ngModel)]="noteText" rows="3"
+                  placeholder="Describe what was said, outcome of the call, next steps...">
+                </textarea>
+              </mat-form-field>
+              <div class="inline-form-footer">
+                <button mat-raised-button color="primary" (click)="submitNote()" [disabled]="!noteText.trim()">
+                  {{ editingNoteId ? 'Update Note' : 'Save Note' }}
+                </button>
+                <button mat-stroked-button (click)="showNoteForm = false; editingNoteId = null">Cancel</button>
+              </div>
+            </div>
+          }
+          <!-- Inline feedback form (triggered from SOP step) -->
+          @if (showFeedbackForm) {
+            <div class="inline-form-card feedback-form-card">
+              <p class="inline-form-title">
+                <mat-icon>feedback</mat-icon>
+                Suggest Improvement@if (feedbackStepTitle) {
+                <span> &mdash; {{ feedbackStepTitle }}</span>
+              }
+            </p>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Your suggestion</mat-label>
+              <textarea matInput [(ngModel)]="feedbackText" rows="3" placeholder="What could be improved?"></textarea>
+            </mat-form-field>
+            <div class="inline-form-footer">
+              <button mat-raised-button color="primary" (click)="submitFeedback()" [disabled]="!feedbackText.trim()">Submit</button>
+              <button mat-stroked-button (click)="showFeedbackForm = false">Cancel</button>
+            </div>
+          </div>
+        }
+      </div>
+    </mat-tab>
+    <!-- -- Tab 2: Notes ----------------------------------------------- -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">edit_note</mat-icon>
+        Notes
+        @if (claimNotes.length) {
+          <span class="tab-badge">{{ claimNotes.length }}</span>
+        }
+      </ng-template>
+      <div class="tab-body">
+        <!-- Add note bar -->
+        @if (!showNoteForm) {
+          <div class="notes-add-bar">
+            <button mat-raised-button color="primary" (click)="openNoteForm(null, '')">
+              <mat-icon>add</mat-icon> Add Note
+            </button>
+          </div>
+        }
+        <!-- Note form -->
+        @if (showNoteForm) {
+          <div class="inline-form-card">
+            <p class="inline-form-title">
+              <mat-icon>{{ editingNoteId ? 'edit_note' : 'note_add' }}</mat-icon>
+              {{ editingNoteId ? 'Edit Note' : 'New Note' }}@if (noteStepTitle) {
+              <span> &mdash; {{ noteStepTitle }}</span>
+            }
+          </p>
+          <!-- Note type -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note type</mat-label>
+            <mat-select [(ngModel)]="noteType">
+              <mat-option value="general">General</mat-option>
+              <mat-option value="follow-up">Follow-up</mat-option>
+              <mat-option value="escalation">Escalation</mat-option>
+              <mat-option value="insurance">Insurance</mat-option>
+              <mat-option value="internal">Internal</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <!-- Structured follow-up fields - always shown -->
+          <div class="note-form-row">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Contact Method</mat-label>
+              <mat-select [(ngModel)]="noteContactMethod">
+                <mat-option value="">-- Select --</mat-option>
+                <mat-option value="Voice">Voice</mat-option>
+                <mat-option value="Email">Email</mat-option>
+                <mat-option value="Payer Website">Payer Website</mat-option>
+                <mat-option value="Text">Text</mat-option>
+                <mat-option value="Fax">Fax</mat-option>
+                <mat-option value="Mail">Mail</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Who was Contacted</mat-label>
+              <mat-select [(ngModel)]="noteContactPerson">
+                <mat-option value="">-- Select --</mat-option>
+                <mat-option value="Person at Insurance">Person at Insurance</mat-option>
+                <mat-option value="Guarantor">Guarantor</mat-option>
+                <mat-option value="Patient">Patient</mat-option>
+                <mat-option value="Responsible Party">Responsible Party</mat-option>
+                <mat-option value="Provider Office">Provider Office</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="note-form-row">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Phone Number Called</mat-label>
+              <input matInput [(ngModel)]="notePhoneNumber" placeholder="e.g. (800) 555-1234" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Case Number</mat-label>
+              <input matInput [(ngModel)]="noteCaseNumber" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Reference Number</mat-label>
+              <input matInput [(ngModel)]="noteReferenceNumber" />
+            </mat-form-field>
+          </div>
+          <div class="note-form-row">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Action Taken</mat-label>
+              <mat-select [(ngModel)]="noteActionTaken">
+                <mat-option value="">-- Select --</mat-option>
+                <mat-option value="Corrected Claim">Corrected Claim</mat-option>
+                <mat-option value="Attached Notes">Attached Notes</mat-option>
+                <mat-option value="Appealed">Appealed</mat-option>
+                <mat-option value="Submitted Additional Documentation">Submitted Additional Documentation</mat-option>
+                <mat-option value="Requested Reconsideration">Requested Reconsideration</mat-option>
+                <mat-option value="Escalated to Manager">Escalated to Manager</mat-option>
+                <mat-option value="No Action Required">No Action Required</mat-option>
+              </mat-select>
+            </mat-form-field>
+            @if (noteActionTaken === 'Appealed') {
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Appeal Level</mat-label>
+                <mat-select [(ngModel)]="noteAppealLevel">
+                  <mat-option value="Level 1">Level 1</mat-option>
+                  <mat-option value="Level 2">Level 2</mat-option>
+                  <mat-option value="Level 3">Level 3</mat-option>
+                  <mat-option value="External Review">External Review</mat-option>
+                </mat-select>
+              </mat-form-field>
+            }
+          </div>
+          <!-- Detailed interaction / note text -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Detailed Interaction</mat-label>
+            <textarea matInput [(ngModel)]="noteText" rows="4"
+              placeholder="Describe what was said, outcome of the call, next steps...">
+            </textarea>
+          </mat-form-field>
+          <div class="inline-form-footer">
+            <button mat-raised-button color="primary" (click)="submitNote()" [disabled]="!noteText.trim()">
+              {{ editingNoteId ? 'Update Note' : 'Save Note' }}
+            </button>
+            <button mat-stroked-button (click)="showNoteForm = false; editingNoteId = null">Cancel</button>
+          </div>
+        </div>
+      }
+      <!-- All notes list (claim-level + step-level, combined) -->
+      @if (claimNotes.length) {
+        <div class="notes-list">
+          @for (n of claimNotes; track trackByNoteId($index, n)) {
+            <div class="note-item">
+              <div class="note-header">
+                <span class="note-author">{{ n.author_name || n.author_user_id }}</span>
+                <span class="note-date">{{ n.created_at | date:'MMM d, y HH:mm' }}</span>
+                <span class="note-type-chip">{{ n.note_type }}</span>
+                @if (n.step_id) {
+                  <span class="note-step-chip">Step note</span>
+                }
+                <span class="spacer"></span>
+                @if (isManager) {
+                  <button mat-icon-button class="note-edit-btn"
+                    (click)="openEditNote(n)" matTooltip="Edit note" matTooltipPosition="above">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                }
+                <button mat-icon-button class="note-delete-btn" (click)="deleteNote(n)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              <!-- Structured follow-up fields display -->
+              @if (n.contact_method || n.contact_person || n.phone_number || n.case_number || n.reference_number || n.action_taken || n.appeal_level) {
+                <div class="note-structured">
+                  @if (n.contact_method) {
+                    <div class="note-structured__field">
+                      <span class="note-structured__label">Contact Method</span>
+                      <span class="note-structured__value">{{ n.contact_method }}</span>
+                    </div>
+                  }
+                  @if (n.contact_person) {
+                    <div class="note-structured__field">
+                      <span class="note-structured__label">Who</span>
+                      <span class="note-structured__value">{{ n.contact_person }}</span>
+                    </div>
+                  }
+                  @if (n.phone_number) {
+                    <div class="note-structured__field">
+                      <span class="note-structured__label">Phone</span>
+                      <span class="note-structured__value">{{ n.phone_number }}</span>
+                    </div>
+                  }
+                  @if (n.case_number) {
+                    <div class="note-structured__field">
+                      <span class="note-structured__label">Case #</span>
+                      <span class="note-structured__value">{{ n.case_number }}</span>
+                    </div>
+                  }
+                  @if (n.reference_number) {
+                    <div class="note-structured__field">
+                      <span class="note-structured__label">Ref #</span>
+                      <span class="note-structured__value">{{ n.reference_number }}</span>
+                    </div>
+                  }
+                  @if (n.action_taken) {
+                    <div class="note-structured__field">
+                      <span class="note-structured__label">Action</span>
+                      <span class="note-structured__value">{{ n.action_taken }}</span>
+                    </div>
+                  }
+                  @if (n.appeal_level) {
+                    <div class="note-structured__field">
+                      <span class="note-structured__label">Appeal Level</span>
+                      <span class="note-structured__value">{{ n.appeal_level }}</span>
+                    </div>
+                  }
+                </div>
+              }
+              <p class="note-text">{{ n.note_text }}</p>
+              @if (n.updated_at) {
+                <div class="note-edit-stamp">
+                  Edited by {{ n.updated_by }} &bull; {{ n.updated_at | date:'MMM d, y HH:mm' }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="no-notes-hint">No notes yet. Add the first note above.</p>
+      }
+    </div>
+  </mat-tab>
+  <!-- -- Tab 3: Activity -------------------------------------------- -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">history</mat-icon>
+      Activity
+      @if (activityTimeline.length) {
+        <span class="tab-badge">{{ activityTimeline.length }}</span>
+      }
+    </ng-template>
+    <div class="tab-body">
+      <!-- Filter + export toolbar -->
+      <div class="activity-toolbar">
+        <mat-button-toggle-group [(ngModel)]="activityFilter" class="activity-filter-group">
+          <mat-button-toggle value="all">All</mat-button-toggle>
+          <mat-button-toggle value="status">Status</mat-button-toggle>
+          <mat-button-toggle value="event">Events</mat-button-toggle>
+          <mat-button-toggle value="note">Notes</mat-button-toggle>
+          <mat-button-toggle value="sla">SLA</mat-button-toggle>
+        </mat-button-toggle-group>
+        @if (activityTimeline.length) {
+          <button type="button" mat-stroked-button (click)="exportActivity()" class="export-btn">
+            <mat-icon>download</mat-icon> Export
+          </button>
+        }
+      </div>
+      @if (!filteredTimeline.length) {
+        <p class="no-notes-hint">No activity recorded yet.</p>
+      }
+      @if (filteredTimeline.length) {
+        <div class="timeline">
+          @for (h of filteredTimeline; track h) {
+            <div
+              class="timeline-entry"
+              [ngClass]="{
+                'timeline-entry--status':      h.type === 'status',
+                'timeline-entry--note':        h.type === 'note',
+                'timeline-entry--escalation':  h.type === 'escalation',
+                'timeline-entry--completion':  h.type === 'step_completion',
+                'timeline-entry--event':       h.type === 'event',
+                'timeline-entry--sla':         h.type === 'sla',
+                'timeline-entry--sla-resolved': h.type === 'sla' && h.resolved
+              }"
+              >
+              <div class="timeline-icon">
+                @if (h.type === 'status') {
+                  <mat-icon>shield</mat-icon>
+                }
+                @if (h.type === 'note') {
+                  <mat-icon>edit</mat-icon>
+                }
+                @if (h.type === 'escalation') {
+                  <mat-icon>priority_high</mat-icon>
+                }
+                @if (h.type === 'step_completion') {
+                  <mat-icon>check_circle</mat-icon>
+                }
+                @if (h.type === 'event') {
+                  <mat-icon>event_note</mat-icon>
+                }
+                @if (h.type === 'sla') {
+                  <mat-icon>{{ h.resolved ? 'check_circle_outline' : 'warning' }}</mat-icon>
+                }
+                @if (!h.type || !['status','note','escalation','step_completion','event','sla'].includes(h.type)) {
+                  <mat-icon>radio_button_unchecked</mat-icon>
+                }
+              </div>
+              <div class="timeline-content">
+                <p class="timeline-action">{{ h.action }}</p>
+                <p class="timeline-meta">
+                  <span>{{ h.performedBy }}</span>
+                  <span class="timeline-dot">&#x00B7;</span>
+                  <span>{{ h.date | date:'MMM d, y h:mm a' }}</span>
+                  @if (h.type === 'sla' && !h.resolved) {
+                    <span class="sla-badge">Active</span>
+                  }
+                  @if (h.type === 'sla' && h.resolved) {
+                    <span class="sla-badge sla-badge--resolved">Resolved</span>
+                  }
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </mat-tab>
+  <!-- -- Tab 4: Comments -------------------------------------------- -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">forum</mat-icon>
+      Comments
+    </ng-template>
+    <div class="tab-body">
+      <app-claim-comments [claimId]="c.id"></app-claim-comments>
+    </div>
+  </mat-tab>
+  <!-- -- Tab 5: Appeals --------------------------------------------- -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">gavel</mat-icon>
+      Appeals
+    </ng-template>
+    <div class="tab-body">
+      <app-appeal-panel [claimId]="c.id" [denialCode]="c.reasonCode ?? ''"></app-appeal-panel>
+    </div>
+  </mat-tab>
+  <!-- -- Tab 6: AI Assist ------------------------------------------- -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">auto_awesome</mat-icon>
+      AI Assist
+      @if (narrativeScore) {
+        <span class="tab-badge"
+        [style.background]="narrativeScoreColor">{{ narrativeScore.score }}</span>
+      }
+    </ng-template>
+    <div class="tab-body">
+      <!-- Payer velocity prediction -->
+      @if (payerVelocityScore) {
+        <div class="ai-section">
+          <h3 class="ai-section-title">
+            <mat-icon>trending_up</mat-icon>
+            Payer Velocity Prediction
+          </h3>
+          <div class="velocity-grid">
+            <div class="velocity-card">
+              <span class="vel-label">Expected Payment</span>
+              <span class="vel-value">{{ payerVelocityScore.expected_payment | currency }}</span>
+            </div>
+            <div class="velocity-card">
+              <span class="vel-label">Pay Probability</span>
+              <span class="vel-value">{{ (payerVelocityScore.payment_probability * 100) | number:'1.0-0' }}%</span>
+            </div>
+            <div class="velocity-card">
+              <span class="vel-label">Avg Days to Pay</span>
+              <span class="vel-value">{{ payerVelocityScore.avg_days_to_payment }} days</span>
+            </div>
+            <div class="velocity-card">
+              <span class="vel-label">Confidence</span>
+              <span class="vel-value vel-confidence" [class.high]="payerVelocityScore.confidence === 'high'">
+                {{ payerVelocityScore.confidence | titlecase }}
+              </span>
+            </div>
+          </div>
+          <p class="vel-note">{{ payerVelocityScore.note }}</p>
+        </div>
+      }
+      @if (payerVelocityScore) {
+        <mat-divider></mat-divider>
+      }
+      <!-- Narrative completeness score -->
+      <div class="ai-section">
+        <div class="ai-section-header">
+          <h3 class="ai-section-title">
+            <mat-icon>rate_review</mat-icon>
+            Narrative Completeness
+          </h3>
+          <button mat-stroked-button type="button" (click)="scoreNarrative()" [disabled]="narrativeScoreLoading">
+            <mat-icon>{{ narrativeScoreLoading ? 'hourglass_empty' : 'refresh' }}</mat-icon>
+            {{ narrativeScore ? 'Re-Score' : 'Score Narrative' }}
+          </button>
+        </div>
+        @if (narrativeScore) {
+          <div class="narrative-score-panel">
+            <div class="score-circle" [style.border-color]="narrativeScoreColor">
+              <span class="score-number" [style.color]="narrativeScoreColor">{{ narrativeScore.score }}</span>
+              <span class="score-label">/ 100</span>
+            </div>
+            <div class="score-details">
+              @if (narrativeScore.missing_elements?.length) {
+                <div class="missing-elements">
+                  <p class="score-section-label">Missing Elements</p>
+                  <ul>
+                    @for (el of narrativeScore.missing_elements; track el) {
+                      <li>{{ el }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+              @if (narrativeScore.recommendations?.length) {
+                <div class="recommendations">
+                  <p class="score-section-label">Recommendations</p>
+                  <ul>
+                    @for (rec of narrativeScore.recommendations; track rec) {
+                      <li>{{ rec }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+              <p class="score-meta">Scored {{ narrativeScore.scored_at | date:'MMM d, y h:mm a' }}
+              &bull; {{ narrativeScore.model_version }}</p>
+            </div>
+          </div>
+        }
+        @if (!narrativeScore) {
+          <p class="ai-empty">
+            Click "Score Narrative" to evaluate this claim's documentation completeness using AI.
+          </p>
+        }
+        <!-- Next step banner: after score -->
+        @if (narrativeScore && !claimRewrite) {
+          <div class="ai-next-step">
+            <mat-icon>arrow_downward</mat-icon>
+            @if (narrativeScore.score < 65) {
+              <span>Score is low &#x2014; generate a rewrite to strengthen this claim.</span>
+            }
+            @if (narrativeScore.score >= 65) {
+              <span>Narrative looks solid. Generate a rewrite to polish it further?</span>
+            }
+            <button mat-stroked-button type="button" (click)="generateRewrite()" [disabled]="rewriteLoading">
+              <mat-icon>auto_fix_high</mat-icon> Generate Rewrite
+            </button>
+          </div>
+        }
+      </div>
+      <mat-divider></mat-divider>
+      <!-- Inline narrative rewrite -->
+      <div class="ai-section">
+        <div class="ai-section-header">
+          <h3 class="ai-section-title">
+            <mat-icon>edit_note</mat-icon>
+            Narrative Rewrite Suggestions
+          </h3>
+          <button mat-stroked-button type="button" (click)="generateRewrite()" [disabled]="rewriteLoading">
+            <mat-icon>{{ rewriteLoading ? 'hourglass_empty' : 'auto_fix_high' }}</mat-icon>
+            {{ claimRewrite ? 'Re-Generate' : 'Generate Suggestions' }}
+          </button>
+        </div>
+        @if (claimRewrite) {
+          <div class="rewrite-panel">
+            <!-- Status banner (once accepted/rejected) -->
+            @if (claimRewrite.accepted !== null) {
+              <div class="rewrite-status-bar"
+                [class.status-accepted]="claimRewrite.accepted"
+                [class.status-rejected]="!claimRewrite.accepted">
+                <mat-icon>{{ claimRewrite.accepted ? 'check_circle' : 'cancel' }}</mat-icon>
+                <span>{{ claimRewrite.accepted ? 'Rewrite accepted & saved' : 'Rewrite discarded' }}</span>
+              </div>
+            }
+            <!-- Meta row -->
+            <div class="rewrite-meta">
+              @for (f of claimRewrite.focus_areas; track f) {
+                <span class="focus-chip">{{ f }}</span>
+              }
+              <span class="confidence-chip">{{ (claimRewrite.confidence * 100) | number:'1.0-0' }}% confidence</span>
+              <button mat-button type="button" class="compare-toggle-btn" (click)="toggleOriginal()">
+                <mat-icon>{{ showOriginalNarrative ? 'visibility_off' : 'compare' }}</mat-icon>
+                {{ showOriginalNarrative ? 'Hide Original' : 'Compare with Original' }}
+              </button>
+            </div>
+            <!-- Original narrative (comparison view) -->
+            @if (showOriginalNarrative) {
+              <div class="rewrite-compare-block">
+                <label class="rewrite-block-label">Original</label>
+                <div class="rewrite-original-text">{{ claimRewrite.original_text || '(no original on file)' }}</div>
+              </div>
+            }
+            <!-- Editable rewrite textarea -->
+            <div class="rewrite-edit-block">
+              <label class="rewrite-block-label">
+                Rewritten Narrative
+                @if (claimRewrite.accepted === null) {
+                  <span class="edit-hint">&nbsp;&#x2014; edit before accepting</span>
+                }
+              </label>
+              <textarea #rewriteTA class="rewrite-textarea"
+                [value]="rewriteEditText"
+                (input)="rewriteEditText = rewriteTA.value"
+                [attr.readonly]="claimRewrite.accepted !== null ? '' : null"
+                rows="10"
+              placeholder="AI-generated rewrite will appear here"></textarea>
+            </div>
+            <!-- Collapsible AI suggestions -->
+            @if (claimRewrite.diff_hunks?.length) {
+              <mat-expansion-panel class="ai-changes-panel">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <mat-icon>lightbulb</mat-icon>
+                    {{ claimRewrite.diff_hunks.length }} AI-suggested change{{ claimRewrite.diff_hunks.length === 1 ? '' : 's' }}
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                @for (hunk of claimRewrite.diff_hunks; track hunk) {
+                  <div class="suggestion-item">
+                    <p class="suggestion-reason">{{ hunk.reason }}</p>
+                    <div class="suggestion-texts">
+                      <span class="suggestion-original">{{ hunk.original }}</span>
+                      <mat-icon class="suggestion-arrow">arrow_downward</mat-icon>
+                      <span class="suggestion-replacement">{{ hunk.replacement }}</span>
+                    </div>
+                  </div>
+                }
+              </mat-expansion-panel>
+            }
+            <!-- Actions -->
+            @if (claimRewrite.accepted === null) {
+              <div class="rewrite-actions">
+                <button mat-raised-button type="button" color="primary" (click)="acceptRewrite(true)">
+                  <mat-icon>check</mat-icon> Accept &amp; Save
+                </button>
+                <button mat-icon-button type="button" (click)="copyRewrite()" matTooltip="Copy to clipboard">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button mat-stroked-button type="button" color="warn" (click)="acceptRewrite(false)">
+                  <mat-icon>close</mat-icon> Discard
+                </button>
+              </div>
+            }
+          </div>
+        }
+        @if (!claimRewrite) {
+          <p class="ai-empty">
+            Click "Generate Suggestions" to get inline narrative improvement recommendations.
+          </p>
+        }
+        <!-- Next step banner: after rewrite accepted, no package yet -->
+        @if (claimRewrite?.accepted && !pkg) {
+          <div class="ai-next-step">
+            <mat-icon>arrow_downward</mat-icon>
+            <span>Rewrite accepted &#x2014; ready to build the resubmission package?</span>
+            <button mat-stroked-button type="button" (click)="createPackage()" [disabled]="pkgLoading">
+              <mat-icon>inventory_2</mat-icon> Create Package
+            </button>
+          </div>
+        }
+      </div>
+      <mat-divider></mat-divider>
+      <!-- Resubmission Package -->
+      <div class="ai-section">
+        <div class="ai-section-header">
+          <h3 class="ai-section-title">
+            <mat-icon>inventory_2</mat-icon>
+            Resubmission Package
+          </h3>
+          <button mat-stroked-button type="button" (click)="createPackage()" [disabled]="pkgLoading || !!pkg">
+            <mat-icon>{{ pkgLoading ? 'hourglass_empty' : 'add' }}</mat-icon>
+            Create Package
+          </button>
+        </div>
+        @if (pkg) {
+          <div class="package-panel">
+            <div class="pkg-status-row">
+              <span class="xen-badge"
+                [class.badge-success]="pkg.status === 'approved'"
+                [class.badge-warn]="pkg.status === 'ready'"
+                [class.badge-info]="pkg.status === 'submitted'"
+                [class.badge-default]="pkg.status === 'draft'">
+                {{ pkg.status | titlecase }}
+              </span>
+              @if (pkg.submitted_at) {
+                <span class="pkg-meta">Submitted {{ pkg.submitted_at | date:'MMM d, y' }}</span>
+              }
+            </div>
+            @if (pkg.checklist?.length) {
+              <div class="pkg-checklist">
+                <p class="score-section-label">Checklist</p>
+                @for (item of pkg.checklist; track item; let i = $index) {
+                  <mat-checkbox
+                    [checked]="item.checked"
+                    (change)="toggleChecklistItem(i, $event.checked)"
+                    [disabled]="pkg.status !== 'draft'">
+                    {{ item.item }}
+                  </mat-checkbox>
+                }
+              </div>
+            }
+            @if (pkg.attachments?.length) {
+              <div class="pkg-attachments">
+                <p class="score-section-label">Attachments</p>
+                @for (a of pkg.attachments; track a) {
+                  <div class="attachment-row">
+                    <mat-icon>attach_file</mat-icon>
+                    <span>{{ a.file_name }}</span>
+                    @if (a.file_size_kb) {
+                      <span class="attach-meta">{{ a.file_size_kb }} KB</span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+            <div class="pkg-actions">
+              @if (pkg.status === 'draft') {
+                <button mat-raised-button type="button" color="primary"
+                  [disabled]="!pkgAllChecked"
+                  (click)="markPackageReady()">
+                  <mat-icon>check_circle</mat-icon> Mark as Ready
+                </button>
+              }
+            </div>
+            <!-- Next step banner: package ready, no approval yet -->
+            @if (pkg.status === 'ready' && (!approvalRecord || approvalRecord.status === 'recalled' || approvalRecord.status === 'rejected')) {
+              <div class="ai-next-step">
+                <mat-icon>arrow_downward</mat-icon>
+                <span>Package is ready &#x2014; submit for manager review?</span>
+                <button mat-stroked-button type="button" (click)="submitForApproval()" [disabled]="approvalLoading">
+                  <mat-icon>send</mat-icon> Submit for Review
+                </button>
+              </div>
+            }
+          </div>
+        }
+        @if (!pkg) {
+          <p class="ai-empty">
+            Create a resubmission package to track all supporting documents and checklist items before submitting for manager approval.
+          </p>
+        }
+      </div>
+    </div>
+  </mat-tab>
+</mat-tab-group>
+</section>
+<!-- Cross-product enrichment panels (subscription-gated) -->
+@if (enrichments && (subscriptionSvc.isSubscribed('recon-iq') || subscriptionSvc.isSubscribed('claim-vision') || subscriptionSvc.isSubscribed('insightflow'))) {
+  <section class="panel enrichment-section">
+    <h2>Cross-Product Insights</h2>
+    <mat-accordion multi>
+      @if (subscriptionSvc.isSubscribed('recon-iq') && enrichments['recon-iq']?.available) {
+        <app-recon-iq-panel [claimId]="c.id"></app-recon-iq-panel>
+      }
+      @if (subscriptionSvc.isSubscribed('claim-vision') && enrichments['claim-vision']?.available) {
+        <app-claim-vision-panel [claimId]="c.id"></app-claim-vision-panel>
+      }
+      @if (subscriptionSvc.isSubscribed('insightflow') && c.reasonCode) {
+        <app-insightflow-panel [reasonCode]="c.reasonCode"></app-insightflow-panel>
+      }
+      <!-- Payment panel lives in the practice-management system, not this suite -->
+      <app-next-actions [claimId]="c.id"></app-next-actions>
+    </mat-accordion>
+  </section>
+}
+<!-- Close & Archive -->
+<section class="panel close-archive">
+  <h2>Close &amp; Archive</h2>
+  <!-- Manager Approval Gate -->
+  <div class="approval-gate">
+    <!-- Template performance leaderboard (specialist view) -->
+    @if (!isManager && templateLeaderboard.length) {
+      <div class="template-leaderboard">
+        <p class="leaderboard-title"><mat-icon>emoji_events</mat-icon> Top Templates for this Denial</p>
+        <table class="leaderboard-table">
+          <thead>
+            <tr><th>Template</th><th>Win Rate</th><th>Used</th></tr>
+          </thead>
+          <tbody>
+            @for (row of templateLeaderboard; track row) {
+              <tr>
+                <td>{{ row.template_name || '&#x2014;' }}</td>
+                <td>{{ row.win_rate != null ? ((row.win_rate * 100) | number:'1.0-0') + '%' : '&#x2014;' }}</td>
+                <td>{{ row.total_used }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <!-- Specialist: submit for review -->
+    @if (!isManager) {
+      @if (approvalRecord) {
+        <div class="approval-status">
+          <mat-icon [class.approved]="approvalRecord.status === 'approved'"
+            [class.rejected]="approvalRecord.status === 'rejected'"
+            [class.pending]="approvalRecord.status === 'pending_review'">
+            {{ approvalRecord.status === 'approved' ? 'verified' : approvalRecord.status === 'rejected' ? 'cancel' : 'pending' }}
+          </mat-icon>
+          <div class="approval-status-text">
+            <strong>{{ approvalRecord.status === 'approved' ? 'Approved by manager' :
+              approvalRecord.status === 'rejected' ? 'Rejected &#x2014; revise and resubmit' :
+            'Pending manager review' }}</strong>
+            @if (approvalRecord.reviewer_notes) {
+              <span class="approval-notes">{{ approvalRecord.reviewer_notes }}</span>
+            }
+            @if (approvalRecord.reviewer_email) {
+              <span class="approval-by">
+                Reviewed by {{ approvalRecord.reviewer_email }}
+              </span>
+            }
+          </div>
+          @if (approvalRecord.status === 'pending_review') {
+            <button mat-stroked-button type="button" color="warn"
+              (click)="recallApproval()" [disabled]="approvalLoading">
+              <mat-icon>undo</mat-icon> Recall
+            </button>
+          }
+        </div>
+      }
+      <!-- Outcome recording - shown after manager approves, before an outcome is recorded -->
+      @if (approvalRecord?.status === 'approved' && !outcomeRecorded) {
+        <div class="outcome-recorder">
+          <p class="outcome-label"><mat-icon>how_to_vote</mat-icon> Payer responded?</p>
+          <div class="outcome-actions">
+            <button mat-raised-button type="button" color="primary"
+              (click)="recordOutcome('won', outcomeDaysInput ? +outcomeDaysInput : undefined)"
+              [disabled]="outcomeLoading">
+              <mat-icon>thumb_up</mat-icon> Won
+            </button>
+            <button mat-stroked-button type="button"
+              (click)="recordOutcome('lost', outcomeDaysInput ? +outcomeDaysInput : undefined)"
+              [disabled]="outcomeLoading">
+              <mat-icon>thumb_down</mat-icon> Lost
+            </button>
+            <mat-form-field appearance="outline" class="days-field">
+              <mat-label>Days to close</mat-label>
+              <input matInput type="number" min="0" [(ngModel)]="outcomeDaysInput" name="outcomeDays" placeholder="Optional">
+            </mat-form-field>
+          </div>
+        </div>
+      }
+      @if (outcomeRecorded) {
+        <div class="outcome-recorded-banner">
+          <mat-icon>check_circle</mat-icon> Outcome recorded &#x2014; leaderboard updated.
+        </div>
+      }
+      @if (!approvalRecord || approvalRecord.status === 'rejected' || approvalRecord.status === 'recalled') {
+        <button mat-stroked-button type="button" color="primary" class="submit-review-btn"
+          (click)="submitForApproval()" [disabled]="approvalLoading">
+          <mat-icon>send</mat-icon>
+          {{ approvalLoading ? 'Submitting...' : 'Submit for Manager Review' }}
+        </button>
+      }
+    }
+    <!-- Manager: approve or reject -->
+    @if (isManager && approvalRecord?.status === 'pending_review') {
+      <div class="manager-review-panel">
+        <p class="manager-review-label">
+          <mat-icon>assignment_turned_in</mat-icon>
+          Resubmission pending your review &#x2014; submitted by <strong>{{ approvalRecord!.submitted_by }}</strong>
+        </p>
+        @if (showApprovalRejectForm) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Rejection reason</mat-label>
+            <textarea matInput [(ngModel)]="approvalReviewerNotes" rows="2"
+            placeholder="Explain what needs to be corrected before resubmission"></textarea>
+          </mat-form-field>
+        }
+        <div class="manager-review-actions">
+          <button mat-raised-button type="button" color="primary"
+            (click)="reviewApproval('approved')" [disabled]="approvalLoading">
+            <mat-icon>check_circle</mat-icon> Approve
+          </button>
+          <button mat-stroked-button type="button" color="warn"
+            (click)="showApprovalRejectForm = !showApprovalRejectForm">
+            <mat-icon>cancel</mat-icon> Reject
+          </button>
+          @if (showApprovalRejectForm) {
+            <button mat-raised-button type="button" color="warn"
+              (click)="reviewApproval('rejected')" [disabled]="approvalLoading || !approvalReviewerNotes.trim()">
+              Confirm Rejection
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+  <mat-divider></mat-divider>
+  @if (requiredStepsIncomplete && !isManager) {
+    <div class="required-warning">
+      <mat-icon>warning</mat-icon>
+      <span>Complete all required remediation steps before closing.</span>
+    </div>
+  }
+  <div class="close-reason-row">
+    <mat-form-field appearance="outline" class="close-reason-field">
+      <mat-label>Close Reason</mat-label>
+      <mat-select [(ngModel)]="closeReason" name="closeReason">
+        @for (opt of closeReasonOptions; track opt) {
+          <mat-option [value]="opt">{{ opt }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>Required before closing</mat-hint>
+    </mat-form-field>
+  </div>
+  <div class="close-footer">
+    <mat-checkbox [(ngModel)]="feedback.readyToClose" name="readyToClose">
+      I am ready to Save &amp; Close this claim.
+    </mat-checkbox>
+    <span class="spacer"></span>
+    <button mat-stroked-button type="button" (click)="closeAdjudicated()"
+      [disabled]="loading || !feedback.readyToClose || !closeReason"
+      matTooltip="Claim is fully adjudicated &#x2014; mark as permanently Closed (skips pending queue)">
+      <mat-icon>check_circle</mat-icon>
+      Close (Adjudicated)
+    </button>
+    <button mat-raised-button type="button" color="primary" (click)="saveClose()"
+      [disabled]="loading || !feedback.readyToClose || !closeReason"
+      matTooltip="Close and send to Pending queue for admin-configured hold days">
+      Save &amp; Close
+    </button>
+  </div>
+</section>
+</section>
+}

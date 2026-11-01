@@ -1,0 +1,42 @@
+<!-- src/app/pages/claim-vision/rules/claim-vision-rules-page.component.html -->
+<section class="page">
+  <!-- Page header / breadcrumbs -->
+  <header class="page-header">
+    <div class="page-title-group">
+      <h1 class="page-title">Rules</h1>
+      <!-- If you have Claim Vision tabs, you can drop them here later -->
+    </div>
+
+    <button
+      class="new-rule-btn"
+      mat-raised-button
+      color="#0086c9"
+      type="button"
+      (click)="onNewRule()"
+    >
+      + New Rule
+    </button>
+  </header>
+
+  <!-- My Custom Rules -->
+  <rp-rules-list-card
+    class="rules-card"
+    [title]="'My Custom Rules'"
+    [rules]="myCustomRules"
+    [allowReorder]="true"
+    [allowDelete]="true"
+    (viewDetails)="onViewDetails($event)"
+    (delete)="onDeleteRule($event)"
+    (reorder)="onReorderRules($event)"
+  >
+  </rp-rules-list-card>
+
+  <!-- System Rules -->
+  <rp-rules-list-card
+    class="rules-card"
+    [title]="'System Rules'"
+    [rules]="systemRules"
+    (viewDetails)="onViewDetails($event)"
+  >
+  </rp-rules-list-card>
+</section>

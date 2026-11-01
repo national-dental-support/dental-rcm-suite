@@ -1,0 +1,819 @@
+<section class="page-content">
+
+  <!-- -- Toolbar ----------------------------------------------------------- -->
+  <div class="cmdbar">
+    <div class="cmdbar__left">
+      <div class="cmdbar__title">Bank Account Connections</div>
+      <div class="cmdbar__hint">Statement import &#x00B7; ACH origination &#x00B7; SOC 2 &#x00B7; HITECH audit log</div>
+    </div>
+    <div class="cmdbar__right">
+      <button mat-stroked-button type="button" (click)="openAuditLog()" [disabled]="auditView">
+        <mat-icon>history</mat-icon> Audit Log
+      </button>
+      <button mat-flat-button color="primary" type="button" (click)="openAdd()" [disabled]="showForm">
+        <mat-icon>add</mat-icon> Add Account
+      </button>
+    </div>
+  </div>
+
+  <!-- -- Add / Edit form --------------------------------------------------- -->
+  @if (showForm) {
+    <div class="form-panel">
+      <div class="form-panel__header">
+        <span class="form-panel__title">{{ editingId ? 'Edit' : 'Add' }} Bank Account</span>
+        <div class="fsn-nav">
+          @for (s of SECTIONS; track s; let i = $index) {
+            <button type="button"
+              class="fsn-btn" [class.fsn-btn--active]="activeSection === i"
+            (click)="activeSection = i">{{ s }}</button>
+          }
+        </div>
+        <button mat-icon-button type="button" (click)="cancel()"><mat-icon>close</mat-icon></button>
+      </div>
+      <!-- -- Section 0: Account Identity + Institution -- -->
+      @if (activeSection === 0) {
+        <div class="form-section">
+          <div class="form-section__heading">Account Identity</div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Bank Name *</mat-label>
+              <input matInput [(ngModel)]="form.bank_name" placeholder="e.g. Chase, Bank of America" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Nickname / Label</mat-label>
+              <input matInput [(ngModel)]="form.nickname" placeholder="e.g. Main Operating Account" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Account Type</mat-label>
+              <mat-select [(ngModel)]="form.account_type">
+                @for (t of accountTypes; track t) {
+                  <mat-option [value]="t.value">{{ t.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Account Holder (Legal Name)</mat-label>
+              <input matInput [(ngModel)]="form.account_holder_name" placeholder="Legal entity name on the account" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Account Number (Last 4 Only)</mat-label>
+              <input matInput [(ngModel)]="form.account_number_last4" maxlength="4" placeholder="XXXX" />
+              <mat-hint>Never store full account numbers &#x2014; last 4 for identification only</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>ABA Routing Number</mat-label>
+              <input matInput [(ngModel)]="form.routing_number" maxlength="9" placeholder="9-digit ABA" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>SWIFT / BIC</mat-label>
+              <input matInput [(ngModel)]="form.swift_bic" maxlength="11" placeholder="e.g. CHASUS33" />
+              <mat-hint>Required for international wire transfers only</mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="form-section__heading mt-16">Institution Contact</div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="col-span-2">
+              <mat-label>Bank Branch Address</mat-label>
+              <input matInput [(ngModel)]="form.bank_address" placeholder="Street, City, State ZIP" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Bank / Treasury Phone</mat-label>
+              <input matInput [(ngModel)]="form.bank_phone" placeholder="(800) 000-0000" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="col-span-2">
+              <mat-label>Relationship Manager / Treasury Contact</mat-label>
+              <input matInput [(ngModel)]="form.bank_contact_name" placeholder="Name &#x2014; Title (e.g. Jane Smith &#x2014; Commercial Relationship Manager)" />
+            </mat-form-field>
+          </div>
+          <div class="form-section__heading mt-16">Account Settings</div>
+          <div class="toggle-row">
+            <mat-slide-toggle [(ngModel)]="form.is_active" color="primary">Account Active</mat-slide-toggle>
+            <span class="toggle-hint">Inactive accounts are excluded from automated imports and ACH origination. All historical data and audit log are preserved.</span>
+          </div>
+          <mat-form-field appearance="outline" class="notes-field mt-16">
+            <mat-label>Internal Notes</mat-label>
+            <textarea matInput [(ngModel)]="form.notes" rows="4"
+            placeholder="SFTP key rotation dates, NACHA registration reference, escalation contacts&#x2026;"></textarea>
+            <mat-hint>Visible to admin users only. Do not store passwords, full account numbers, or private keys.</mat-hint>
+          </mat-form-field>
+        </div>
+      }
+      <!-- -- Section 1: Statement Import -- -->
+      @if (activeSection === 1) {
+        <div class="form-section">
+          <div class="form-section__heading">Statement Import Method</div>
+          <p class="form-section__sub">How does bank transaction data flow into this system for reconciliation against ERA 835 payments?</p>
+          <div class="method-cards">
+            @for (m of importMethods; track m) {
+              <div class="method-card"
+                [class.method-card--selected]="form.stmt_import_method === m.value"
+                (click)="form.stmt_import_method = m.value">
+                <div class="method-card__label">{{ m.label }}</div>
+                <div class="method-card__desc">{{ m.desc }}</div>
+              </div>
+            }
+          </div>
+          <!-- SFTP fields -->
+          @if (form.stmt_import_method === 'sftp') {
+            <div class="form-section__heading mt-20">SFTP Connection</div>
+            <p class="form-section__sub">
+              The bank pushes statement files to an SFTP endpoint. Credentials are stored in the configured secrets vault &#x2014; never in the database.
+            </p>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>SFTP Host</mat-label>
+                <input matInput [(ngModel)]="form.sftp_host" placeholder="e.g. sftp.chase.com" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Port</mat-label>
+                <input matInput type="number" [(ngModel)]="form.sftp_port" placeholder="22" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Username</mat-label>
+                <input matInput [(ngModel)]="form.sftp_username" placeholder="SFTP login name from bank" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Authentication Method</mat-label>
+                <mat-select [(ngModel)]="form.sftp_auth_method">
+                  <mat-option value="rsa_key">RSA Key Pair (recommended)</mat-option>
+                  <mat-option value="password">Password</mat-option>
+                </mat-select>
+              </mat-form-field>
+              @if (form.sftp_auth_method === 'rsa_key') {
+                <mat-form-field appearance="outline" class="col-span-2">
+                  <mat-label>Public Key Fingerprint (SHA-256)</mat-label>
+                  <input matInput [(ngModel)]="form.sftp_key_fingerprint" placeholder="SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+                  <mat-hint>Store the fingerprint here for verification &#x2014; private key goes in secrets vault only</mat-hint>
+                </mat-form-field>
+              }
+              <mat-form-field appearance="outline" class="col-span-2">
+                <mat-label>Remote Path</mat-label>
+                <input matInput [(ngModel)]="form.sftp_remote_path" placeholder="/treasury/statements/outbound/" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>File Format</mat-label>
+                <mat-select [(ngModel)]="form.sftp_file_format">
+                  @for (f of fileFormats; track f) {
+                    <mat-option [value]="f.value">
+                      {{ f.label }} &#x2014; {{ f.desc }}
+                    </mat-option>
+                  }
+                </mat-select>
+                <mat-hint>The bank specifies which format(s) they support &#x2014; confirm with your treasury contact</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>File Name Pattern</mat-label>
+                <input matInput [(ngModel)]="form.sftp_file_pattern" placeholder="e.g. ACME_{YYYYMMDD}.bai2" />
+              </mat-form-field>
+            </div>
+          }
+          <!-- Plaid fields -->
+          @if (form.stmt_import_method === 'plaid') {
+            <div class="form-section__heading mt-20">Plaid Link</div>
+            <div class="info-box info-box--blue">
+              <mat-icon>info</mat-icon>
+              Plaid provides read-only access to balances and transactions. Business account support requires Plaid Assets or Auth products.
+              Credentials are managed through the Plaid dashboard &#x2014; enter the resulting Item ID and Institution ID below after linking.
+            </div>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Plaid Item ID</mat-label>
+                <input matInput [(ngModel)]="form.plaid_item_id" placeholder="item_xxxxxxxxxxxxxxxxxxxxxxxx" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Institution ID</mat-label>
+                <input matInput [(ngModel)]="form.plaid_institution_id" placeholder="ins_xxxxxxxx" />
+              </mat-form-field>
+            </div>
+          }
+          <!-- Manual / API info box -->
+          @if (form.stmt_import_method === 'manual') {
+            <div class="info-box info-box--gray mt-16">
+              <mat-icon>upload_file</mat-icon>
+              Manual import &#x2014; staff will upload statement files via the ERA Ingestion tab. No automated connection required.
+            </div>
+          }
+          <!-- Schedule (automated methods only) -->
+          @if (form.stmt_import_method !== 'manual') {
+            <div class="form-section__heading mt-20">Import Schedule</div>
+            <p class="form-section__sub">When should this account's statement import job run automatically?</p>
+            <div class="method-cards">
+              @for (s of scheduleTypes; track s) {
+                <div class="method-card"
+                  [class.method-card--selected]="form.schedule_type === s.value"
+                  (click)="form.schedule_type = s.value">
+                  <div class="method-card__label">{{ s.label }}</div>
+                  <div class="method-card__desc">{{ s.desc }}</div>
+                </div>
+              }
+            </div>
+            @if (form.schedule_type === 'daily' || form.schedule_type === 'weekly') {
+              <div class="form-grid mt-16">
+                <mat-form-field appearance="outline">
+                  <mat-label>Run Time (24h, e.g. 03:00)</mat-label>
+                  <input matInput [(ngModel)]="form.schedule_time" placeholder="03:00" maxlength="5" />
+                  <mat-hint>Bank statements are typically available 2&#x2013;4 hours after end of business</mat-hint>
+                </mat-form-field>
+              </div>
+            }
+            @if (form.schedule_type === 'weekly') {
+              <div class="day-picker mt-16">
+                <div class="day-picker__label">Run on these days</div>
+                <div class="day-chips">
+                  @for (d of daysOfWeek; track d) {
+                    <div class="day-chip"
+                      [class.day-chip--on]="form.schedule_days_set.has(d.value)"
+                    (click)="toggleScheduleDay(d.value)">{{ d.label }}</div>
+                  }
+                </div>
+              </div>
+            }
+            @if (form.schedule_type === 'custom') {
+              <div class="form-grid mt-16">
+                <mat-form-field appearance="outline" class="col-span-2">
+                  <mat-label>Cron Expression</mat-label>
+                  <input matInput [(ngModel)]="form.schedule_cron" placeholder="0 3 * * 1-5" />
+                  <mat-hint>Standard 5-field cron: minute hour day-of-month month day-of-week</mat-hint>
+                </mat-form-field>
+              </div>
+            }
+            <!-- Retry Policy -->
+            <div class="form-section__heading mt-20">Retry Policy</div>
+            <p class="form-section__sub">How should the job behave when an import run fails?</p>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Max Retry Attempts</mat-label>
+                <input matInput type="number" [(ngModel)]="form.retry_max_attempts" min="0" max="10" placeholder="3" />
+                <mat-hint>Set to 0 to disable retries</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Delay Between Retries (minutes)</mat-label>
+                <input matInput type="number" [(ngModel)]="form.retry_delay_minutes" min="1" placeholder="15" />
+                <mat-hint>Wait this many minutes before each retry attempt</mat-hint>
+              </mat-form-field>
+            </div>
+          }
+          <!-- Reconciliation settings (always shown) -->
+          <div class="form-section__heading mt-20">Reconciliation Settings</div>
+          <p class="form-section__sub">How should statement deposits be matched against ERA 835 remittances?</p>
+          <div class="form-grid">
+            <div class="toggle-row">
+              <mat-slide-toggle [(ngModel)]="form.recon_trace_match" color="primary">
+                Match by TRN Trace Number
+              </mat-slide-toggle>
+              <span class="toggle-hint">Recommended &#x2014; uses the trace number present in both ERA 835 (TRN segment) and bank statement entry to auto-match deposits</span>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Flag Unmatched Deposits After (Days)</mat-label>
+              <input matInput type="number" [(ngModel)]="form.recon_lag_days" placeholder="4" />
+              <mat-hint>Flag deposits with no corresponding ERA after this many business days</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      }
+      <!-- -- Section 2: ACH Origination -- -->
+      @if (activeSection === 2) {
+        <div class="form-section">
+          <div class="form-section__heading">ACH Origination</div>
+          <p class="form-section__sub">
+            ACH origination allows this account to send payments outbound (patient refunds, vendor payments) or collect
+            inbound (patient balance collection). Requires a signed ACH origination agreement with your bank.
+          </p>
+          <div class="toggle-row toggle-row--prominent">
+            <mat-slide-toggle [(ngModel)]="form.ach_enabled" color="primary">
+              ACH Origination Enabled for This Account
+            </mat-slide-toggle>
+          </div>
+          @if (form.ach_enabled) {
+            <div class="form-section__heading mt-18">NACHA Registration</div>
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="col-span-2">
+                <mat-label>Company Name (NACHA-Registered Legal Name)</mat-label>
+                <input matInput [(ngModel)]="form.ach_company_name" placeholder="Exact legal name from your ODFI agreement" />
+                <mat-hint>Must match exactly what appears in your bank's ACH origination agreement</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Company ID (10-digit, bank-assigned)</mat-label>
+                <input matInput [(ngModel)]="form.ach_company_id" maxlength="10" placeholder="1234567890" />
+                <mat-hint>Assigned by your ODFI &#x2014; appears in every ACH batch header</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>ODFI Routing Number</mat-label>
+                <input matInput [(ngModel)]="form.ach_odfi_routing" maxlength="9" placeholder="9-digit routing of your bank" />
+                <mat-hint>Your bank's routing number in its role as Originating Depository Financial Institution</mat-hint>
+              </mat-form-field>
+            </div>
+            <div class="form-section__heading mt-18">SEC Codes</div>
+            <p class="form-section__sub">Select the Standard Entry Class codes your bank has authorized. Each requires separate authorization in your origination agreement.</p>
+            <div class="sec-code-list">
+              @for (s of secCodes; track s) {
+                <div class="sec-card"
+                  [class.sec-card--on]="form.ach_sec_codes_set.has(s.value)"
+                  (click)="toggleSecCode(s.value)">
+                  <div class="sec-card__check">
+                    <mat-icon>{{ form.ach_sec_codes_set.has(s.value) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                  </div>
+                  <div>
+                    <div class="sec-card__label">{{ s.label }}</div>
+                    <div class="sec-card__desc">{{ s.desc }}</div>
+                  </div>
+                </div>
+              }
+            </div>
+            <div class="form-section__heading mt-18">Settlement &amp; Limits</div>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Settlement</mat-label>
+                <mat-select [(ngModel)]="form.ach_settlement_days">
+                  <mat-option [value]="1">Standard &#x2014; T+1 (next business day)</mat-option>
+                  <mat-option [value]="0">Same-Day ACH &#x2014; T+0 (requires bank approval)</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Per-Transaction Limit ($)</mat-label>
+                <input matInput type="number" [(ngModel)]="form.ach_transaction_limit" placeholder="25000" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Daily Origination Limit ($)</mat-label>
+                <input matInput type="number" [(ngModel)]="form.ach_daily_limit" placeholder="100000" />
+              </mat-form-field>
+            </div>
+            <div class="form-section__heading mt-18">Dual Approval (Separation of Duties)</div>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Require Second Approver Above ($)</mat-label>
+                <input matInput type="number" [(ngModel)]="form.ach_dual_approval_threshold" placeholder="10000" />
+                <mat-hint>Payments at or above this amount require a second authorized user to approve before transmission</mat-hint>
+              </mat-form-field>
+            </div>
+            <div class="info-box info-box--orange mt-16">
+              <mat-icon>gavel</mat-icon>
+              <span>
+                <strong>NACHA compliance requirement (effective March 2026):</strong> ACH originators must implement
+                risk-based fraud detection monitoring. Confirm with your compliance officer before enabling origination.
+                All batches are logged in the audit trail with originator identity and approval chain.
+              </span>
+            </div>
+            <div class="toggle-row mt-14">
+              <mat-slide-toggle [(ngModel)]="form.ach_nacha_registered" color="primary">
+                Signed NACHA/ACH Origination Agreement on File
+              </mat-slide-toggle>
+            </div>
+          }
+        </div>
+      }
+      <!-- Form footer -->
+      <div class="form-panel__footer">
+        <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+        <div class="form-panel__nav">
+          @if (activeSection > 0) {
+            <button mat-stroked-button type="button" (click)="activeSection = activeSection - 1">
+              <mat-icon>chevron_left</mat-icon> Back
+            </button>
+          }
+          @if (activeSection < SECTIONS.length - 1) {
+            <button mat-stroked-button type="button" (click)="activeSection = activeSection + 1">
+              Next <mat-icon>chevron_right</mat-icon>
+            </button>
+          }
+          @if (activeSection === SECTIONS.length - 1) {
+            <button mat-flat-button color="primary" type="button"
+              [disabled]="!form.bank_name?.trim() || submitting" (click)="save()">
+              {{ submitting ? 'Saving&#x2026;' : (editingId ? 'Save Changes' : 'Add Account') }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- -- Loading / Error / Empty ------------------------------------------- -->
+  @if (loading && !showForm) {
+    <div class="xen-loading">Loading bank accounts&#x2026;</div>
+  }
+  @if (error && !loading) {
+    <div class="xen-empty">
+      <mat-icon>error_outline</mat-icon>
+      <p>Failed to load bank accounts. <button mat-button type="button" (click)="load()">Retry</button></p>
+    </div>
+  }
+  @if (!loading && !error && accounts.length === 0 && !showForm && !auditView) {
+    <div class="xen-empty">
+      <mat-icon>account_balance</mat-icon>
+      <p>No bank accounts configured. Add an account to begin.</p>
+    </div>
+  }
+
+  <!-- -- Accounts table ---------------------------------------------------- -->
+  @if (!loading && accounts.length > 0 && !auditView) {
+    <div class="accounts-card">
+      <div class="card-header">
+        <span class="card-title">Connected Accounts</span>
+        <span class="card-count">{{ accounts.length }} account{{ accounts.length !== 1 ? 's' : '' }}</span>
+      </div>
+      <table class="acct-table">
+        <thead>
+          <tr>
+            <th class="col-exp" aria-label="Expand row"></th>
+            <th>Bank / Account</th>
+            <th>Statement Import</th>
+            <th>ACH Origination</th>
+            <th>Status</th>
+            <th class="col-actions" aria-label="Row actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (acct of accounts; track acct) {
+            <!-- Main row -->
+            <tr class="acct-row" [class.acct-row--inactive]="!acct.is_active"
+              [class.acct-row--expanded]="expandedId === acct.id"
+              (click)="toggleExpand(acct)">
+              <td class="col-exp">
+                <mat-icon class="expand-icon" [class.expand-icon--open]="expandedId === acct.id">chevron_right</mat-icon>
+              </td>
+              <td class="cell--bank">
+                <mat-icon class="bank-icon">account_balance</mat-icon>
+                <div>
+                  <div class="bank-name">{{ acct.bank_name }}</div>
+                  <div class="bank-sub">
+                    @if (acct.nickname) {
+                      <span class="bank-nick">{{ acct.nickname }}</span>
+                    }
+                    <span class="bank-acct">{{ acct.account_number_last4 ? '&#x2022;&#x2022;&#x2022;&#x2022;' + acct.account_number_last4 : '' }}</span>
+                    <span class="bank-type">{{ accountTypeLabel(acct.account_type) }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="import-cell">
+                  <span class="import-badge import-badge--{{ acct.stmt_import_method }}">
+                    {{ importMethodLabel(acct.stmt_import_method) }}
+                  </span>
+                  @if (acct.sftp_file_format) {
+                    <span class="format-tag">{{ fileFormatLabel(acct.sftp_file_format) }}</span>
+                  }
+                  @if (acct.last_sync_at) {
+                    <span class="sync-dot sync-dot--{{ acct.last_sync_status }}"
+                    [matTooltip]="'Last sync: ' + (acct.last_sync_at | date:'short')"></span>
+                  }
+                </div>
+              </td>
+              <td>
+                @if (acct.ach_enabled) {
+                  <div class="ach-cell">
+                    <span class="ach-on">ACH On</span>
+                    @if (acct.ach_company_id) {
+                      <span class="ach-co">ID: {{ acct.ach_company_id }}</span>
+                    }
+                    @for (c of secCodeList(acct.ach_sec_codes); track c) {
+                      <span class="sec-pill">{{ c }}</span>
+                    }
+                    @if (acct.ach_nacha_registered) {
+                      <span class="sec-pill sec-pill--nacha" matTooltip="NACHA agreement on file">NACHA</span>
+                    }
+                  </div>
+                }
+                @if (!acct.ach_enabled) {
+                  <span class="ach-off">Not configured</span>
+                }
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="connStatusMeta(acct.connection_status).cls">
+                  {{ connStatusMeta(acct.connection_status).label }}
+                </span>
+              </td>
+              <td class="cell-actions" (click)="$event.stopPropagation()">
+                @if (deleteConfirmId === acct.id) {
+                  <span class="confirm-text">Delete?</span>
+                  <button mat-stroked-button color="warn" type="button" (click)="doDelete(acct.id)">Yes</button>
+                  <button mat-stroked-button type="button" (click)="cancelDelete()">No</button>
+                } @else {
+                  <button mat-icon-button type="button" matTooltip="Edit" (click)="openEdit(acct)"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button type="button" [matTooltip]="acct.is_active ? 'Deactivate' : 'Activate'"
+                    (click)="toggleActive(acct, $event)">
+                    <mat-icon>{{ acct.is_active ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" color="warn" matTooltip="Delete"
+                    (click)="confirmDelete(acct.id); $event.stopPropagation()">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                }
+              </td>
+            </tr>
+            <!-- Expanded detail row -->
+            @if (expandedId === acct.id) {
+              <tr class="detail-row">
+                <td colspan="7" class="detail-cell">
+                  <!-- Tab bar -->
+                  <div class="detail-tabs">
+                    <button type="button" class="dtab" [class.dtab--active]="getExpandTab(acct.id) === 'account'"
+                    (click)="setExpandTab(acct.id, 'account', $event)">Account</button>
+                    <button type="button" class="dtab" [class.dtab--active]="getExpandTab(acct.id) === 'import'"
+                    (click)="setExpandTab(acct.id, 'import', $event)">Statement Import</button>
+                    <button type="button" class="dtab" [class.dtab--active]="getExpandTab(acct.id) === 'ach'"
+                    (click)="setExpandTab(acct.id, 'ach', $event)">ACH Origination</button>
+                    <div class="dtab-actions">
+                      <button mat-stroked-button type="button" [disabled]="testingId === acct.id"
+                        (click)="testConnection(acct, $event)">
+                        <mat-icon>cable</mat-icon> {{ testingId === acct.id ? 'Testing&#x2026;' : 'Test Connection' }}
+                      </button>
+                      @if (testResults.has(acct.id)) {
+                        <div class="test-result"
+                          [class.test-result--pass]="testResults.get(acct.id)?.passed"
+                          [class.test-result--fail]="!testResults.get(acct.id)?.passed">
+                          <mat-icon>{{ testResults.get(acct.id)?.passed ? 'check_circle' : 'cancel' }}</mat-icon>
+                          {{ testResults.get(acct.id)?.passed ? 'OK' : 'Failed' }}
+                          <span class="dim"> &#x00B7; {{ testResults.get(acct.id)?.latency_ms }}ms</span>
+                        </div>
+                      }
+                      <button mat-button type="button" (click)="openAuditLog(acct.id); $event.stopPropagation()">
+                        <mat-icon>history</mat-icon> Audit Log
+                      </button>
+                    </div>
+                  </div>
+                  <!-- Account tab -->
+                  @if (getExpandTab(acct.id) === 'account') {
+                    <div class="detail-body">
+                      <div class="detail-cols">
+                        <div class="detail-col">
+                          <div class="dcol-title">Account</div>
+                          <dl class="detail-dl">
+                            <dt>Holder</dt>    <dd>{{ acct.account_holder_name || '&#x2014;' }}</dd>
+                            <dt>Type</dt>      <dd>{{ accountTypeLabel(acct.account_type) }}</dd>
+                            <dt>Routing</dt>   <dd class="mono">{{ acct.routing_number || '&#x2014;' }}</dd>
+                            <dt>SWIFT/BIC</dt> <dd class="mono">{{ acct.swift_bic || '&#x2014;' }}</dd>
+                            <dt>Verified</dt>  <dd>{{ acct.verification_method || '&#x2014;' }}
+                            @if (acct.verified_at) {
+                              <span class="dim"> &#x00B7; {{ acct.verified_at | date:'mediumDate' }}</span>
+                            }
+                          </dd>
+                        </dl>
+                      </div>
+                      <div class="detail-col">
+                        <div class="dcol-title">Institution Contact</div>
+                        <dl class="detail-dl">
+                          <dt>Address</dt> <dd>{{ acct.bank_address || '&#x2014;' }}</dd>
+                          <dt>Phone</dt>   <dd>{{ acct.bank_phone || '&#x2014;' }}</dd>
+                          <dt>Contact</dt> <dd>{{ acct.bank_contact_name || '&#x2014;' }}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                    @if (acct.notes) {
+                      <p class="notes-text mt-12">{{ acct.notes }}</p>
+                    }
+                  </div>
+                }
+                <!-- Statement Import tab -->
+                @if (getExpandTab(acct.id) === 'import') {
+                  <div class="detail-body">
+                    <div class="detail-cols">
+                      <div class="detail-col">
+                        <div class="dcol-title">Import Method</div>
+                        <dl class="detail-dl">
+                          <dt>Method</dt>
+                          <dd><span class="import-badge import-badge--{{ acct.stmt_import_method }}">{{ importMethodLabel(acct.stmt_import_method) }}</span></dd>
+                        </dl>
+                        @if (acct.stmt_import_method === 'sftp') {
+                          <dl class="detail-dl mt-12">
+                            <dt>Host</dt>       <dd class="mono">{{ acct.sftp_host || '&#x2014;' }}</dd>
+                            <dt>Port</dt>       <dd class="mono">{{ acct.sftp_port || 22 }}</dd>
+                            <dt>Username</dt>   <dd class="mono">{{ acct.sftp_username || '&#x2014;' }}</dd>
+                            <dt>Auth</dt>       <dd>{{ acct.sftp_auth_method === 'rsa_key' ? 'RSA Key Pair' : 'Password' }}</dd>
+                            <dt>Fingerprint</dt><dd class="mono small-mono">{{ acct.sftp_key_fingerprint || '&#x2014;' }}</dd>
+                            <dt>Remote Path</dt><dd class="mono">{{ acct.sftp_remote_path || '&#x2014;' }}</dd>
+                            <dt>File Format</dt><dd>{{ fileFormatLabel(acct.sftp_file_format || '') }}</dd>
+                            <dt>Pattern</dt>    <dd class="mono">{{ acct.sftp_file_pattern || '&#x2014;' }}</dd>
+                          </dl>
+                        }
+                        @if (acct.stmt_import_method === 'plaid') {
+                          <dl class="detail-dl mt-12">
+                            <dt>Item ID</dt>       <dd class="mono small-mono">{{ acct.plaid_item_id || '&#x2014;' }}</dd>
+                            <dt>Institution ID</dt><dd class="mono">{{ acct.plaid_institution_id || '&#x2014;' }}</dd>
+                            <dt>Last Refresh</dt>  <dd>{{ (acct.plaid_last_refresh | date:'short') || 'Never' }}</dd>
+                          </dl>
+                        }
+                      </div>
+                      <div class="detail-col">
+                        <div class="dcol-title">Reconciliation</div>
+                        <dl class="detail-dl">
+                          <dt>TRN Match</dt>
+                          <dd>
+                            <span class="bool-badge" [class.bool-badge--on]="acct.recon_trace_match">
+                              {{ acct.recon_trace_match ? 'Enabled' : 'Disabled' }}
+                            </span>
+                            <span class="dim"> &#x2014; match ERA 835 TRN to bank statement trace</span>
+                          </dd>
+                          <dt>Lag Threshold</dt>
+                          <dd>{{ acct.recon_lag_days }} business days &#x2014; flag deposits with no ERA after this period</dd>
+                          <dt>Last Sync</dt>
+                          <dd>
+                            @if (acct.last_sync_at) {
+                              <span>
+                                {{ acct.last_sync_at | date:'short' }}
+                                <span class="sync-dot sync-dot--{{ acct.last_sync_status }} sync-dot--inline"></span>
+                                {{ acct.last_sync_status }}
+                              </span>
+                            }
+                            @if (!acct.last_sync_at) {
+                              <span>Never synced</span>
+                            }
+                          </dd>
+                        </dl>
+                      </div>
+                      <div class="detail-col">
+                        <div class="dcol-title">Schedule &amp; Retries</div>
+                        <dl class="detail-dl">
+                          <dt>Schedule</dt>
+                          <dd>{{ scheduleLabel(acct) }}</dd>
+                          <dt>Max Retries</dt>
+                          <dd>{{ acct.retry_max_attempts != null ? (acct.retry_max_attempts === 0 ? 'Disabled' : acct.retry_max_attempts + ' attempts') : '&#x2014;' }}</dd>
+                          <dt>Retry Delay</dt>
+                          <dd>{{ acct.retry_delay_minutes != null && acct.retry_max_attempts ? acct.retry_delay_minutes + ' min' : '&#x2014;' }}</dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                }
+                <!-- ACH tab -->
+                @if (getExpandTab(acct.id) === 'ach') {
+                  <div class="detail-body">
+                    @if (!acct.ach_enabled) {
+                      <div class="info-box info-box--gray m-16">
+                        ACH origination is not enabled for this account.
+                        <a (click)="openEdit(acct); $event.stopPropagation()" class="link">Configure in Edit</a>
+                      </div>
+                    }
+                    @if (acct.ach_enabled) {
+                      <div class="detail-cols">
+                        <div class="detail-col">
+                          <div class="dcol-title">NACHA Registration</div>
+                          <dl class="detail-dl">
+                            <dt>Company Name</dt> <dd>{{ acct.ach_company_name || '&#x2014;' }}</dd>
+                            <dt>Company ID</dt>   <dd class="mono">{{ acct.ach_company_id || '&#x2014;' }}</dd>
+                            <dt>ODFI Routing</dt> <dd class="mono">{{ acct.ach_odfi_routing || '&#x2014;' }}</dd>
+                            <dt>NACHA Reg.</dt>
+                            <dd>
+                              <span class="bool-badge" [class.bool-badge--on]="acct.ach_nacha_registered">
+                                {{ acct.ach_nacha_registered ? 'On File' : 'Not Registered' }}
+                              </span>
+                              @if (acct.ach_nacha_registered_date) {
+                                <span class="dim"> &#x00B7; {{ acct.ach_nacha_registered_date | date:'mediumDate' }}</span>
+                              }
+                            </dd>
+                          </dl>
+                        </div>
+                        <div class="detail-col">
+                          <div class="dcol-title">Authorized SEC Codes</div>
+                          <div class="sec-pills-block">
+                            @for (c of secCodeList(acct.ach_sec_codes); track c) {
+                              <span class="sec-pill-lg">{{ c }}</span>
+                              <span class="sec-pill-desc">
+                                {{ c === 'PPD' ? 'Patient refunds / pre-authorized consumer' :
+                                c === 'CCD' ? 'Vendor payments / intercompany' :
+                                'Corporate trade w/ invoice detail' }}
+                              </span>
+                            }
+                            @if (!acct.ach_sec_codes) {
+                              <span class="dim">None configured</span>
+                            }
+                          </div>
+                          <div class="dcol-title mt-14">Settlement</div>
+                          <dl class="detail-dl">
+                            <dt>Settlement</dt>
+                            <dd>{{ acct.ach_settlement_days === 0 ? 'Same-Day (T+0)' : 'Standard T+1' }}</dd>
+                          </dl>
+                        </div>
+                        <div class="detail-col">
+                          <div class="dcol-title">Limits &amp; Dual Approval</div>
+                          <dl class="detail-dl">
+                            <dt>Per-Transaction</dt> <dd>${{ acct.ach_transaction_limit | number:'1.0-0' }}</dd>
+                            <dt>Daily Limit</dt>     <dd>${{ acct.ach_daily_limit | number:'1.0-0' }}</dd>
+                            <dt>Dual Approval at</dt><dd>${{ acct.ach_dual_approval_threshold | number:'1.0-0' }}</dd>
+                          </dl>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- -- Audit Log -------------------------------------------------------- -->
+@if (auditView) {
+  <div class="audit-panel">
+    <div class="audit-panel__header">
+      <div class="audit-panel__title">
+        <mat-icon>history</mat-icon>
+        Connection Audit Log
+        @if (auditFilter != null) {
+          <span class="audit-subtitle"> &#x2014; {{ auditAccountLabel(auditFilter) }}</span>
+        }
+      </div>
+      <div class="audit-panel__toolbar">
+        <mat-form-field appearance="outline" class="audit-filter-sel">
+          <mat-label>Filter by Account</mat-label>
+          <mat-select [(ngModel)]="auditFilter" (ngModelChange)="filterAudit($event)">
+            <mat-option [value]="null">All Accounts</mat-option>
+            @for (a of accounts; track a) {
+              <mat-option [value]="a.id">
+                {{ a.bank_name }}{{ a.nickname ? ' &#x2014; ' + a.nickname : '' }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-icon-button type="button" matTooltip="Close" (click)="closeAuditLog()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+    @if (auditLoading) {
+      <div class="xen-loading">Loading audit log&#x2026;</div>
+    }
+    @if (!auditLoading) {
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Account</th>
+            <th>Event</th>
+            <th>Actor</th>
+            <th>Source IP</th>
+            <th>Detail</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (auditEntries.length === 0) {
+            <tr>
+              <td colspan="6" class="empty-cell">No audit log entries found.</td>
+            </tr>
+          }
+          @for (entry of auditEntries; track entry) {
+            <tr class="audit-row">
+              <td class="mono audit-ts">{{ entry.created_at | date:'MM/dd/yy HH:mm:ss' }}</td>
+              <td>
+                <div class="audit-acct">{{ entry.bank_name || 'Deleted Account' }}</div>
+                @if (entry.account_number_last4) {
+                  <div class="audit-acct-sub">&#x2022;&#x2022;&#x2022;&#x2022;{{ entry.account_number_last4 }}</div>
+                }
+              </td>
+              <td>
+                <span class="event-badge event-badge--{{ auditEventMeta(entry.event_type).color }}">
+                  {{ auditEventMeta(entry.event_type).label }}
+                </span>
+              </td>
+              <td class="audit-actor">{{ entry.actor_email }}</td>
+              <td class="mono audit-ip">{{ entry.actor_ip || '&#x2014;' }}</td>
+              <td class="audit-detail">
+                @if (parseDetail(entry.event_detail); as d) {
+                  @if (d.result) {
+                    <span          class="detail-result detail-result--{{ d.result }}">{{ d.result }}</span>
+                  }
+                  @if (d.changed_fields?.length) {
+                    <span class="detail-fields">{{ d.changed_fields.join(', ') }}</span>
+                  }
+                  @if (d.error) {
+                    <span           class="detail-error">{{ d.error }}</span>
+                  }
+                  @if (d.records_pulled != null) {
+                    <span class="detail-note">{{ d.records_pulled }} records &#x00B7; ${{ d.amount_total | number:'1.2-2' }}</span>
+                  }
+                  @if (d.reason && !d.changed_fields && !d.error) {
+                    <span class="detail-note">{{ d.reason }}</span>
+                  }
+                } @else {
+                  @if (entry.event_detail) {
+                    <span class="dim">{{ entry.event_detail | slice:0:80 }}</span>
+                  }
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    @if (auditTotal > auditLimit) {
+      <div class="audit-pagination">
+        <button mat-icon-button type="button" [disabled]="auditOffset === 0" (click)="auditPage(-1)">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="page-info">{{ auditPageInfo() }}</span>
+        <button mat-icon-button type="button" [disabled]="auditOffset + auditLimit >= auditTotal" (click)="auditPage(1)">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    }
+    <div class="audit-compliance-note">
+      <mat-icon>lock</mat-icon>
+      Audit log is append-only per SOC 2 CC7.2 and HITECH &#x00A7;13402.
+      Retention period governed by the storage policy in Admin Settings.
+    </div>
+  </div>
+}
+
+</section>

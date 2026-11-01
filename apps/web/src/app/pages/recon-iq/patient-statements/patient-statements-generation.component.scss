@@ -1,0 +1,117 @@
+.patient-statements {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.ps-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  &__left {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+}
+
+.ps-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.ps-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, var(--color-text-muted));
+}
+
+.ps-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+
+  &--success {
+    background: #e8f5e9;
+    color: var(--color-success);
+    mat-icon { color: var(--color-success); }
+  }
+
+  &--error {
+    background: #fce4ec;
+    color: var(--color-danger);
+    mat-icon { color: var(--color-danger); }
+    a { cursor: pointer; text-decoration: underline; }
+  }
+}
+
+.ps-filter-card {
+  mat-card-content { padding-bottom: 8px !important; }
+}
+
+.ps-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ps-field {
+  min-width: 180px;
+  flex: 1 1 180px;
+
+  &--sm {
+    min-width: 120px;
+    flex: 0 1 140px;
+  }
+}
+
+.ps-reset-btn {
+  align-self: center;
+  margin-top: 4px;
+}
+
+.ps-table-card {
+  overflow: hidden;
+}
+
+.ps-table-scroll {
+  overflow-x: auto;
+}
+
+.col-right {
+  text-align: right;
+}
+
+.ps-balance {
+  font-weight: 500;
+
+  &--high {
+    color: var(--color-danger);
+  }
+}
+
+.ps-row--selected {
+  background: rgba(var(--color-primary-rgb, 63, 81, 181), 0.06);
+}
+
+.ps-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 0 0;
+
+  &__label {
+    font-size: 0.875rem;
+    min-width: 100px;
+    text-align: center;
+  }
+}

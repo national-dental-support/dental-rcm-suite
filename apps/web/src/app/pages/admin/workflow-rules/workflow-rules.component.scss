@@ -1,0 +1,213 @@
+.wf-root {
+  padding: 20px 0;
+}
+
+.wf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.wf-title {
+  margin: 0 0 2px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.wf-subtitle {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.wf-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+// Eval banner
+.wf-eval-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+
+  mat-icon:first-child { font-size: 20px; height: 20px; width: 20px; }
+  span { flex: 1; }
+}
+
+// Loading
+.wf-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+// Empty state
+.wf-empty {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--color-text-muted);
+
+  .wf-empty-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    color: var(--color-border-strong);
+    margin-bottom: 12px;
+  }
+
+  p { margin: 0 0 16px; }
+}
+
+// Rules list
+.wf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wf-rule-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  transition: box-shadow 0.12s;
+
+  &:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+}
+
+.wf-rule-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.wf-rule-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wf-rule-name {
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.wf-rule-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wf-rule-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.wf-chip {
+  display: inline-flex;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--color-bg-subtle);
+  color: var(--color-gray-600);
+  border: 1px solid var(--color-border);
+}
+
+.wf-chip--match {
+  background: #ede9fe;
+  color: #6d28d9;
+  border-color: #c4b5fd;
+}
+
+.wf-chip--action {
+  background: var(--color-info-light);
+  color: var(--color-info);
+  border-color: #93c5fd;
+}
+
+.wf-rule-actions {
+  display: flex;
+  gap: 4px;
+}
+
+// Editor
+.wf-editor {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-subtle);
+}
+
+.wf-editor-title {
+  margin: 0 0 16px;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+}
+
+.wf-form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.wf-field-name { flex: 3; }
+.wf-field-priority { flex: 1; max-width: 120px; }
+.wf-field-full { width: 100%; margin-bottom: 8px; }
+
+.wf-section-label {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-700);
+  margin: 16px 0 8px;
+}
+
+.wf-condition-row,
+.wf-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.wf-cond-field { flex: 2; }
+.wf-cond-op { flex: 1; max-width: 130px; }
+.wf-cond-val { flex: 2; }
+.wf-act-type { flex: 1; }
+.wf-act-msg { flex: 2; }
+
+.wf-add-btn {
+  margin-top: 4px;
+  font-size: var(--font-size-xs);
+}
+
+.wf-form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}

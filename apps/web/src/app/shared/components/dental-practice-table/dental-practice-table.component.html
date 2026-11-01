@@ -1,0 +1,72 @@
+@if (rows$ | async; as rows) {
+  <div class="table-wrapper mat-elevation-z0">
+    <table class="mat-mdc-table custom-table">
+      <thead>
+        <tr>
+          <th>Practice</th>
+          <th class="num"># of Collections</th>
+          <th class="num">Insurance Collections</th>
+          <th class="num">Patient Collections</th>
+          <th class="num">Gross Collections</th>
+          <th class="num">Collection Rate</th>
+          <th class="num">Production Adjustment</th>
+          <th class="num">Collection Adjustment</th>
+          <th class="num">Refund</th>
+          <th class="num">Insurance Billed</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows; track trackRow($index, row)) {
+          <!-- Practice row -->
+          @if (row.kind === 'practice') {
+            <tr
+              class="practice-row"
+              (click)="toggle(row.name)">
+              <td>
+                <button mat-icon-button tabindex="-1">
+                  <mat-icon color="primary">{{ isOpen(row.name) ? 'indeterminate_check_box' : 'add_box' }}</mat-icon>
+                </button>
+                <span class="practice-name" [class.bold]="isOpen(row.name)">{{ row.name }}</span>
+              </td>
+              <td class="num" [class.bold]="isOpen(row.name)">{{ row.totals.numberOfCollections | number }}</td>
+              <td class="num" [class.bold]="isOpen(row.name)">{{ row.totals.insuranceCollections | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num" [class.bold]="isOpen(row.name)">{{ row.totals.patientCollections | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num" [class.bold]="isOpen(row.name)">{{ row.totals.grossCollections | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num" [class.bold]="isOpen(row.name)">{{ row.totals.collectionRateAvg | percent:'1.2-2' }}</td>
+              <td class="num" [class.bold]="isOpen(row.name)">{{ row.totals.prodcutionAdjustment | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num" [class.bold]="isOpen(row.name)">{{ row.totals.collectionAdjustment | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num" [class.bold]="isOpen(row.name)">{{ row.totals.refund | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num" [class.bold]="isOpen(row.name)">{{ row.totals.insuranceBilled | number }}</td>
+            </tr>
+          } @else {
+            <tr class="location-row">
+              <td>
+                <div class="indent">
+                  <mat-icon class="chevron">subdirectory_arrow_right</mat-icon>
+                  <!-- <span>{{ row.location.name }}</span> -->
+                </div>
+              </td>
+              <!-- <td class="num">{{ row.location.numberOfCollections | number }}</td>
+              <td class="num">{{ row.location.insuranceCollections | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num">{{ row.location.patientCollections | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num">{{ row.location.grossCollections | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num">{{ row.location.collectionRate | percent:'1.2-2' }}</td>
+              <td class="num">{{ row.location.prodcutionAdjustment | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num">{{ row.location.collectionAdjustment | currency:'USD':'symbol':'1.0-0' }}</td>
+              <td class="num">{{ row.location.refund | currency:'USD':'symbol':'1.0-0' }}</td> -->
+              <!-- <td class="num">{{ row.location.insuranceBilled | number }}</td> -->
+            </tr>
+          }
+          <!-- Location row -->
+        }
+      </tbody>
+    </table>
+  </div>
+  <mat-paginator
+    [length]="(totalPractices$ | async) ?? 0"
+    [pageIndex]="0"
+    [pageSize]="10"
+    [pageSizeOptions]="[10, 25]"
+    (page)="onPageChange($event)">
+  </mat-paginator>
+}

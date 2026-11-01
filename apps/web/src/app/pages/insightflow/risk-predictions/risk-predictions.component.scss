@@ -1,0 +1,360 @@
+.risk-predictions {
+  padding: 16px 0;
+}
+
+// Loading / Error
+.loading-state, .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: var(--color-text-muted);
+
+  mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--color-danger); }
+  a { color: var(--color-info); cursor: pointer; text-decoration: underline; }
+}
+
+// KPI Row
+.kpi-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.kpi-card {
+  flex: 1;
+  min-width: 180px;
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px !important;
+  }
+
+  .kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-subtle);
+
+    mat-icon { color: var(--color-gray-600); }
+  }
+
+  .kpi-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-gray-700);
+  }
+
+  .kpi-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--color-text-subtle);
+  }
+
+  &.risk-high-bg {
+    border-left: 4px solid var(--color-danger);
+    .kpi-icon { background: #fef2f2; mat-icon { color: var(--color-danger); } }
+    .kpi-value { color: var(--color-danger); }
+  }
+
+  &.risk-medium-bg {
+    border-left: 4px solid var(--color-warning);
+    .kpi-icon { background: #fffbeb; mat-icon { color: var(--color-warning); } }
+    .kpi-value { color: var(--color-warning); }
+  }
+}
+
+// Section toggle
+.section-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  button {
+    font-size: var(--font-size-sm);
+    mat-icon { font-size: 18px; width: 18px; height: 18px; margin-right: 4px; }
+
+    &.active {
+      background: var(--color-info);
+      color: var(--color-surface);
+      border-color: var(--color-info);
+    }
+  }
+}
+
+.section { margin-bottom: 24px; }
+
+// Two column layout
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel-card {
+  mat-card-header { margin-bottom: 12px; }
+  mat-card-title { font-size: 15px !important; font-weight: 600; }
+}
+
+// Risk bars
+.risk-bars { display: flex; flex-direction: column; gap: 12px; }
+
+.risk-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bar-label {
+  width: 60px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-align: right;
+}
+
+.bar-track {
+  flex: 1;
+  height: 24px;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  min-width: 2px;
+  transition: width 0.5s ease;
+}
+
+.risk-high-fill { background: var(--color-danger); }
+.risk-medium-fill { background: var(--color-warning); }
+.risk-low-fill { background: var(--color-success); }
+
+.bar-value {
+  width: 40px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+.total-scored {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+  margin-top: 12px;
+}
+
+// Data tables
+.data-table, .mini-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+    font-size: var(--font-size-sm);
+  }
+
+  th {
+    font-weight: 600;
+    color: var(--color-text-muted);
+    background: var(--color-bg-subtle);
+    position: sticky;
+    top: 0;
+  }
+
+  tbody tr:hover td { background: var(--color-bg-subtle); }
+}
+
+.trend-table-wrap {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+// Risk badges
+.risk-score-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+
+  &.risk-high { background: #fef2f2; color: var(--color-danger); }
+  &.risk-medium { background: #fffbeb; color: var(--color-warning); }
+  &.risk-low { background: #f0fdf4; color: var(--color-success); }
+}
+
+.risk-tier-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.risk-high { background: #fef2f2; color: var(--color-danger); }
+  &.risk-medium { background: #fffbeb; color: var(--color-warning); }
+  &.risk-low { background: #f0fdf4; color: var(--color-success); }
+}
+
+.risk-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+
+  &.risk-high { background: #fef2f2; color: var(--color-danger); }
+  &.risk-low { color: var(--color-success); }
+}
+
+.risk-high { color: var(--color-danger); }
+.risk-medium { color: var(--color-warning); }
+.risk-low { color: var(--color-success); }
+
+.claim-id {
+  font-family: monospace;
+  font-size: var(--font-size-xs);
+}
+
+.carc-code {
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.rate-col {
+  font-weight: 600;
+}
+
+.status-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: var(--color-success);
+
+  &.denied {
+    background: #ffebee;
+    color: var(--color-danger);
+  }
+}
+
+.recovery-badge {
+  font-weight: 600;
+
+  &.good { color: var(--color-success); }
+  &.poor { color: var(--color-danger); }
+}
+
+.empty {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-md);
+  padding: 24px 0;
+  text-align: center;
+}
+
+// Algorithm info button inside kpi-label
+.algo-info-btn {
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  vertical-align: middle;
+  margin-left: 2px;
+
+  mat-icon { font-size: var(--font-size-base); width: var(--font-size-base); height: var(--font-size-base); color: var(--color-info); }
+}
+
+// Algorithm transparency panel
+.algo-panel {
+  background: #f0f7ff;
+  border: 1px solid #bbdefb;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+
+  .algo-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: var(--font-size-md);
+
+    mat-icon { color: var(--color-info); font-size: 20px; width: 20px; height: 20px; }
+    button { margin-left: auto; }
+  }
+
+  .algo-intro {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    margin: 0 0 12px;
+    line-height: 1.5;
+  }
+
+  .algo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+    margin-bottom: 12px;
+
+    th {
+      background: #e3f2fd;
+      padding: 6px 10px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--color-info);
+      border-bottom: 1px solid #bbdefb;
+    }
+
+    td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e3f2fd;
+      vertical-align: top;
+      color: var(--color-gray-700);
+      line-height: 1.4;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    tr.algo-bonus td { background: #fff8e1; }
+  }
+
+  .algo-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-600);
+    margin: 0;
+    line-height: 1.5;
+
+    mat-icon { font-size: var(--font-size-base); width: var(--font-size-base); height: var(--font-size-base); color: var(--color-info); flex-shrink: 0; margin-top: 1px; }
+  }
+}
+
+// High-rate highlight in claims table
+.rate-high {
+  color: var(--color-danger);
+  font-weight: 600;
+}

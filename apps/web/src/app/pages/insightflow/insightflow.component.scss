@@ -1,0 +1,183 @@
+@use 'sass:color';
+
+/* ===========================
+   InsightFlow Landing Styles
+   =========================== */
+
+/* Tokens (fallback values - live colors come from CSS vars set by ThemeService) */
+$bg:            var(--color-bg-subtle);
+$card-bg:       var(--color-surface);
+$card-border:   #e7edf5;
+$text:          var(--color-text);
+$text-muted:    var(--color-text-muted);
+$chevron:       #c0c6d1;
+$ok:            var(--color-success);
+$warn:          var(--color-warning);
+$flag:          var(--color-danger);
+
+/* Accent colors */
+$blue:   #5b8def;
+$orange: #ff8c3a;
+$purple: #8b5cf6;
+$green:  #22c55e;  // kept as hex: used in SCSS mix() - CSS vars not valid here
+$sky:    #60a5fa;
+
+/* soft chip - CSS vars override at runtime; SCSS values are compile-time fallbacks */
+
+:host { display: block; background: var(--rcm-bg, #{$bg}); min-height: 100%; }
+
+/* ===== Page frame ===== */
+.page { padding: 24px; min-height: calc(100vh - 64px); }
+.page-header .title { margin: 4px 0 var(--font-size-base); font-weight: 800; color: $text; font-size: 22px; }
+
+div breadcombs{
+  
+}
+/* ===== Card shell (shared) ===== */
+.menu-card {
+  background: $card-bg;
+  border: 1px solid $card-border;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  padding: 0;
+}
+
+.menu-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px;
+
+  h2 { margin: 0; font-size: 18px; font-weight: 700; color: $text; }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  .muted { font-size: var(--font-size-xs); color: $text-muted; }
+}
+
+/* ===== LIST VIEW (unchanged) ===== */
+:host ::ng-deep .mat-mdc-list-base { padding: 12px 16px 16px; }
+
+/* Make MDC wrappers a single row */
+:host ::ng-deep .mat-mdc-list-item .mdc-list-item__content,
+:host ::ng-deep .mat-mdc-list-item .mdc-list-item__content .mat-mdc-list-item-unscoped-content,
+:host ::ng-deep .mat-mdc-list-item .mdc-list-item__primary-text {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+
+:host ::ng-deep a.menu-row.mat-mdc-list-item {
+  margin: 10px 4px;
+  border: 1px solid $card-border;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-height: 68px;
+  padding: 16px 20px;
+  transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease;
+  text-decoration: none;
+
+  &:hover {
+    border-color: color.adjust($card-border, $lightness: 6%);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 4px 10px rgba(15, 23, 42, .06);
+    transform: translateY(-1px);
+  }
+}
+
+.leading-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-md); display: grid; place-content: center;
+  background: var(--rcm-color-1-tint, #{color.mix(white, $blue, 88%)});
+  color: var(--rcm-color-1, #{$blue});
+  :host ::ng-deep & mat-icon { font-size: 20px; line-height: 20px; }
+  &.color-blue   { background: var(--rcm-color-1-tint, #{color.mix(white, $blue,   88%)}); color: var(--rcm-color-1, #{$blue});   }
+  &.color-orange { background: var(--rcm-color-2-tint, #{color.mix(white, $orange, 88%)}); color: var(--rcm-color-2, #{$orange}); }
+  &.color-purple { background: var(--rcm-color-3-tint, #{color.mix(white, $purple, 88%)}); color: var(--rcm-color-3, #{$purple}); }
+  &.color-green  { background: var(--rcm-color-4-tint, #{color.mix(white, $green,  88%)}); color: var(--rcm-color-4, #{$green});  }
+  &.color-sky    { background: var(--rcm-color-5-tint, #{color.mix(white, $sky,    88%)}); color: var(--rcm-color-5, #{$sky});    }
+}
+
+.row-text { display: flex; flex-direction: column; gap: 2px; }
+.row-text .title { font-weight: 700; color: $text; font-size: var(--font-size-base); }
+
+.meta.muted { font-size: var(--font-size-xs); color: $text-muted; }
+.spacer { flex: 1 1 auto; }
+.status.ok      { color: $ok; }
+.status.warning { color: $warn; }
+.status.flagged { color: $flag; }
+.status.loading { color: $text-muted; font-size: 18px; }
+.chevron { color: $chevron; }
+.meta-block { display: flex; align-items: center; margin-right: 8px; }
+:host ::ng-deep mat-divider { border-top-color: $card-border !important; }
+
+/* ===== GRID VIEW (corrected) ===== */
+.grid {
+  padding: 18px 22px 24px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+
+  @media (max-width: 1200px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 720px)  { grid-template-columns: 1fr; }
+}
+
+/* card */
+.grid-card {
+  border: 1px solid $card-border;
+  border-radius: 14px;
+  background: var(--color-surface);
+  padding: 22px;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-decoration: none;
+  transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease;
+
+  &:hover {
+    border-color: color.adjust($card-border, $lightness: 6%);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 6px 14px rgba(15, 23, 42, .07);
+    transform: translateY(-1px);
+  }
+}
+
+/* header: icon ABOVE & CENTERED, title centered */
+.grid-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* <<< center the icon + title */
+  gap: 12px;
+
+  .leading-icon {
+    width: 48px; height: 48px; border-radius: 14px;  /* larger chip like mock */
+    /* color variants already handled by .color-* classes */
+    :host ::ng-deep & mat-icon { font-size: 26px; }
+  }
+
+  .title {
+    font-weight: 700;
+    color: $text;
+    font-size: 15px;
+    line-height: 1.25;
+    text-align: center;  /* <<< center title under icon */
+  }
+}
+
+/* metadata block: left-aligned under the centered header */
+.grid-meta {
+  margin-top: 2px;
+  display: flex; flex-direction: column; gap: 10px;
+
+  .row {
+    display: flex; align-items: center; gap: 10px;
+    font-size: var(--font-size-sm); color: $text-muted;
+
+    .label { width: 64px; }
+    .value { color: $text-muted; }
+  }
+
+  .status.ok      { color: $ok; }
+  .status.warning { color: $warn; }
+  .status.flagged { color: $flag; }
+  .status.loading { color: $text-muted; font-size: 18px; }
+}
+
+/* keep MDC ripple from tinting list rows */
+:host ::ng-deep .mat-mdc-list-item:hover .mdc-list-item__ripple::before,
+:host ::ng-deep .mat-mdc-list-item:hover .mdc-list-item__ripple::after { opacity: 0 !important; }

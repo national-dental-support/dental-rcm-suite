@@ -1,0 +1,32 @@
+<h2 mat-dialog-title>Confirm Match</h2>
+
+<div mat-dialog-content class="content">
+  <p class="subtitle">
+    You are about to match the following records. Please confirm.
+  </p>
+
+  <div class="block">
+    <div class="block__title">Payment</div>
+    <div class="row"><span class="label">Payment ID:</span> <span class="value">{{ data.payment.paymentId }}</span></div>
+    <div class="row"><span class="label">Value:</span> <span class="value">{{ data.payment.value }}</span></div>
+    <div class="row"><span class="label">Date:</span> <span class="value">{{ data.payment.date }}</span></div>
+    <div class="row"><span class="label">Payer:</span> <span class="value">{{ data.payment.payer }}</span></div>
+    <div class="row"><span class="label">Type:</span> <span class="value">{{ data.payment.type }}</span></div>
+    <div class="row"><span class="label">Amount:</span> <span class="value">{{ data.payment.amount }}</span></div>
+  </div>
+
+  <div class="block">
+    <div class="block__title">EOB/ERA</div>
+    <div class="row"><span class="label">EOB/ERA ID:</span> <span class="value">{{ data.eob.eobId }}</span></div>
+    <div class="row"><span class="label">Value:</span> <span class="value">{{ data.eob.value }}</span></div>
+    <div class="row"><span class="label">Date:</span> <span class="value">{{ data.eob.date }}</span></div>
+    <div class="row"><span class="label">Payer:</span> <span class="value">{{ data.eob.payer }}</span></div>
+    <div class="row"><span class="label">Type:</span> <span class="value">{{ data.eob.type }}</span></div>
+    <div class="row"><span class="label">Amount:</span> <span class="value">{{ data.eob.amount }}</span></div>
+  </div>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="confirm()">Confirm Match</button>
+</div>

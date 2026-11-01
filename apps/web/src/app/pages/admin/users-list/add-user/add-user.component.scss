@@ -1,0 +1,214 @@
+/* Page shell to match Figma canvas */
+:host {
+  display: block;
+  background: var(--rcm-bg, #eef1f6); /* slightly bluer than var(--color-bg-subtle) to match your shot */
+  min-height: 100vh;
+  padding:20px;
+}
+
+/* Align the select text baseline with inputs without breaking label math */
+:host ::ng-deep .field .mat-mdc-select-trigger {
+  display: flex;
+  align-items: center; /* vertical-center the selected value */
+}
+
+/* Keep the chevron centered too (some themes need this) */
+:host ::ng-deep .field .mat-mdc-select-arrow-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+/* If you still see a teeny baseline drift, nudge the select 1px: */
+:host ::ng-deep .role-field .mat-mdc-select-trigger {
+  transform: translateY(-1px); /* try -1px, 0, or -2px */
+}
+
+
+/* Title */
+.page-title {
+  margin: 16px 16px;
+  padding-bottom:10px;
+  font-weight: 800;
+  font-size: 28px;
+  letter-spacing: .2px;
+  color: var(--color-text);
+}
+
+/* Centered, wider card */
+.add-user-page {
+  /* WIDER + TALLER */
+//   width: min(1280px, 96vw);
+//   margin: 0 auto 48px;
+}
+
+/* Card */
+.panel {
+  padding: 24px 28px;     /* more breathing room */
+  margin:25px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  min-height: 620px;      /* TALLER */
+  box-shadow: 0 10px 30px rgba(17, 24, 39, .08), 0 1px 2px rgba(0,0,0,.05);
+}
+
+/* Section headers */
+.section { padding: 2px 0; }
+
+.section__header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section__title {
+  margin: 0;
+  font-weight: 700;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+}
+
+.section__hint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Divider spacing */
+.divider { margin: 14px 0 16px; border-top-color: var(--color-border); }
+
+/* Grids */
+.grid {
+  display: grid;
+  gap: 16px;
+
+  &.grid-4 { grid-template-columns: repeat(4, minmax(200px, 1fr)); }
+}
+
+mat-form-field { width: 100%; }
+
+/* ===== Permissions ===== */
+.perm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* 3 equal columns */
+  gap: 28px;
+}
+
+.perm-col { display: flex; flex-direction: column; gap: 10px; }
+.perm-col__title {
+  margin: 0 0 6px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-gray-800);
+  letter-spacing: .2px;
+}
+
+/* ===== Queue ===== */
+.queue-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 28px;
+}
+
+.queue-col { display: flex; flex-direction: column; }
+.queue-col__title {
+  margin: 0 0 6px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-gray-800);
+  letter-spacing: .2px;
+}
+
+.queue-search-field {
+  width: 100%;
+  margin-bottom: 4px;
+
+  ::ng-deep .mat-mdc-text-field-wrapper { height: 36px; }
+  ::ng-deep .mat-mdc-form-field-flex { height: 36px; align-items: center; }
+  ::ng-deep .mat-mdc-form-field-infix { padding: 0 !important; min-height: auto; }
+  ::ng-deep .mat-mdc-input-element { height: 36px; line-height: 36px; font-size: var(--font-size-xs); }
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+  ::ng-deep .mat-mdc-form-field-icon-prefix,
+  ::ng-deep .mat-mdc-form-field-icon-suffix { align-self: center; }
+
+  /* Ensure square (4px) corners - prevents global pill-radius from leaking in */
+  ::ng-deep .mdc-notched-outline__leading  { border-radius: var(--radius-sm) 0 0 var(--radius-sm) !important; min-width: var(--radius-sm); }
+  ::ng-deep .mdc-notched-outline__trailing { border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important; }
+}
+
+.select-all-row {
+  margin-bottom: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+.checkbox-stack {
+  display: grid;
+  gap: 8px;
+  max-height: calc(6 * 40px); /* show ~6 items; scroll beyond */
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.3);
+    border-radius: 999px;
+  }
+}
+
+/* Actions */
+.actions {
+  padding-top: 14px;
+  margin-top: 12px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Typography on checkbox labels */
+::ng-deep .mat-mdc-checkbox .mdc-form-field {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+/* -- Hardening for "missing box" issue --
+   If anything in your global styles/theme reduced opacity or hid the MDC checkbox
+   background, these rules make the square visible again in all contexts. */
+::ng-deep .mat-mdc-checkbox .mdc-checkbox__background {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  display: block !important;
+}
+::ng-deep .mat-mdc-checkbox .mdc-checkbox__ripple {
+  /* don't hide the control if someone set display:none on ripples globally */
+  display: block !important;
+}
+::ng-deep .mat-mdc-checkbox .mdc-checkbox {
+  width: 18px; height: 18px;
+}
+
+/* ===== Align mat-select text with matInput (Angular Material v16 safe) ===== */
+:host ::ng-deep .field .mat-mdc-select-trigger {
+  display: flex;
+  align-items: center; /* vertical-center the selected value */
+}
+
+:host ::ng-deep .field .mat-mdc-select-arrow-wrapper {
+  display: flex;
+  align-items: center; /* keep chevron centered */
+}
+
+/* Optional 1px nudge if your font/theme still shows a tiny baseline drift */
+:host ::ng-deep .role-field .mat-mdc-select-trigger {
+  transform: translateY(-1px); /* try -1px, 0, or -2px */
+}
+/* Responsive stacking like Figma */
+@media (max-width: 1200px) {
+  .grid.grid-4 { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
+@media (max-width: 820px) {
+  .perm-grid, .queue-grid { grid-template-columns: 1fr; }
+}

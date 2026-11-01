@@ -1,0 +1,256 @@
+<div class="exec-root" role="region" aria-label="Executive Summary">
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="exec-loading">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error && !loading) {
+    <div class="exec-error">
+      <mat-icon>error_outline</mat-icon>
+      <p>Failed to load executive summary. Please try again.</p>
+    </div>
+  }
+
+  <!-- Content -->
+  @if (!loading && !error && data) {
+    <!-- -- LAYOUT TOOLBAR -- -->
+    <div class="layout-toolbar">
+      <div class="layout-toolbar-left">
+        @if (layouts.length > 0) {
+          <mat-select
+            [(ngModel)]="activeLayoutId"
+            (ngModelChange)="selectLayout($event)"
+            class="layout-select"
+            placeholder="Default view">
+            <mat-option [value]="null">Default view</mat-option>
+            @for (l of layouts; track trackByLayout($index, l)) {
+              <mat-option
+                [value]="l.id">
+                {{ l.name }}{{ l.isDefault ? ' &#x2605;' : '' }}
+              </mat-option>
+            }
+          </mat-select>
+        }
+        @if (activeLayoutId != null) {
+          <button
+            mat-icon-button
+            class="delete-layout-btn"
+            matTooltip="Delete this layout"
+            matTooltipPosition="above"
+            (click)="deleteLayout(activeLayout!)">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        }
+        @if (layoutError) {
+          <span class="layout-error">{{ layoutError }}</span>
+        }
+      </div>
+      <button mat-stroked-button color="primary" (click)="openCustomizeDialog()" [disabled]="savingLayout">
+        <mat-icon>tune</mat-icon>
+        Customize
+      </button>
+    </div>
+    <!-- -- A. AI NARRATIVE -- -->
+    <div class="narrative-card">
+      @if (!narrativeText && !narrativeLoading) {
+        <div class="narrative-prompt">
+          <mat-icon class="narrative-icon">auto_awesome</mat-icon>
+          <div class="narrative-prompt-text">
+            <strong>AI Executive Summary</strong>
+            <span>Generate a plain-language summary of these metrics with a recommended action.</span>
+          </div>
+          <button type="button" mat-stroked-button color="primary" (click)="generateNarrative()">
+            Generate
+          </button>
+        </div>
+      }
+      @if (narrativeLoading) {
+        <div class="narrative-generating">
+          <mat-spinner diameter="20"></mat-spinner>
+          <span>Generating summary&hellip;</span>
+        </div>
+      }
+      @if (narrativeText) {
+        <div class="narrative-result">
+          <mat-icon class="narrative-icon">auto_awesome</mat-icon>
+          <p class="narrative-body">{{ narrativeText }}</p>
+          <button type="button" mat-icon-button matTooltip="Regenerate" class="narrative-regen" (click)="generateNarrative()">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+      }
+      @if (narrativeError) {
+        <div class="narrative-error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ narrativeError }}</span>
+          <button type="button" mat-button color="primary" (click)="generateNarrative()">Retry</button>
+        </div>
+      }
+    </div>
+
+    <!-- -- B. OVERVIEW BAR -- -->
+    <div class="overview-bar" [ngClass]="overallStatusClass()">
+      <div class="overview-left">
+        <mat-icon class="ov-icon">
+          {{ data.overallStatus === 'red' ? 'error' : data.overallStatus === 'yellow' ? 'warning' : 'check_circle' }}
+        </mat-icon>
+        <span class="ov-label">Overall Health: <strong>{{ overallLabel() }}</strong></span>
+      </div>
+      <div class="overview-counts">
+        @if (data.criticalCount) {
+          <span class="ov-count ov-critical">{{ data.criticalCount }} Critical</span>
+        }
+        @if (data.warningCount) {
+          <span class="ov-count ov-warning" >{{ data.warningCount }} Warning</span>
+        }
+        @if (data.okCount) {
+          <span class="ov-count ov-ok"      >{{ data.okCount }} OK</span>
+        }
+      </div>
+      <span class="ov-ts">Generated {{ formatTs(data.generatedAt) }}</span>
+    </div>
+
+    <!-- -- C. PRODUCT CARDS -- -->
+    @if (displayedSections.length) {
+      <div class="section-grid">
+        @for (section of displayedSections; track trackBySection($index, section)) {
+          <div class="section-card" [ngClass]="'section-card--' + section.slug">
+            <div class="section-header">
+              <mat-icon [style.color]="getColor(section.slug)">{{ getIcon(section.slug) }}</mat-icon>
+              <h3>{{ section.label }}</h3>
+              <!-- #69: info icon on payer-iq card header -->
+              @if (getSectionTooltip(section.slug)) {
+                <mat-icon
+                  class="info-tip section-info-tip"
+                  [matTooltip]="getSectionTooltip(section.slug)"
+                  matTooltipPosition="above"
+                >info</mat-icon>
+              }
+              <span class="rag-badge" [ngClass]="statusClass(section.status)">
+                {{ section.status === 'red' ? 'Critical' : section.status === 'yellow' ? 'Warning' : section.status === 'error' ? 'Unavailable' : 'OK' }}
+              </span>
+            </div>
+            @if (section.status === 'error') {
+              <div class="section-degraded">
+                <mat-icon>cloud_off</mat-icon>
+                <p>{{ section.message || 'This section could not be loaded.' }}</p>
+              </div>
+            }
+            @if (section.kpis.length) {
+            <div class="kpi-grid">
+              @for (kpi of section.kpis; track trackByKpi($index, kpi)) {
+                <div class="kpi-item"
+                     [class.kpi-item--clickable]="!!getKpiRoute(kpi.key)"
+                     (click)="navigateToKpi(kpi.key)"
+                     [attr.tabindex]="getKpiRoute(kpi.key) ? 0 : null"
+                     [attr.role]="getKpiRoute(kpi.key) ? 'button' : null"
+                     (keydown.enter)="navigateToKpi(kpi.key)">
+                  <span class="kpi-value">{{ formatKpi(kpi) }}</span>
+                  <span class="kpi-label">
+                    {{ kpi.label }}
+                    @if (getKpiTooltip(kpi.key)) {
+                      <mat-icon
+                        class="info-tip"
+                        [matTooltip]="getKpiTooltip(kpi.key)"
+                        matTooltipPosition="above"
+                      >info</mat-icon>
+                    }
+                  </span>
+                  @if (getKpiRoute(kpi.key)) {
+                    <span class="kpi-view-link">View &#x2192;</span>
+                  }
+                </div>
+              }
+            </div>
+            }
+            <!-- Payer risk table (payer-iq only) -->
+            @if (section.topPayers?.length) {
+              <div class="payer-table">
+                <table>
+                  <thead>
+                    <tr><th>Payer</th><th>Denial Rate</th><th>Denied</th><th>Total</th></tr>
+                  </thead>
+                  <tbody>
+                    @for (p of section.topPayers; track trackByPayer($index, p)) {
+                      <tr>
+                        <td>{{ p.payerName }}</td>
+                        <td>{{ (p.denialRate * 100).toFixed(1) }}%</td>
+                        <td>{{ p.deniedCount }}</td>
+                        <td>{{ p.totalCount }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+            <!-- Top Preventable Denials (denial-iq only) -->
+            @if (section.topReasons?.length) {
+              <div class="payer-table reasons-table">
+                <p class="subtable-label">Top Preventable Denials (Last 90 Days)</p>
+                <table>
+                  <thead>
+                    <tr><th>Denial Reason</th><th>Current (90d)</th><th>Prior (90d)</th></tr>
+                  </thead>
+                  <tbody>
+                    @for (r of section.topReasons; track $index) {
+                      <tr>
+                        <td>{{ r.reason }}</td>
+                        <td>{{ formatAmount(r.currentAmount) }}</td>
+                        <td>{{ formatAmount(r.previousAmount) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+            <!-- Alert callouts inside the product card -->
+            @for (alert of section.alerts; track $index) {
+              <div class="alert-callout" [ngClass]="severityClass(alert.severity)">
+                <mat-icon class="alert-icon">{{ severityIcon(alert.severity) }}</mat-icon>
+                <div class="alert-body">
+                  <p class="alert-msg">{{ alert.message }}</p>
+                  <div class="alert-actions">
+                    @for (a of alert.actions; track $index) {
+                      <a [routerLink]="a.link" [queryParams]="a.queryParams ?? null" class="alert-link">{{ a.label }} &#x2192;</a>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+    <!-- -- D. PRIORITY ACTION QUEUE -- -->
+    @if (data.actionQueue?.length) {
+      <div class="action-section">
+        <h3 class="section-title">
+          <mat-icon>playlist_add_check</mat-icon>
+          Priority Action Queue
+        </h3>
+        @for (a of data.actionQueue; track $index) {
+          <div class="action-row">
+            <span class="priority-chip" [ngClass]="priorityClass(a.priority)">
+              {{ a.priority === 'high' ? 'P1' : a.priority === 'medium' ? 'P2' : 'P3' }}
+            </span>
+            <span class="product-chip grey">{{ a.product }}</span>
+            <span class="action-label">{{ a.label }}</span>
+            <a [routerLink]="a.link" [queryParams]="a.queryParams ?? null" class="action-nav" matRipple>
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+          </div>
+        }
+      </div>
+    }
+    @if (displayedSections.length === 0) {
+      <div class="exec-empty">
+        <mat-icon>analytics</mat-icon>
+        <p>No data available for your subscribed products.</p>
+      </div>
+    }
+  }
+</div>

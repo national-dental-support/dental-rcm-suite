@@ -1,0 +1,179 @@
+<div class="wf-root">
+
+  <!-- Header bar -->
+  <div class="wf-header">
+    <div>
+      <h3 class="wf-title">Workflow Rules</h3>
+      <p class="wf-subtitle">Configure automated actions triggered by claim conditions</p>
+    </div>
+    <div class="wf-header-actions">
+      <button mat-stroked-button color="primary" (click)="runEvaluation()" [disabled]="evaluating">
+        <mat-icon>play_arrow</mat-icon> Run Rules Now
+      </button>
+      <button mat-flat-button color="primary" (click)="addRule()" [disabled]="!!editingRule">
+        <mat-icon>add</mat-icon> New Rule
+      </button>
+    </div>
+  </div>
+
+  <!-- Evaluate result banner -->
+  @if (lastEvalResult) {
+    <div class="wf-eval-banner">
+      <mat-icon>check_circle</mat-icon>
+      <span>{{ lastEvalResult.message }} &mdash; {{ lastEvalResult.results.length }} claim(s) matched</span>
+      <button mat-icon-button (click)="lastEvalResult = null"><mat-icon>close</mat-icon></button>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="wf-loading">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!loading && rules.length === 0 && !editingRule) {
+    <div class="wf-empty">
+      <mat-icon class="wf-empty-icon">rule</mat-icon>
+      <p>No workflow rules configured yet.</p>
+      <button mat-flat-button color="primary" (click)="addRule()">Create Your First Rule</button>
+    </div>
+  }
+
+  <!-- Rules list -->
+  @if (!loading && rules.length > 0 && !editingRule) {
+    <div class="wf-list">
+      @for (rule of rules; track rule) {
+        <div class="wf-rule-card">
+          <div class="wf-rule-left">
+            <mat-slide-toggle
+              [checked]="rule.isActive"
+              (change)="toggleActive(rule)"
+              color="primary">
+            </mat-slide-toggle>
+            <div class="wf-rule-info">
+              <span class="wf-rule-name">{{ rule.name }}</span>
+              @if (rule.description) {
+                <span class="wf-rule-desc">{{ rule.description }}</span>
+              }
+              <div class="wf-rule-chips">
+                <span class="wf-chip wf-chip--match">Match {{ rule.matchType }}</span>
+                @for (c of rule.conditions; track c) {
+                  <span class="wf-chip">
+                    {{ getFieldLabel(c.field) }} {{ c.operator }} {{ c.value }}
+                  </span>
+                }
+                @for (a of rule.actions; track a) {
+                  <span class="wf-chip wf-chip--action">
+                    {{ getActionLabel(a.actionType) }}
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="wf-rule-actions">
+            <button mat-icon-button (click)="editRule(rule)" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deleteRule(rule)" matTooltip="Delete">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Edit / Create form -->
+  @if (editingRule) {
+    <div class="wf-editor">
+      <h4 class="wf-editor-title">{{ isNewRule ? 'New Rule' : 'Edit Rule' }}</h4>
+      <div class="wf-form-row">
+        <mat-form-field appearance="outline" class="wf-field-name">
+          <mat-label>Rule Name</mat-label>
+          <input matInput [(ngModel)]="editingRule.name" placeholder="e.g. High-value aged claims">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="wf-field-priority">
+          <mat-label>Priority</mat-label>
+          <input matInput type="number" [(ngModel)]="editingRule.priority">
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="wf-field-full">
+        <mat-label>Description</mat-label>
+        <textarea matInput [(ngModel)]="editingRule.description" rows="2"
+        placeholder="Describe what this rule does..."></textarea>
+      </mat-form-field>
+      <div class="wf-form-row">
+        <mat-button-toggle-group [(ngModel)]="editingRule.matchType">
+          <mat-button-toggle value="all">Match ALL conditions</mat-button-toggle>
+          <mat-button-toggle value="any">Match ANY condition</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+      <!-- Conditions -->
+      <div class="wf-section-label">Conditions</div>
+      @for (cond of editingRule.conditions; track cond; let i = $index) {
+        <div class="wf-condition-row">
+          <mat-form-field appearance="outline" class="wf-cond-field">
+            <mat-select [(ngModel)]="cond.field">
+              @for (f of conditionFields; track f) {
+                <mat-option [value]="f.value">{{ f.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="wf-cond-op">
+            <mat-select [(ngModel)]="cond.operator">
+              @for (op of operators; track op) {
+                <mat-option [value]="op.value">{{ op.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="wf-cond-val">
+            <input matInput [(ngModel)]="cond.value" placeholder="Value">
+          </mat-form-field>
+          <button mat-icon-button color="warn" (click)="removeCondition(i)"
+            [disabled]="editingRule.conditions.length <= 1">
+            <mat-icon>remove_circle_outline</mat-icon>
+          </button>
+        </div>
+      }
+      <button mat-stroked-button (click)="addCondition()" class="wf-add-btn">
+        <mat-icon>add</mat-icon> Add Condition
+      </button>
+      <!-- Actions -->
+      <div class="wf-section-label">Actions</div>
+      @for (act of editingRule.actions; track act; let i = $index) {
+        <div class="wf-action-row">
+          <mat-form-field appearance="outline" class="wf-act-type">
+            <mat-select [(ngModel)]="act.actionType">
+              @for (at of actionTypes; track at) {
+                <mat-option [value]="at.value">{{ at.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (act.actionType === 'add-note') {
+            <mat-form-field appearance="outline" class="wf-act-msg">
+              <mat-label>Note message</mat-label>
+              <input matInput [(ngModel)]="act.params.message" placeholder="Note text...">
+            </mat-form-field>
+          }
+          <button mat-icon-button color="warn" (click)="removeAction(i)"
+            [disabled]="editingRule.actions.length <= 1">
+            <mat-icon>remove_circle_outline</mat-icon>
+          </button>
+        </div>
+      }
+      <button mat-stroked-button (click)="addAction()" class="wf-add-btn">
+        <mat-icon>add</mat-icon> Add Action
+      </button>
+      <!-- Form buttons -->
+      <div class="wf-form-buttons">
+        <button mat-button (click)="cancelEdit()">Cancel</button>
+        <button mat-flat-button color="primary" (click)="saveRule()" [disabled]="saving || !editingRule.name.trim()">
+          {{ saving ? 'Saving...' : (isNewRule ? 'Create Rule' : 'Update Rule') }}
+        </button>
+      </div>
+    </div>
+  }
+
+</div>

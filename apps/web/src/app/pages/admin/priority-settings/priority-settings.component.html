@@ -1,0 +1,169 @@
+<div class="priority-admin">
+
+  @if (loading) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+
+  @if (!loading) {
+    <app-section-card>
+      <!-- Header -->
+      <div class="section-header">
+        <h3>Priority Recalculation</h3>
+        <div class="header-actions">
+          <mat-slide-toggle [checked]="enabled" (change)="toggleEnabled()">
+            {{ enabled ? 'Enabled' : 'Disabled' }}
+          </mat-slide-toggle>
+          <button mat-flat-button color="primary" (click)="triggerRecalc()" [disabled]="recalculating">
+            <mat-icon>refresh</mat-icon>
+            {{ recalculating ? 'Recalculating...' : 'Run Now' }}
+          </button>
+        </div>
+      </div>
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value">{{ stats.totalScored }}</div>
+          <div class="stat-label">Claims Scored</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ stats.avgScore }}</div>
+          <div class="stat-label">Avg Score</div>
+        </div>
+        <div class="stat-card alert">
+          <div class="stat-value">{{ distribution.high }}</div>
+          <div class="stat-label">High Priority</div>
+        </div>
+        <div class="stat-card warn">
+          <div class="stat-value">{{ distribution.medium }}</div>
+          <div class="stat-label">Medium</div>
+        </div>
+        <div class="stat-card ok">
+          <div class="stat-value">{{ distribution.low }}</div>
+          <div class="stat-label">Low</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value last-run">{{ stats.lastRunAt ? (stats.lastRunAt | date:'short') : 'Never' }}</div>
+          <div class="stat-label">Last Recalculation</div>
+        </div>
+      </div>
+      <!-- Weights configuration -->
+      <div class="form-section">
+        <h4>Priority Weights</h4>
+        <p class="hint">
+          Adjust how much each factor contributes to the priority score. Values are percentages (should total 100).
+          Current total: <strong [class.invalid]="weightsTotal !== 100">{{ weightsTotal }}%</strong>
+        </p>
+        <div class="weights-grid">
+          <div class="weight-item">
+            <mat-icon class="weight-icon">schedule</mat-icon>
+            <div class="weight-info">
+              <div class="weight-name">Aging Days</div>
+              <div class="weight-desc">Older claims get higher priority</div>
+            </div>
+            <mat-form-field appearance="outline" class="weight-input">
+              <input matInput type="number" [(ngModel)]="weights.aging" min="0" max="100">
+              <span matSuffix>%</span>
+            </mat-form-field>
+          </div>
+          <div class="weight-item">
+            <mat-icon class="weight-icon">attach_money</mat-icon>
+            <div class="weight-info">
+              <div class="weight-name">Charge Amount</div>
+              <div class="weight-desc">Higher-value claims prioritized</div>
+            </div>
+            <mat-form-field appearance="outline" class="weight-input">
+              <input matInput type="number" [(ngModel)]="weights.value" min="0" max="100">
+              <span matSuffix>%</span>
+            </mat-form-field>
+          </div>
+          <div class="weight-item">
+            <mat-icon class="weight-icon">warning</mat-icon>
+            <div class="weight-info">
+              <div class="weight-name">Filing Deadline</div>
+              <div class="weight-desc">Urgency near timely filing limits</div>
+            </div>
+            <mat-form-field appearance="outline" class="weight-input">
+              <input matInput type="number" [(ngModel)]="weights.deadline" min="0" max="100">
+              <span matSuffix>%</span>
+            </mat-form-field>
+          </div>
+          <div class="weight-item">
+            <mat-icon class="weight-icon">group</mat-icon>
+            <div class="weight-info">
+              <div class="weight-name">Workload Balance</div>
+              <div class="weight-desc">Favors less-loaded specialists</div>
+            </div>
+            <mat-form-field appearance="outline" class="weight-input">
+              <input matInput type="number" [(ngModel)]="weights.workload" min="0" max="100">
+              <span matSuffix>%</span>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button mat-flat-button color="primary" (click)="saveWeights()"
+            [disabled]="saving || weightsTotal !== 100">
+            {{ saving ? 'Saving...' : 'Save Weights' }}
+          </button>
+          @if (weightsTotal !== 100) {
+            <span class="total-warn">
+              Weights must total 100% (currently {{ weightsTotal }}%)
+            </span>
+          }
+        </div>
+      </div>
+      <!-- Top priority claims preview -->
+      <div class="section-header" style="margin-top: 24px;">
+        <h3>Top Priority Claims</h3>
+        <button mat-stroked-button (click)="loadTopClaims()">
+          <mat-icon>{{ showTop ? 'expand_less' : 'expand_more' }}</mat-icon>
+          {{ showTop ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+      @if (showTop && topClaims.length > 0) {
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>Score</th>
+              <th>Claim ID</th>
+              <th>Patient</th>
+              <th>Charge</th>
+              <th>Aging</th>
+              <th>CARC</th>
+              <th>Assigned To</th>
+              <th>Aging Pts</th>
+              <th>Value Pts</th>
+              <th>Deadline Pts</th>
+              <th>Workload Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of topClaims; track $index) {
+              <tr>
+                <td>
+                  <span class="score-badge" [ngClass]="scoreClass(c.priorityScore)">
+                    {{ c.priorityScore }}
+                  </span>
+                </td>
+                <td>{{ c.claimId }}</td>
+                <td>{{ c.patientName }}</td>
+                <td>{{ c.chargeAmt | currency }}</td>
+                <td>{{ c.agingDays }}d</td>
+                <td>{{ c.carcCode }}</td>
+                <td>{{ c.assignedTo }}</td>
+                <td>{{ c.agingComponent }}</td>
+                <td>{{ c.valueComponent }}</td>
+                <td>{{ c.deadlineComponent }}</td>
+                <td>{{ c.workloadComponent }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      @if (showTop && topClaims.length === 0) {
+        <div class="empty">
+          No priority scores calculated yet. Click "Run Now" to recalculate.
+        </div>
+      }
+    </app-section-card>
+  }
+</div>

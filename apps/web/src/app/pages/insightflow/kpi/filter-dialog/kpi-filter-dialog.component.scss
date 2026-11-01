@@ -1,0 +1,7 @@
+.content{min-width:880px}
+.grid{
+  display:grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap:12px;
+}
+@media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }

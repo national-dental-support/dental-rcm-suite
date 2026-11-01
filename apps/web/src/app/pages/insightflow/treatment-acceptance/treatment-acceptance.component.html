@@ -1,0 +1,118 @@
+<div class="ta-page">
+
+  <!-- Overall KPI cards -->
+  @if (summary && !loading) {
+    <div class="kpi-row">
+      <div class="kpi-card" [ngClass]="ragClass(summary.overall.rag)">
+        <div class="kpi-label">Overall Acceptance Rate</div>
+        <div class="kpi-value">{{ summary.overall.acceptanceRate | number:'1.0-1' }}%</div>
+        <div class="kpi-sub">
+          <mat-icon class="rag-icon small">{{ ragIcon(summary.overall.rag) }}</mat-icon>
+          {{ ragLabel(summary.overall.rag) }}
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Plans Presented</div>
+        <div class="kpi-value">{{ summary.overall.totalPlans | number }}</div>
+        <div class="kpi-sub">{{ summary.overall.totalPresented | currency:'USD':'symbol':'1.0-0' }} presented</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Accepted Value</div>
+        <div class="kpi-value">{{ summary.overall.totalAccepted | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="kpi-sub">of {{ summary.overall.totalPresented | currency:'USD':'symbol':'1.0-0' }} presented</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Variance</div>
+        <div class="kpi-value">{{ (summary.overall.totalPresented - summary.overall.totalAccepted) | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="kpi-sub">unaccepted treatment value</div>
+      </div>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="xen-loading">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="xen-empty err">
+      <mat-icon>error</mat-icon>
+      <span>Failed to load treatment acceptance data.</span>
+    </div>
+  }
+
+  <!-- By Treatment Type table -->
+  @if (summary && !loading) {
+    <app-section-card title="Acceptance Rate by Treatment Type" [tooltip]="'Percentage of presented treatment plans accepted by patients, broken down by treatment category. Calculated as accepted plans &#x00F7; total presented for each treatment type.'">
+      <button type="button" cardHeaderActions mat-icon-button matTooltip="Refresh" (click)="fetch()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <table mat-table [dataSource]="summary.byType" class="xen-table">
+        <ng-container matColumnDef="treatmentType">
+          <th mat-header-cell *matHeaderCellDef>Treatment Type</th>
+          <td mat-cell *matCellDef="let r"><strong>{{ r.treatmentType }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="totalPlans">
+          <th mat-header-cell *matHeaderCellDef>Plans</th>
+          <td mat-cell *matCellDef="let r">{{ r.totalPlans | number }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalPresented">
+          <th mat-header-cell *matHeaderCellDef>Value Presented</th>
+          <td mat-cell *matCellDef="let r">{{ r.totalPresented | currency:'USD':'symbol':'1.0-0' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalAccepted">
+          <th mat-header-cell *matHeaderCellDef>Value Accepted</th>
+          <td mat-cell *matCellDef="let r">{{ r.totalAccepted | currency:'USD':'symbol':'1.0-0' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="acceptanceRate">
+          <th mat-header-cell *matHeaderCellDef>Acceptance Rate</th>
+          <td mat-cell *matCellDef="let r" [ngClass]="ragClass(r.rag)">
+            {{ r.acceptanceRate | number:'1.0-1' }}%
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let r">
+            <mat-icon class="rag-icon" [ngClass]="ragClass(r.rag)" [matTooltip]="ragLabel(r.rag)">
+              {{ ragIcon(r.rag) }}
+            </mat-icon>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="typeColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: typeColumns;" class="xen-row"></tr>
+      </table>
+    </app-section-card>
+  }
+
+  <!-- 12-Month Trend -->
+  @if (!trendLoading && trend.length > 0) {
+    <app-section-card title="12-Month Acceptance Trend" [tooltip]="'Month-by-month acceptance rate trend over the past 12 months. Helps identify seasonal patterns and measure impact of patient communication or financing changes.'">
+      <table mat-table [dataSource]="trend" class="xen-table">
+        <ng-container matColumnDef="month">
+          <th mat-header-cell *matHeaderCellDef>Month</th>
+          <td mat-cell *matCellDef="let r">{{ r.month }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalPlans">
+          <th mat-header-cell *matHeaderCellDef>Plans</th>
+          <td mat-cell *matCellDef="let r">{{ r.totalPlans | number }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalPresented">
+          <th mat-header-cell *matHeaderCellDef>Presented</th>
+          <td mat-cell *matCellDef="let r">{{ r.totalPresented | currency:'USD':'symbol':'1.0-0' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalAccepted">
+          <th mat-header-cell *matHeaderCellDef>Accepted</th>
+          <td mat-cell *matCellDef="let r">{{ r.totalAccepted | currency:'USD':'symbol':'1.0-0' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="acceptanceRate">
+          <th mat-header-cell *matHeaderCellDef>Rate</th>
+          <td mat-cell *matCellDef="let r">{{ r.acceptanceRate | number:'1.0-1' }}%</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="['month','totalPlans','totalPresented','totalAccepted','acceptanceRate']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['month','totalPlans','totalPresented','totalAccepted','acceptanceRate'];" class="xen-row"></tr>
+      </table>
+    </app-section-card>
+  }
+
+</div>

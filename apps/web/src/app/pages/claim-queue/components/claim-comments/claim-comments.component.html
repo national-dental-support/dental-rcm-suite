@@ -1,0 +1,157 @@
+<section class="comments-section">
+  <div class="comments-header">
+    <h2>
+      <mat-icon class="section-icon">forum</mat-icon>
+      Team Discussion
+      @if (totalCount) {
+        <span class="comment-count">({{ totalCount }})</span>
+      }
+    </h2>
+  </div>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="comments-loading">
+      <mat-spinner diameter="28"></mat-spinner>
+      <span>Loading comments&#x2026;</span>
+    </div>
+  }
+
+  <!-- Thread list -->
+  @if (!loading) {
+    <div class="thread-list">
+      @for (c of comments; track trackById($index, c)) {
+        <div class="comment-thread">
+          <!-- Top-level comment -->
+          <div class="comment-card" [class.own-comment]="isOwner(c)">
+            <div class="comment-avatar">
+              {{ c.authorName?.charAt(0) || '?' }}
+            </div>
+            <div class="comment-content">
+              <div class="comment-meta">
+                <span class="author-name">{{ c.authorName }}</span>
+                <span class="author-role">{{ c.authorRole }}</span>
+                <span class="comment-date">{{ c.createdAt | date:'MMM d, y h:mm a' }}</span>
+                @if (c.isEdited) {
+                  <span class="edited-badge">(edited)</span>
+                }
+              </div>
+              <!-- Editing mode -->
+              @if (editingComment?.id === c.id) {
+                <mat-form-field appearance="outline" class="edit-field">
+                  <textarea matInput [(ngModel)]="editBody" rows="2"></textarea>
+                </mat-form-field>
+                <div class="inline-actions">
+                  <button mat-flat-button color="primary" (click)="submitEdit()" [disabled]="submitting || !editBody.trim()">Save</button>
+                  <button mat-stroked-button (click)="cancelEdit()">Cancel</button>
+                </div>
+              } @else {
+                <p class="comment-body">{{ c.body }}</p>
+              }
+              @if (editingComment?.id !== c.id) {
+                <div class="comment-actions">
+                  <button mat-button class="action-btn" (click)="startReply(c)">
+                    <mat-icon>reply</mat-icon> Reply
+                  </button>
+                  @if (isOwner(c)) {
+                    <button mat-button class="action-btn" (click)="startEdit(c)">
+                      <mat-icon>edit</mat-icon> Edit
+                    </button>
+                  }
+                  @if (isOwner(c)) {
+                    <button mat-button class="action-btn delete-btn" (click)="deleteComment(c)">
+                      <mat-icon>delete_outline</mat-icon> Delete
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          <!-- Replies -->
+          @if (c.replies?.length) {
+            <div class="replies">
+              @for (r of c.replies; track trackById($index, r)) {
+                <div class="comment-card reply-card"
+                  [class.own-comment]="isOwner(r)">
+                  <div class="comment-avatar reply-avatar">
+                    {{ r.authorName?.charAt(0) || '?' }}
+                  </div>
+                  <div class="comment-content">
+                    <div class="comment-meta">
+                      <span class="author-name">{{ r.authorName }}</span>
+                      <span class="author-role">{{ r.authorRole }}</span>
+                      <span class="comment-date">{{ r.createdAt | date:'MMM d, y h:mm a' }}</span>
+                      @if (r.isEdited) {
+                        <span class="edited-badge">(edited)</span>
+                      }
+                    </div>
+                    @if (editingComment?.id === r.id) {
+                      <mat-form-field appearance="outline" class="edit-field">
+                        <textarea matInput [(ngModel)]="editBody" rows="2"></textarea>
+                      </mat-form-field>
+                      <div class="inline-actions">
+                        <button mat-flat-button color="primary" (click)="submitEdit()" [disabled]="submitting || !editBody.trim()">Save</button>
+                        <button mat-stroked-button (click)="cancelEdit()">Cancel</button>
+                      </div>
+                    } @else {
+                      <p class="comment-body">{{ r.body }}</p>
+                    }
+                    @if (editingComment?.id !== r.id) {
+                      <div class="comment-actions">
+                        @if (isOwner(r)) {
+                          <button mat-button class="action-btn" (click)="startEdit(r)">
+                            <mat-icon>edit</mat-icon> Edit
+                          </button>
+                        }
+                        @if (isOwner(r)) {
+                          <button mat-button class="action-btn delete-btn" (click)="deleteComment(r, c.id)">
+                            <mat-icon>delete_outline</mat-icon> Delete
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          <!-- Reply form (inline under the thread) -->
+          @if (replyingTo?.id === c.id) {
+            <div class="reply-form">
+              <mat-form-field appearance="outline" class="reply-field">
+                <mat-label>Reply to {{ c.authorName }}</mat-label>
+                <textarea matInput [(ngModel)]="replyBody" rows="2" placeholder="Write a reply&#x2026;"></textarea>
+              </mat-form-field>
+              <div class="inline-actions">
+                <button mat-flat-button color="primary" (click)="submitReply()" [disabled]="submitting || !replyBody.trim()">Reply</button>
+                <button mat-stroked-button (click)="cancelReply()">Cancel</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+      <!-- Empty state -->
+      @if (!comments.length) {
+        <div class="empty-state">
+          <mat-icon>chat_bubble_outline</mat-icon>
+          <p>No comments yet. Start a discussion about this claim.</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- New comment form -->
+  @if (!loading) {
+    <div class="new-comment-form">
+      <mat-form-field appearance="outline" class="comment-input">
+        <mat-label>Add a comment</mat-label>
+        <textarea matInput [(ngModel)]="newBody" rows="2"
+        placeholder="Write a comment&#x2026; Use @email to mention team members"></textarea>
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="submitComment()"
+        [disabled]="submitting || !newBody.trim()">
+        <mat-icon>send</mat-icon> Post
+      </button>
+    </div>
+  }
+</section>

@@ -1,0 +1,34 @@
+<!-- rcm-revenue-table.component.html -->
+<div class="revenue-section">
+  <h4>Revenue By Practice/Provider</h4>
+  <table class="revenue-table">
+    <thead>
+      <tr>
+        <th>Practice/Provider</th>
+        <th>Charges</th>
+        <th>Insurance Billed</th>
+        <th>Insurance Collections</th>
+        <th>Patient Collections</th>
+        <th>Gross Collections</th>
+        <th>Collection Rate</th>
+        <th>Adjustment</th>
+        <th>Refund</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (provider of providers; track provider) {
+        <tr>
+          <td>{{ provider.name }}</td>
+          <td>{{ provider.charges }}</td>
+          <td>{{ provider.insuranceBilled }}</td>
+          <td>{{ provider.insuranceCollections }}</td>
+          <td>{{ provider.patientCollections }}</td>
+          <td>{{ provider.grossCollections }}</td>
+          <td>{{ provider.collectionRate }}</td>
+          <td>{{ provider.adjustment }}</td>
+          <td>{{ provider.refund }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

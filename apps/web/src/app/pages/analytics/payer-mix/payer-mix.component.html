@@ -1,0 +1,350 @@
+<div class="container">
+
+
+  <!-- Chips -->
+  @if ((chips$ | async)?.length) {
+    <div class="chips">
+      <mat-chip-set>
+        @for (chip of chips$ | async; track chip) {
+          <mat-chip
+            removable
+            (removed)="removeChip(chip.key, chip.label)">
+            {{ chip.label }}
+            <button matChipRemove aria-label="Remove chip">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-chip>
+        }
+      </mat-chip-set>
+    </div>
+  }
+
+  <div class="kpi-grid">
+    @if (totalsInsurance$ | async; as ti) {
+      <mat-card class="kpi-card">
+        <div class="kpi-title">Insurance Collection (Past 12 Months) <mat-icon class="info-tip" matTooltip="Total payments received from insurance payers over the past 12 months. Includes all remittance payments excluding patient responsibility." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="kpi-value">{{ ti?.total || '&#x2014;' }}</div>
+        <div class="kpi-sub">All Time: {{ ti?.all_time || '&#x2014;' }}</div>
+      </mat-card>
+    } @else {
+      <mat-card class="kpi-card loading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </mat-card>
+    }
+
+    @if (totalsPatient$ | async; as tp) {
+      <mat-card class="kpi-card">
+        <div class="kpi-title">Patient Collection (Past 12 Months) <mat-icon class="info-tip" matTooltip="Total payments received directly from patients over the past 12 months. Includes copays, coinsurance, deductibles, and self-pay balances." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="kpi-value">{{ tp?.total || '&#x2014;' }}</div>
+        <div class="kpi-sub">All Time: {{ tp?.all_time || '&#x2014;' }}</div>
+      </mat-card>
+    } @else {
+      <mat-card class="kpi-card loading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </mat-card>
+    }
+
+  </div>
+  <!-- Combo chart -->
+  <div class="panel-grid">
+    <mat-card class="panel-card">
+      <div class="panel-header">
+        <h3>Insurance and Patient Collections <mat-icon class="info-tip" matTooltip="Side-by-side comparison of insurance vs. patient payment volumes by month. Helps visualize the balance between payer sources." matTooltipPosition="right">info_outline</mat-icon></h3>
+        <button mat-stroked-button class="btn-export" (click)="exportCollectionTrends()">Export</button>
+      </div>
+      @if (comboOpts; as opts) {
+        <div class="panel-body">
+          <apx-chart
+            [series]="opts.series"
+            [chart]="opts.chart"
+            [xaxis]="opts.xaxis"
+            [yaxis]="opts.yaxis"
+            [stroke]="opts.stroke"
+            [dataLabels]="opts.dataLabels"
+            [legend]="opts.legend"
+            [tooltip]="opts.tooltip"
+            [colors]="opts.colors || []">
+          </apx-chart>
+        </div>
+      } @else {
+        <div class="loading">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+    </mat-card>
+
+    <mat-card class="panel-card">
+      <div class="panel-header">
+        <h3>Insurance &amp; Patient Collection Trends <mat-icon class="info-tip" matTooltip="Monthly trend lines showing how insurance and patient collections have changed over time. Useful for identifying seasonal patterns or shifts in payer mix." matTooltipPosition="right">info_outline</mat-icon></h3>
+        <button mat-stroked-button class="btn-export" (click)="exportCollectionTrends()">Export</button>
+      </div>
+      @if (lineOpts; as opts) {
+        <div class="panel-body">
+          <apx-chart
+            [series]="opts.series"
+            [chart]="opts.chart"
+            [xaxis]="opts.xaxis"
+            [yaxis]="opts.yaxis"
+            [stroke]="opts.stroke"
+            [dataLabels]="opts.dataLabels"
+            [legend]="opts.legend"
+            [tooltip]="opts.tooltip"
+            [colors]="opts.colors || []">
+          </apx-chart>
+        </div>
+      } @else {
+        <div class="loading">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+    </mat-card>
+  </div>
+
+
+
+  <div class="pmx-grid">
+    <mat-card class="pmx-card span-6">
+      <div class="pmx-head">
+        <div class="pmx-title">Payers Increasing Production <mat-icon class="info-tip" matTooltip="Top 7 payers with the largest growth in billed production compared to the prior period. Indicates expanding payer relationships or volume growth." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="pmx-meta">Viewing top 7</div>
+        <span class="spacer"></span>
+        <button mat-stroked-button class="pmx-export" (click)="exportPayersIncreasing()">Export</button>
+      </div>
+      <div class="chart-host" aria-label="Payers Increasing Production chart">
+        @if (payersIncreasingChart$ | async; as bars) {
+          <app-horizontal-bar-chart [data]="bars" [currency]="true"></app-horizontal-bar-chart>
+        } @else {
+          <div class="mini-loading">
+            <mat-progress-spinner diameter="24" mode="indeterminate"></mat-progress-spinner>
+          </div>
+        }
+      </div>
+    </mat-card>
+
+    <!-- Payers Declining Production -->
+    <mat-card class="pmx-card span-6">
+      <div class="pmx-head">
+        <div class="pmx-title">Payers Declining Production <mat-icon class="info-tip" matTooltip="Top 7 payers with the largest decrease in billed production compared to the prior period. May signal contract changes, patient attrition, or credentialing issues." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="pmx-meta">Viewing top 7</div>
+        <span class="spacer"></span>
+        <button mat-stroked-button class="pmx-export" (click)="exportPayersDecreasing()">Export</button>
+      </div>
+      <div class="chart-host" aria-label="Payers Declining Production chart">
+        @if (payersDecreasingChart$ | async; as bars) {
+          <app-horizontal-bar-chart [data]="bars" [currency]="true"></app-horizontal-bar-chart>
+        } @else {
+          <div class="mini-loading">
+            <mat-progress-spinner diameter="24" mode="indeterminate"></mat-progress-spinner>
+          </div>
+        }
+      </div>
+    </mat-card>
+
+    <!-- Procedures Increasing Production -->
+    <mat-card class="pmx-card span-6">
+      <div class="pmx-head">
+        <div class="pmx-title">Procedures Increasing Production <mat-icon class="info-tip" matTooltip="Top 7 procedure categories with the largest growth in billed production. Highlights service lines that are expanding." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="pmx-meta">Viewing top 7</div>
+        <span class="spacer"></span>
+        <button mat-stroked-button class="pmx-export" (click)="exportProceduresIncreasing()">Export</button>
+      </div>
+      <div class="chart-host" aria-label="Procedures Increasing Production chart">
+        @if (proceduresIncreasingChart$ | async; as bars) {
+          <app-horizontal-bar-chart [data]="bars" [currency]="true"></app-horizontal-bar-chart>
+        } @else {
+          <div class="mini-loading">
+            <mat-progress-spinner diameter="24" mode="indeterminate"></mat-progress-spinner>
+          </div>
+        }
+      </div>
+    </mat-card>
+
+    <!-- Procedures Declining Production -->
+    <mat-card class="pmx-card span-6">
+      <div class="pmx-head">
+        <div class="pmx-title">Procedures Declining Production <mat-icon class="info-tip" matTooltip="Top 7 procedure categories with the largest decrease in billed production. May indicate shifts in patient demand or coding changes." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="pmx-meta">Viewing top 7</div>
+        <span class="spacer"></span>
+        <button mat-stroked-button class="pmx-export" (click)="exportProceduresDecreasing()">Export</button>
+      </div>
+      <div class="chart-host" aria-label="Procedures Declining Production chart">
+        @if (proceduresDecreasingChart$ | async; as bars) {
+          <app-horizontal-bar-chart [data]="bars" [currency]="true"></app-horizontal-bar-chart>
+        } @else {
+          <div class="mini-loading">
+            <mat-progress-spinner diameter="24" mode="indeterminate"></mat-progress-spinner>
+          </div>
+        }
+      </div>
+    </mat-card>
+
+    <!-- Payer Collection Details (full width) -->
+    <mat-card class="pmx-card span-12">
+      <div class="pmx-head">
+        <div class="pmx-title">Payer Collection Details <mat-icon class="info-tip" matTooltip="Comprehensive table of all payers showing total collections, insurance vs. patient split, collection percentages, and claim volumes for the selected period." matTooltipPosition="right">info_outline</mat-icon></div>
+        <span class="spacer"></span>
+        <button mat-stroked-button class="pmx-export" (click)="exportPayerCollectionDetails()">Export</button>
+      </div>
+
+      <!-- simple table shell; safe even without data -->
+      @if (payerCollectionPage$ | async; as page) {
+        @if (payerCollectionTotals$ | async; as totals) {
+          @if (page.total > 0) {
+            <rp-advanced-table
+              [data]="page.rows"
+              [columns]="payerCollectionColumns"
+              [enableGlobalSearch]="true"
+              [globalSearchPlaceholder]="'Search payers&#x2026;'"
+              [pageSize]="page.pageSize"
+              [enableRowHover]="true"
+              [stickyHeader]="true"
+              [autoGenerateValueLists]="true"
+              >
+            </rp-advanced-table>
+          } @else {
+            <div class="pmx-empty">No payer collections found.</div>
+          }
+          <!-- Totals row (always uses full totals) -->
+          <!-- <div class="pmx-totals" *ngIf="page.total > 0">
+          <ng-container *ngIf="payerCollectionTotals$ | async as totals">
+            <div class="pmx-totals__row">
+              <div class="pmx-totals__label">Total</div>
+              <div class="pmx-totals__num">
+                {{ totals.totalCollections | currency : 'USD' : 'symbol' : '1.0-0' }}
+              </div>
+              <div class="pmx-totals__num">
+                {{ totals.insuranceCollections | currency : 'USD' : 'symbol' : '1.0-0' }}
+              </div>
+              <div class="pmx-totals__num">
+                {{ totals.patientCollections | currency : 'USD' : 'symbol' : '1.0-0' }}
+              </div>
+              <div class="pmx-totals__num">-</div>
+              <div class="pmx-totals__num">-</div>
+              <div class="pmx-totals__num">
+                {{ totals.claim | currency : 'USD' : 'symbol' : '1.0-0' }}
+              </div>
+            </div>
+          </ng-container>
+        </div> -->
+        <!-- Keep your existing custom pager UI (AdvancedTable paginator is commented out) -->
+        @if (page.total > 0) {
+          <div class="pmx-table-footer">
+            <div class="rows-meta">Rows per page: {{ page.pageSize }}</div>
+            <div class="pager">
+              {{ page.startIndex + 1 }}&#x2013;{{ page.endIndex }} of {{ page.total }}
+            </div>
+            <div class="pager-btns">
+              <button
+                mat-icon-button
+                (click)="goPrev(page)"
+                [disabled]="page.pageIndex === 0"
+                aria-label="Previous page"
+                >
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                (click)="goNext(page)"
+                [disabled]="page.pageIndex >= page.maxPage"
+                aria-label="Next page"
+                >
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      }
+      <!-- <ng-container *ngIf="payerCollectionPage$ | async as page"> -->
+      <!-- <table class="pmx-table">
+      <thead>
+        <tr>
+          <th>Payer Category</th>
+          <th>Total Collections</th>
+          <th>Insurance Collections</th>
+          <th>Patient Collections</th>
+          <th>Insurance Percentage</th>
+          <th>Patient Percentage</th>
+          <th>Claim</th>
+        </tr>
+      </thead>
+      rows -->
+      <!-- <tbody *ngIf="page.total > 0; else detailsEmpty">
+      <tr *ngFor="let row of page.rows" class="pmx-row">
+        <td class="pmx-cell pmx-cell--payer">
+          <span class="pmx-payer-label">{{ row.insuranceName }}</span>
+        </td>
+        <td class="pmx-cell pmx-cell--num">
+          {{ row.totalCollections | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+        <td class="pmx-cell pmx-cell--num">
+          {{ row.insuranceCollections | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+        <td class="pmx-cell pmx-cell--num">
+          {{ row.patientCollections | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+        <td class="pmx-cell pmx-cell--num">
+          {{ (row.insurancePct / 100) | percent:'1.1-1' }}
+        </td>
+        <td class="pmx-cell pmx-cell--num">
+          {{ (row.patientPct / 100) | percent:'1.1-1' }}
+        </td>
+        <td class="pmx-cell pmx-cell--num">
+          {{ row.claim | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+      </tr>
+    </tbody> -->
+    <!-- totals row always uses full totals -->
+    <!-- <tfoot *ngIf="page.total > 0">
+    <ng-container *ngIf="payerCollectionTotals$ | async as totals">
+      <tr class="pmx-row pmx-row--total">
+        <td>Total</td>
+        <td class="pmx-cell--num">
+          {{ totals.totalCollections | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+        <td class="pmx-cell--num">
+          {{ totals.insuranceCollections | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+        <td class="pmx-cell--num">
+          {{ totals.patientCollections | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+        <td class="pmx-cell--num">-</td>
+        <td class="pmx-cell--num">-</td>
+        <td class="pmx-cell--num">
+          {{ totals.claim | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+      </tr>
+    </ng-container>
+  </tfoot> -->
+<!-- </table>  -->
+<!-- Figma-style pager -->
+<!-- <div class="pmx-table-footer" *ngIf="page.total > 0">
+<div class="rows-meta">
+  Rows per page: {{ page.pageSize }}
+</div>
+<div class="pager">
+  {{ page.startIndex + 1 }}-{{ page.endIndex }} of {{ page.total }}
+</div>
+<div class="pager-btns">
+  <button
+    mat-icon-button
+    (click)="goPrev(page)"
+    [disabled]="page.pageIndex === 0"
+    aria-label="Previous page">
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+  <button
+    mat-icon-button
+    (click)="goNext(page)"
+    [disabled]="page.pageIndex >= page.maxPage"
+    aria-label="Next page">
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+</div>
+</div>
+</ng-container> -->
+}
+
+</mat-card>
+
+</div>
+</div>

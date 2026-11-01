@@ -1,0 +1,216 @@
+:host {
+  display: block;
+  height: 100vh;
+}
+
+$bg:            var(--color-bg-subtle);
+$card-bg:       var(--color-surface);
+$card-border:   #e7edf5;
+$text:          var(--color-text);
+$text-muted:    var(--color-text-muted);
+
+/* =====================================================
+   PAGE CONTAINER
+   ===================================================== */
+
+.recon-iq-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: var(--rcm-bg, var(--color-bg-subtle));
+  min-height: 100%;
+}
+
+/* =====================================================
+   KPI CARDS - WRAP INTO ROWS (NO SCROLLBAR)
+   ===================================================== */
+
+.kpi-cards {
+  display: grid;
+  gap: 16px;
+
+  /* auto-wrap into rows */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+
+  /* make all items in each row same height */
+  align-items: stretch;
+}
+
+/* allow the component to stretch inside grid */
+.kpi-cards > app-data-card {
+  display: block;
+  height: 100%;
+}
+
+.toolbar-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  background: $card-bg;
+  border: 1px solid $card-border;
+  border-radius: 14px;
+  padding: 12px 14px;           /* +2px to match screenshot height */
+}
+
+/* Tabs (left) */
+.search-bar { display: flex; flex-direction: row; justify-content: flex-end; align-items: center; gap: 22px; padding-left: 8px; }
+.tab {
+  border: 0; background: transparent; padding: 12px 6px;  /* a bit taller */
+  color: var(--color-text-muted); cursor: pointer;
+  position: relative; transition: color .12s ease;
+}
+
+
+/* Tools (right) */
+.tools { display: flex; flex-direction: row; align-items: flex-end; gap: 12px; padding-right: 8px; }
+
+/* Soft search pill */
+.soft-search {
+  display: flex; align-items: center; gap: 8px;
+  background: #f6f8fd;
+  border: 1px solid $card-border;
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-width: 460px;               /* matches screenshot */
+  height: 40px;                   /* fixed height like pill */
+}
+.search-icon { color: #11182788; font-size: 18px; height: 18px; width: 18px; }
+.search-input {
+  border: 0; outline: 0; background: transparent; width: 100%;
+  font: inherit; color: $text; font-size: var(--font-size-md);
+  &::placeholder { color: $text-muted; }
+}
+
+/* Filter button */
+.filter-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px var(--radius-md); border-radius: 10px; border: 0;
+  background: #0BA5EC; color: var(--color-surface); font-weight: 700; cursor: pointer;
+  height: 40px;                         /* equal height to search pill */
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+  transition: filter .12s ease, transform .12s ease;
+}
+.filter-btn mat-icon { font-size: 18px; height: 18px; width: 18px; }
+.filter-btn .caret { margin-left: 2px; }
+.filter-btn:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.fully{
+  display: flex;
+  justify-content: space-between;
+}
+
+.chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.chart-subtitle {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: rgba(17, 24, 39, 0.65);
+}
+
+/* minimal "pill" control (your screenshot vibe) */
+.period-btn {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  background: rgba(255, 255, 255, 0.6);
+  min-width: unset;
+  font-weight: 600;
+
+  &:hover {
+    border-color: rgba(17, 24, 39, 0.22);
+    background: rgba(255, 255, 255, 0.85);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(79, 67, 188, 0.45);
+    outline-offset: 2px;
+  }
+
+  .period-btn__icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-left: 6px;
+    opacity: 0.8;
+  }
+}
+
+/* ---------- chart states ---------- */
+.chart-state {
+  height: 320px; /* match chart height */
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 16px;
+}
+
+.card-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chart-subtitle {
+  margin: 0 0 8px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted); // matches your subtitle token
+}
+
+
+.chart-state__title {
+  font-weight: 700;
+  color: rgba(17, 24, 39, 0.85);
+  margin-bottom: 4px;
+}
+
+.chart-state__hint {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: rgba(17, 24, 39, 0.55);
+}
+
+/* skeleton loader */
+.chart-state--loading {
+  align-content: start;
+  gap: 12px;
+}
+
+.skeleton {
+  width: 100%;
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(17, 24, 39, 0.06) 25%,
+    rgba(17, 24, 39, 0.10) 37%,
+    rgba(17, 24, 39, 0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.skeleton--title {
+  height: 14px;
+  width: 220px;
+  justify-self: start;
+}
+
+.skeleton--chart {
+  height: 260px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+

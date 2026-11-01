@@ -1,0 +1,21 @@
+@if (pills.length > 0) {
+  <div class="filters-row">
+    <span class="label sr-only">Active Filters:</span>
+    <div class="right">
+      <mat-chip-set class="pill-set">
+        @for (pill of pills; track pill) {
+          <mat-chip
+            (removed)="clearKey.emit(pill.key)"
+            class="pill"
+            >
+            <span class="key">{{ pill.label }}:</span>&nbsp;<span class="value">{{ pill.value }}</span>
+            <button matChipRemove [attr.aria-label]="'Remove ' + pill.label + ' filter'">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-chip>
+        }
+      </mat-chip-set>
+      <button type="button" class="clear-all" (click)="clearAll.emit()">Clear all</button>
+    </div>
+  </div>
+}

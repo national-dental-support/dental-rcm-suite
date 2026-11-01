@@ -1,0 +1,68 @@
+:host { display: block; }
+
+.tab-nav-row {
+  display: flex;
+  align-items: center;
+  background: var(--rcm-bg, var(--color-bg-subtle));
+  border-bottom: 1px solid var(--color-border);
+
+  .primary-nav {
+    flex: 1;
+    // remove the bottom border that mat-tab-nav-bar adds - we handle it on the wrapper
+    border-bottom: none;
+  }
+}
+
+// Locked tab - unsubscribed module, non-interactive
+.locked-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+  padding: 0 16px;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.28);
+  cursor: not-allowed;
+  flex-shrink: 0;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+
+  .lock-icon {
+    font-size: var(--font-size-md);
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+  }
+}
+
+// Tools overflow button - styled to look like a tab link
+.tools-btn {
+  height: 48px;
+  padding: 0 16px;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: rgba(0,0,0,.54);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+
+  mat-icon { font-size: 18px; height: 18px; width: 18px; }
+  .drop-icon { font-size: 20px; height: 20px; width: 20px; margin-left: -2px; }
+
+  &:hover {
+    color: rgba(0,0,0,.87);
+    background: transparent;
+  }
+
+  &.tools-active {
+    color: var(--mat-tab-active-indicator-color, var(--color-info));
+    border-bottom-color: var(--mat-tab-active-indicator-color, var(--color-info));
+  }
+}

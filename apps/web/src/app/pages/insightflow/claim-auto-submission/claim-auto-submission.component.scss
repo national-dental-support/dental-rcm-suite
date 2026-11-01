@@ -1,0 +1,66 @@
+.auto-submit-page { padding: 16px; }
+
+.xen-toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  text-align: center;
+  padding: 8px;
+  &.highlight .kpi-value { color: var(--rcm-color-1, #00bfa5); }
+}
+
+.kpi-label {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.kpi-value {
+  font-size: 1.9rem;
+  font-weight: 700;
+}
+
+.sub-tabs ::ng-deep .mat-tab-body-content { padding: 0; }
+
+.tab-card { margin-top: 12px; }
+
+.condition-chip {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  margin: 2px 2px 2px 0;
+}
+
+.confidence-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.confidence-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #42a5f5, #00bfa5);
+  max-width: 80px;
+}

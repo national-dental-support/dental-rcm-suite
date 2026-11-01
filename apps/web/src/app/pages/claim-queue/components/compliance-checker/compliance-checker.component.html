@@ -1,0 +1,226 @@
+<div class="compliance-checker xen-page">
+
+  <!-- -- Header -- -->
+  <div class="cc-header">
+    <div class="cc-header__title">
+      <mat-icon>fact_check</mat-icon>
+      <h1>Automated Compliance Checker</h1>
+    </div>
+    <div class="cc-header__actions">
+      <mat-form-field class="cc-batch-input" appearance="outline">
+        <mat-label>Claim IDs (comma-separated)</mat-label>
+        <input matInput [(ngModel)]="batchClaimIds" placeholder="CL50001, CL50002&#x2026;" />
+      </mat-form-field>
+      <button
+        mat-raised-button
+        type="button"
+        color="primary"
+        [disabled]="auditRunning || !batchClaimIds.trim()"
+        (click)="runAudit()"
+      >
+        <mat-icon>play_circle</mat-icon>
+        {{ auditRunning ? 'Running&#x2026;' : 'Run Audit' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- -- KPI Summary Cards -- -->
+  <div class="cc-kpi-row">
+    <div class="cc-kpi-card cc-kpi-card--neutral">
+      <div class="cc-kpi-card__value">{{ totalClaims }}</div>
+      <div class="cc-kpi-card__label">Total Claims</div>
+    </div>
+    <div class="cc-kpi-card cc-kpi-card--pass">
+      <div class="cc-kpi-card__value">{{ totalPassed }}</div>
+      <div class="cc-kpi-card__label">Passed</div>
+    </div>
+    <div class="cc-kpi-card cc-kpi-card--warning">
+      <div class="cc-kpi-card__value">{{ totalWarnings }}</div>
+      <div class="cc-kpi-card__label">Warnings</div>
+    </div>
+    <div class="cc-kpi-card cc-kpi-card--fail">
+      <div class="cc-kpi-card__value">{{ totalFailures }}</div>
+      <div class="cc-kpi-card__label">Failures</div>
+    </div>
+  </div>
+
+  <!-- -- Two-panel body -- -->
+  <div class="cc-body">
+
+    <!-- LEFT: Rules accordion -->
+    <div class="cc-panel cc-panel--rules">
+      <h2 class="cc-panel__title">
+        <mat-icon>rule</mat-icon>
+        Compliance Rules
+      </h2>
+
+      <div *ngIf="loading" class="xen-loading">Loading rules&#x2026;</div>
+
+      <mat-accordion *ngIf="!loading" multi>
+        <mat-expansion-panel
+          *ngFor="let group of rulesByCategory"
+          [expanded]="true"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <strong>{{ group.category }}</strong>
+              <span class="cc-rule-count">&nbsp;({{ group.rules.length }})</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="cc-rule-list">
+            <div class="cc-rule-item" *ngFor="let rule of group.rules">
+              <div class="cc-rule-item__header">
+                <mat-chip-listbox class="cc-severity-chip">
+                  <mat-chip [ngClass]="'cc-chip--' + rule.severity" disableRipple>
+                    {{ rule.severity }}
+                  </mat-chip>
+                </mat-chip-listbox>
+                <span class="cc-rule-item__name">{{ rule.name }}</span>
+                <mat-slide-toggle
+                  [checked]="rule.enabled"
+                  [disabled]="togglingRuleId === rule.id"
+                  (change)="toggleRule(rule)"
+                  color="primary"
+                  class="cc-rule-toggle"
+                ></mat-slide-toggle>
+              </div>
+              <p class="cc-rule-item__desc">{{ rule.description }}</p>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
+
+    <!-- RIGHT: Audit results table -->
+    <div class="cc-panel cc-panel--results">
+      <h2 class="cc-panel__title">
+        <mat-icon>assignment_turned_in</mat-icon>
+        Claim Compliance Results
+      </h2>
+
+      <!-- Claim detail drill-down -->
+      @if (selectedAudit) {
+        <div class="cc-audit-detail">
+          <div class="cc-audit-detail__header">
+            <strong>Audit Detail &#x2014; {{ selectedAudit.claimId }}</strong>
+            <button type="button" mat-icon-button (click)="closeAuditDetail()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <div class="cc-audit-detail__summary">
+            <span>Score: <strong>{{ selectedAudit.score }}</strong></span>
+            <span class="cc-status-chip" [ngClass]="'cc-status--' + selectedAudit.overallStatus">
+              {{ selectedAudit.overallStatus | uppercase }}
+            </span>
+          </div>
+          @for (r of selectedAudit.ruleResults; track r.ruleId) {
+            <div class="cc-rule-result">
+              <mat-icon [ngClass]="'cc-icon--' + r.status">
+                {{ r.status === 'pass' ? 'check_circle' : r.status === 'warning' ? 'warning' : 'cancel' }}
+              </mat-icon>
+              <div>
+                <div class="cc-rule-result__name">{{ r.ruleName }}</div>
+                <div class="cc-rule-result__msg">{{ r.message }}</div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Loading -->
+      @if (claimsLoading && !selectedAudit) {
+        <div class="xen-loading">Loading claims&#x2026;</div>
+      }
+
+      <!-- Empty state -->
+      @if (!claimsLoading && !selectedAudit && auditRows.length === 0) {
+        <div class="xen-empty">
+          <mat-icon>inbox</mat-icon>
+          <p>No claims found for your organisation.</p>
+        </div>
+      }
+
+      <!-- Results table -->
+      <mat-table
+        [dataSource]="auditRows"
+        *ngIf="!selectedAudit && !claimsLoading && auditRows.length > 0"
+        class="cc-audit-table"
+      >
+        <ng-container matColumnDef="claimId">
+          <mat-header-cell *matHeaderCellDef>Claim ID</mat-header-cell>
+          <mat-cell *matCellDef="let row">
+            <a [routerLink]="['/app/denial-iq/claim-queue', row.claimId]" class="cc-claim-link">{{ row.claimId }}</a>
+          </mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="patient">
+          <mat-header-cell *matHeaderCellDef>Patient</mat-header-cell>
+          <mat-cell *matCellDef="let row">{{ row.patient }}</mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="submitDate">
+          <mat-header-cell *matHeaderCellDef>Submit Date</mat-header-cell>
+          <mat-cell *matCellDef="let row">{{ row.submitDate }}</mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="score">
+          <mat-header-cell *matHeaderCellDef>Score</mat-header-cell>
+          <mat-cell *matCellDef="let row">
+            @if (checksRunning && row.score === null) {
+              <span class="cc-checking">&#x2026;</span>
+            } @else {
+              <strong>{{ row.score ?? '&#x2014;' }}</strong>
+            }
+          </mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+          <mat-cell *matCellDef="let row">
+            @if (checksRunning && row.status === null) {
+              <span class="cc-checking">Checking&#x2026;</span>
+            } @else if (row.status) {
+              <span class="cc-status-chip" [ngClass]="'cc-status--' + row.status"
+                [matTooltip]="failureTooltip(row)"
+                matTooltipClass="cc-failure-tooltip"
+                matTooltipPosition="before">
+                {{ row.status | uppercase }}
+                @if (row.failingRules?.length) {
+                  <mat-icon class="cc-status-chip__info">info_outline</mat-icon>
+                }
+              </span>
+            } @else {
+              <span class="cc-unchecked">&#x2014;</span>
+            }
+          </mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <mat-header-cell *matHeaderCellDef></mat-header-cell>
+          <mat-cell *matCellDef="let row">
+            <button type="button" mat-icon-button matTooltip="View Audit Detail" (click)="viewClaimAudit(row)">
+              <mat-icon>fact_check</mat-icon>
+            </button>
+          </mat-cell>
+        </ng-container>
+
+        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+        <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+      </mat-table>
+
+      <!-- Pagination -->
+      @if (!selectedAudit && totalClaims > 0) {
+        <mat-paginator
+          [length]="totalClaims"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[25, 50, 100]"
+          (page)="onPage($event)"
+          showFirstLastButtons
+        ></mat-paginator>
+      }
+
+    </div>
+  </div>
+
+</div>

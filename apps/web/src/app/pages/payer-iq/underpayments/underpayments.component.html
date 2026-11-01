@@ -1,0 +1,48 @@
+<div class="container">
+  <app-section-card class="container__header" [title]="'At Risk Payers/Plans to Agreements'">
+
+    <rp-advanced-table
+      [data]="atRiskPayers"
+      [columns]="atRiskkColumns"
+      [enableNestedRows]="true"
+      [childrenAccessor]="atRiskChildren"
+      [idField]="'payer'"
+      (actionClicked)="onAtRiskTableAction($event)"
+    ></rp-advanced-table>
+  </app-section-card>
+
+
+  <!-- Remediation -->
+  <app-section-card class="panel remediation" [title]="'Remediation'">
+    <div class="remediation-header">
+
+    </div>
+
+
+    <!-- Next Steps title -->
+    <app-section-card [title]="'Next Steps'" class="next-steps">
+
+      @for (step of arNextSteps; track step) {
+        <article
+          class="next-step-card"
+          >
+          <div class="next-step-header">
+            <span class="next-step-title">{{ step.title }}</span>
+          </div>
+          <p class="next-step-body">
+            {{ step.body }}
+          </p>
+          @if (step.checklist?.length) {
+            <ul class="next-step-list">
+              @for (item of step.checklist; track item) {
+                <li>
+                  {{ item }}
+                </li>
+              }
+            </ul>
+          }
+        </article>
+      }
+    </app-section-card>
+  </app-section-card>
+</div>

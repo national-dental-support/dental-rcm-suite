@@ -1,0 +1,111 @@
+<div class="analytics-page">
+
+  <div *ngIf="loading" class="xen-loading">
+    <mat-spinner diameter="36"></mat-spinner>
+  </div>
+
+  <div *ngIf="error && !loading" class="xen-empty err">
+    <mat-icon>error_outline</mat-icon>
+    <span>Failed to load reactivation data.</span>
+    <button mat-stroked-button (click)="load()">Retry</button>
+  </div>
+
+  <ng-container *ngIf="data && !loading">
+
+    <!-- Summary Cards -->
+    <div class="kpi-row">
+      <div class="kpi-card danger">
+        <div class="kpi-label">Lapsed Patients</div>
+        <div class="kpi-value">{{ data.summary.lapsedCount | number }}</div>
+        <div class="kpi-sub">No visit in 12+ months</div>
+      </div>
+      <div class="kpi-card warn">
+        <div class="kpi-label">At-Risk Patients</div>
+        <div class="kpi-value">{{ data.summary.atRiskCount | number }}</div>
+        <div class="kpi-sub">6&#x2013;12 months since last visit</div>
+      </div>
+      <div class="kpi-card success">
+        <div class="kpi-label">Active Patients</div>
+        <div class="kpi-value">{{ data.summary.activeCount | number }}</div>
+        <div class="kpi-sub">Visit in last 6 months</div>
+      </div>
+      <div class="kpi-card primary">
+        <div class="kpi-label">Reactivated (Last 90d)</div>
+        <div class="kpi-value">{{ data.summary.reactivatedLast90 | number }}</div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-card">
+      <div class="progress-header">
+        <span>Patient Base Health</span>
+        <span class="progress-legend">
+          <span class="dot active"></span> Active ({{ activePct }}%)
+          &nbsp;
+          <span class="dot lapsed"></span> Lapsed ({{ lapsedPct }}%)
+        </span>
+      </div>
+      <mat-progress-bar mode="determinate" [value]="activePct" color="primary"></mat-progress-bar>
+    </div>
+
+    <!-- Segment Filter + Export -->
+    <div class="toolbar">
+      <mat-button-toggle-group [value]="activeSegment" (change)="onSegmentChange($event.value)">
+        <mat-button-toggle *ngFor="let seg of segments; let i = index" [value]="i">
+          {{ seg.label }}
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+      <button mat-stroked-button (click)="exportCsv()" [disabled]="!data?.patients?.length">
+        <mat-icon>download</mat-icon> Export CSV
+      </button>
+    </div>
+
+    <!-- Patient Table -->
+    <div class="table-card">
+      <table mat-table [dataSource]="data.patients" class="xen-table">
+
+        <ng-container matColumnDef="patientName">
+          <th mat-header-cell *matHeaderCellDef>Patient Name</th>
+          <td mat-cell *matCellDef="let r"><strong>{{ r.patientName }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="insurance">
+          <th mat-header-cell *matHeaderCellDef>Insurance</th>
+          <td mat-cell *matCellDef="let r">{{ r.insurance }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="lastVisit">
+          <th mat-header-cell *matHeaderCellDef>Last Visit</th>
+          <td mat-cell *matCellDef="let r">{{ r.lastVisit | date:'mediumDate' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="daysSinceVisit">
+          <th mat-header-cell *matHeaderCellDef class="num">Days Since Visit</th>
+          <td mat-cell *matCellDef="let r" class="num">
+            <span class="days-badge" [ngClass]="r.daysSinceVisit > 730 ? 'days-red' : r.daysSinceVisit > 548 ? 'days-amber' : 'days-yellow'">
+              {{ r.daysSinceVisit | number }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="totalClaims">
+          <th mat-header-cell *matHeaderCellDef class="num">Total Claims</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.totalClaims | number }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="patientColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: patientColumns;" class="xen-row"></tr>
+      </table>
+
+      <mat-paginator
+        *ngIf="total > pageSize"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[25, 50, 100]"
+        (page)="onPage($event)">
+      </mat-paginator>
+    </div>
+
+  </ng-container>
+
+</div>

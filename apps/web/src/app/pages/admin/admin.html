@@ -1,0 +1,91 @@
+<section class="admin-page">
+
+  <mat-tab-group animationDuration="0ms" class="admin-tabs">
+
+    <mat-tab label="Users">
+      <ng-template matTabContent>
+        <rp-users-list></rp-users-list>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Single Sign-On">
+      <ng-template matTabContent>
+        <rp-customer-sso-admin></rp-customer-sso-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Security">
+      <ng-template matTabContent>
+        <rp-security-admin></rp-security-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Compliance">
+      <ng-template matTabContent>
+        <rp-compliance-admin></rp-compliance-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Catalogs">
+      <ng-template matTabContent>
+        <rp-catalog-management></rp-catalog-management>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Denial Code Mapping">
+      <ng-template matTabContent>
+        <rp-denial-code-mapping-admin></rp-denial-code-mapping-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Remediation Steps">
+      <ng-template matTabContent>
+        <rp-remediation-admin></rp-remediation-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Workflow Rules">
+      <ng-template matTabContent>
+        <rp-workflow-rules-admin></rp-workflow-rules-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Escalation Chains">
+      <ng-template matTabContent>
+        <rp-escalation-chains-admin></rp-escalation-chains-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Payer Follow-Up">
+      <ng-template matTabContent>
+        <rp-payer-followup-admin></rp-payer-followup-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Queue Priority">
+      <ng-template matTabContent>
+        <rp-priority-settings></rp-priority-settings>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Write-Off Rules">
+      <ng-template matTabContent>
+        <rp-writeoff-rules-admin></rp-writeoff-rules-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="RAG Thresholds">
+      <ng-template matTabContent>
+        <rp-exec-thresholds-admin></rp-exec-thresholds-admin>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Logs">
+      <ng-template matTabContent>
+        <app-admin-logs></app-admin-logs>
+      </ng-template>
+    </mat-tab>
+
+  </mat-tab-group>
+
+</section>

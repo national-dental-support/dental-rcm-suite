@@ -1,0 +1,22 @@
+.app-container {
+  display: flex;           /* or use CSS Grid (see below) */
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+app-side-nav {
+  flex: 0 0 82px;          /* match your sidebar width */
+}
+
+.main-content {
+  flex: 1 1 auto;
+  min-width: 0;            /* prevents flex overflow pushing things around */
+  display: flex;
+  flex-direction: column;
+}
+
+.page-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: auto;
+}

@@ -1,0 +1,92 @@
+.stats-row {
+  display: flex;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.stat-card {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+
+  &__value { font-size: 2rem; font-weight: 700; }
+  &__label  { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; }
+
+  &--open          { border-top: 3px solid var(--color-warning); }
+  &--investigating { border-top: 3px solid var(--color-info); }
+  &--resolved      { border-top: 3px solid var(--color-success); }
+}
+
+.new-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 8px 0;
+
+  &__desc    { grid-column: span 3; }
+  &__actions { grid-column: span 3; display: flex; gap: 8px; justify-content: flex-end; }
+}
+
+.esc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-bg-muted);
+  }
+
+  th { font-weight: 600; background: var(--color-bg-subtle); }
+  tr:hover td { background: var(--color-bg-subtle); }
+}
+
+.mono { font-family: monospace; font-size: 0.8rem; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--open          { background: var(--color-warning-light); color: #92400e; }
+  &--investigating { background: var(--color-info-light); color: var(--color-info); }
+  &--resolved      { background: #d1fae5; color: #065f46; }
+  &--dismissed     { background: var(--color-bg-muted); color: var(--color-text-muted); }
+  &--critical      { background: var(--color-danger-light); color: var(--color-danger); }
+  &--high          { background: #ffedd5; color: #9a3412; }
+  &--medium        { background: var(--color-warning-light); color: #92400e; }
+  &--low           { background: #f0fdf4; color: var(--color-success); }
+}
+
+.actions-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+
+  button { font-size: 0.75rem; }
+}
+
+.empty-row { text-align: center; color: var(--color-text-subtle); padding: 32px !important; }
+
+.loading-row { display: flex; justify-content: center; padding: 32px; }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+
+  span { font-size: 0.85rem; color: var(--color-gray-600); }
+}
+
+.filter-select {
+  width: 140px;
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+}

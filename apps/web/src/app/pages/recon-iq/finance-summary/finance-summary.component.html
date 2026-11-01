@@ -1,0 +1,283 @@
+<div class="finance-summary">
+
+  <!-- -- Controls --------------------------------------------------------- -->
+  <div class="controls-row">
+    <button type="button" mat-stroked-button (click)="exportCsv()" [disabled]="loading || !summary">
+      <mat-icon>download</mat-icon> Export
+    </button>
+    <div class="filter-group">
+      <button class="filter-pill" type="button" [matMenuTriggerFor]="periodMenu">
+        <span class="pill-label">Period</span>
+        <span class="pill-value">{{ periodLabel }}</span>
+        <mat-icon class="pill-caret">expand_more</mat-icon>
+      </button>
+      <mat-menu #periodMenu="matMenu" panelClass="fs-filter-menu">
+        @for (o of monthOptions; track o) {
+          <button type="button" mat-menu-item
+            [class.fs-menu-item--active]="selectedMonths === o.value"
+          (click)="setMonths(o.value)">{{ o.label }}</button>
+        }
+      </mat-menu>
+      @if (filterOptions.locations.length) {
+        <button class="filter-pill" type="button" [matMenuTriggerFor]="locationMenu">
+          <span class="pill-label">Location</span>
+          <span class="pill-value">{{ locationLabel }}</span>
+          <mat-icon class="pill-caret">expand_more</mat-icon>
+        </button>
+      }
+      <mat-menu #locationMenu="matMenu" panelClass="fs-filter-menu">
+        <button type="button" mat-menu-item (click)="setLocation('')">All Locations</button>
+        @for (loc of filterOptions.locations; track loc) {
+          <button type="button" mat-menu-item (click)="setLocation(loc)">{{ loc }}</button>
+        }
+      </mat-menu>
+
+      @if (filterOptions.payers.length) {
+        <button class="filter-pill" type="button" [matMenuTriggerFor]="payerMenu">
+          <span class="pill-label">Payer</span>
+          <span class="pill-value">{{ payerLabel }}</span>
+          <mat-icon class="pill-caret">expand_more</mat-icon>
+        </button>
+      }
+      <mat-menu #payerMenu="matMenu" panelClass="fs-filter-menu">
+        <button type="button" mat-menu-item (click)="setPayer('')">All Payers</button>
+        @for (payer of filterOptions.payers; track payer) {
+          <button type="button" mat-menu-item (click)="setPayer(payer)">{{ payer }}</button>
+        }
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- -- Loading ----------------------------------------------------------- -->
+  @if (loading) {
+    <div class="state-box">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading finance summary&#x2026;</p>
+    </div>
+  }
+
+  <!-- -- Error ------------------------------------------------------------- -->
+  @if (error && !loading) {
+    <div class="state-box error-box">
+      <mat-icon>info</mat-icon>
+      <p>Finance data is not available at this time. <a (click)="loadData()">Refresh</a></p>
+    </div>
+  }
+
+  <!-- -- No data ----------------------------------------------------------- -->
+  @if (!loading && !error && summary && isEmptySummary()) {
+    <div class="state-box">
+      <mat-icon>assessment</mat-icon>
+      <p>No finance data available for the selected period. Adjust the period or check back once transactions have been posted.</p>
+    </div>
+  }
+
+  @if (!loading && !error && summary && !isEmptySummary()) {
+    <!-- -- KPI Cards Row --------------------------------------------------- -->
+    <div class="kpi-row">
+      <mat-card class="kpi-card accent-blue"
+        matTooltip="Total billed charges submitted to all payers before any adjustments, write-offs, or contractual reductions."
+        matTooltipPosition="above">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>receipt_long</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ fmt(summary.grossCharges) }}</div>
+            <div class="kpi-label">Gross Charges</div>
+            <div class="kpi-sub">Total billed before adjustments</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card accent-green"
+        matTooltip="Sum of all payments actually received &#x2014; both insurance remittances and patient payments. Gross Charges minus Contractual Adjustments and Write-offs."
+        matTooltipPosition="above">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>account_balance_wallet</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ fmt(summary.netCollections) }}</div>
+            <div class="kpi-label">Net Collections</div>
+            <div class="kpi-sub">Insurance + Patient payments</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card accent-teal"
+        matTooltip="Payments received from insurance payers via ERA or EOB remittance files during the selected period."
+        matTooltipPosition="above">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>business</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ fmt(summary.insurancePayments) }}</div>
+            <div class="kpi-label">Insurance Payments</div>
+            <div class="kpi-sub">ERA / EOB remittances</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card accent-purple"
+        matTooltip="Payments received directly from patients &#x2014; cash, credit card, copays, and coinsurance collected at the point of care or via patient billing."
+        matTooltipPosition="above">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>person</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ fmt(summary.patientPayments) }}</div>
+            <div class="kpi-label">Patient Payments</div>
+            <div class="kpi-sub">Cash, credit, copays</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card accent-amber"
+        matTooltip="Reductions to gross charges based on contracted fee schedules with payers. These are expected, non-cash adjustments that reduce billed charges to the agreed-upon allowed amount."
+        matTooltipPosition="above">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>remove_circle_outline</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ fmt(summary.contractualAdjustments) }}</div>
+            <div class="kpi-label">Contractual Adj.</div>
+            <div class="kpi-sub">Contracted write-downs</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card accent-red"
+        matTooltip="Transactional write-offs posted to the PMS &#x2014; includes bad debt, courtesy adjustments, and small-balance write-offs. Distinct from contractual adjustments."
+        matTooltipPosition="above">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>money_off</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ fmt(summary.writeOffs) }}</div>
+            <div class="kpi-label">Transactional Write-offs</div>
+            <div class="kpi-sub">Bad debt & courtesy</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <!-- -- Performance KPIs ------------------------------------------------ -->
+    <div class="perf-row">
+      <mat-card class="perf-card">
+        <mat-card-content>
+          <div class="perf-label">Net Collection Rate</div>
+          <div class="perf-value" [ngClass]="collectionRateClass(summary.netCollectionRate)">
+            {{ fmtPct(summary.netCollectionRate) }}
+          </div>
+          <div class="perf-sub">Collections &#x00F7; Adjusted charges</div>
+          <div class="perf-bar">
+            <div class="perf-bar-fill" [style.width.%]="summary.netCollectionRate"
+            [ngClass]="collectionRateClass(summary.netCollectionRate)"></div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="perf-card">
+        <mat-card-content>
+          <div class="perf-label">Gross Collection Rate</div>
+          <div class="perf-value" [ngClass]="collectionRateClass(summary.grossCollectionRate)">
+            {{ fmtPct(summary.grossCollectionRate) }}
+          </div>
+          <div class="perf-sub">Collections &#x00F7; Gross charges</div>
+          <div class="perf-bar">
+            <div class="perf-bar-fill" [style.width.%]="summary.grossCollectionRate"
+            [ngClass]="collectionRateClass(summary.grossCollectionRate)"></div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="perf-card">
+        <mat-card-content>
+          <div class="perf-label">Days in A/R</div>
+          <div class="perf-value" [ngClass]="daysInArClass(summary.daysInAR)">
+            {{ summary.daysInAR }}
+          </div>
+          <div class="perf-sub">Avg days to collect payment</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="perf-card">
+        <mat-card-content>
+          <div class="perf-label">Open A/R Balance</div>
+          <div class="perf-value" [ngClass]="daysInArClass(summary.daysInAR)">
+            {{ fmt(summary.openAR) }}
+          </div>
+          <div class="perf-sub">Uncollected charges (all time)</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="perf-card">
+        <mat-card-content>
+          <div class="perf-label">Net Collectable</div>
+          <div class="perf-value neutral">{{ fmt(netCollectableAmount()) }}</div>
+          <div class="perf-sub">Gross &#x2212; Adj. &#x2212; Write-offs</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <!-- -- Revenue Waterfall + Payment Mix -------------------------------- -->
+    <div class="mid-grid">
+      <!-- Waterfall / Revenue Funnel -->
+      <app-section-card
+        title="Revenue Funnel"
+        [tooltip]="'Step-by-step breakdown of how gross charges flow through adjustments and write-offs to arrive at net collections. Each row shows the contribution or reduction at that stage of the revenue cycle.'">
+        <div class="waterfall">
+          @for (row of waterfallRows; track row) {
+            <div
+              class="wf-row"
+              [ngClass]="{'wf-result': row.type === 'result', 'wf-negative': row.type === 'negative'}">
+              <div class="wf-label">
+                <mat-icon class="wf-icon">{{ row.icon }}</mat-icon>
+                <span>{{ row.label }}</span>
+              </div>
+              <div class="wf-amount" [ngClass]="{'wf-amount-neg': row.type === 'negative'}">
+                {{ row.type === 'negative' ? '(' + fmt(row.amount * -1) + ')' : fmt(row.amount) }}
+              </div>
+              @if (summary) {
+                <div class="wf-bar-wrap">
+                  <div class="wf-bar-fill"
+                    [ngClass]="{'wf-bar-neg': row.type === 'negative', 'wf-bar-result': row.type === 'result'}"
+                    [style.width.%]="waterfallPct(row.amount)">
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </app-section-card>
+      <!-- Payment Mix pie -->
+      <app-section-card
+        title="Payment Mix"
+        [tooltip]="'Proportional breakdown of all revenue components: insurance payments, patient payments, contractual adjustments, and write-offs &#x2014; as a share of total activity.'">
+        <app-pie-chart chartId="fin-mix" [data]="paymentMixData" [isCurrency]="true"></app-pie-chart>
+      </app-section-card>
+    </div>
+    <!-- -- Monthly Trend --------------------------------------------------- -->
+    <app-section-card
+      title="Monthly Revenue Trend"
+      [tooltip]="'Month-by-month view of gross charges (bars), insurance payments, patient payments, and contractual adjustments. The line shows net collections &#x2014; helping leadership spot seasonality, declining collection rates, or growing A/R gaps over time.'"
+      class="trend-card">
+      <app-line-chart
+        [seriesOverride]="trendSeries"
+        [categoriesOverride]="trendCategories"
+        [tooltipAsCurrency]="true"
+        [optionsOverride]="{ stroke: { width: [0, 0, 0, 0, 3], curve: 'smooth' } }">
+      </app-line-chart>
+    </app-section-card>
+    <!-- -- PMS Transaction Type Breakdown --------------------------------- -->
+    <app-section-card
+      title="PMS Transaction Type Breakdown"
+      [tooltip]="'Every transaction type posted in the practice management system, grouped by finance category. Helps the finance team audit how the PMS classifies each money movement and reconcile against GL entries.'">
+      <table mat-table [dataSource]="byTrxType" class="trx-table">
+        <ng-container matColumnDef="trxType">
+          <th mat-header-cell *matHeaderCellDef>Transaction Type</th>
+          <td mat-cell *matCellDef="let r">{{ r.trxType }}</td>
+        </ng-container>
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef>Category</th>
+          <td mat-cell *matCellDef="let r">
+            <span class="cat-chip" [ngClass]="'cat-' + r.category">{{ categoryLabel(r.category) }}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="totalAmount">
+          <th mat-header-cell *matHeaderCellDef class="col-right">Total Amount</th>
+          <td mat-cell *matCellDef="let r" class="col-right">{{ fmt(r.totalAmount) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="txCount">
+          <th mat-header-cell *matHeaderCellDef class="col-right">Transactions</th>
+          <td mat-cell *matCellDef="let r" class="col-right">{{ fmtCount(r.txCount) }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="trxColumns"></tr>
+        <tr mat-row *matRowDef="let r; columns: trxColumns;"></tr>
+      </table>
+    </app-section-card>
+  }
+
+</div>

@@ -1,0 +1,16 @@
+<nav mat-tab-nav-bar [tabPanel]="panel">
+  @for (t of tabs; track trackByLabel($index, t)) {
+    <a
+      mat-tab-link
+      [routerLink]="t.link"
+      routerLinkActive
+      #rla="routerLinkActive"
+      [active]="rla.isActive"
+      >
+      {{ t.label }}
+    </a>
+  }
+</nav>
+
+<mat-tab-nav-panel #panel>
+</mat-tab-nav-panel>

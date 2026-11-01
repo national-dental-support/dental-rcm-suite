@@ -1,0 +1,724 @@
+// -- Design system partials -------------------
+@use 'tokens';
+@use 'typography';
+@use 'cards';
+@use 'badges';
+@use 'buttons';
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* -- ApexCharts no-data state -------------------------------------------------
+   When a chart has no data, ApexCharts renders a text element with class
+   apexcharts-empty-series-text. Gray out the whole canvas.
+   ---------------------------------------------------------------------------- */
+.apexcharts-canvas:has(.apexcharts-empty-series-text),
+.apexcharts-canvas:has(text.apexcharts-empty-series-text) {
+  background-color: var(--color-bg-muted) !important;
+  border-radius: var(--radius);
+  opacity: 0.75;
+  filter: grayscale(60%);
+}
+
+/* -- Catch-all for any page-specific empty-state class names -----------------
+   Some pages use their own class instead of .empty - apply the same gray look.
+   ---------------------------------------------------------------------------- */
+.pmx-empty,
+.empty-state,
+.no-data-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  border-radius: var(--radius);
+  background: var(--color-bg-muted);
+  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--font-size-md);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-6);
+  opacity: 0.75;
+}
+
+/* -- Design System - Global Utilities ----------------------------
+   These are truly global so they apply inside child components
+   (e.g. FamilyTabComponent) without needing per-component SCSS imports.
+   ------------------------------------------------------------------------ */
+
+/* Tables */
+.xen-table { width: 100%; }
+.xen-row:hover { background: var(--color-bg-subtle); cursor: default; }
+
+/* Empty / loading states */
+.xen-empty {
+  display: flex; align-items: center; gap: 10px;
+  padding: var(--space-8); color: var(--color-text-muted); font-style: italic;
+  mat-icon { opacity: 0.4; font-size: 28px; width: 28px; height: 28px; }
+}
+
+/* No-data placeholder - used by analytics/insightflow chart containers
+   and any page-level else-template with class="empty" */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  border-radius: var(--radius);
+  background: var(--color-bg-muted);
+  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--font-size-md);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-6);
+  opacity: 0.75;
+  filter: grayscale(60%);
+}
+.xen-loading {
+  display: flex; justify-content: center; align-items: center; padding: 32px;
+}
+
+/* Card-style section container */
+.xen-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.xen-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--space-3);
+  h3 { margin: 0; font-size: 15px; font-weight: 600; color: #4f43bc; }
+}
+
+/* Info row (icon + label + value) */
+.xen-info-row {
+  display: flex; align-items: center; gap: var(--space-2);
+  font-size: var(--font-size-sm); color: var(--color-gray-700);
+}
+
+/* Inline badge (e.g. "This patient is the guarantor") */
+.xen-badge {
+  display: inline-block; padding: 2px var(--space-2); border-radius: 10px;
+  font-size: 11px; font-weight: 600;
+  background: var(--color-success-light); color: var(--color-success);
+}
+
+/* -- Status Chips ---------------------------------------------
+   Used across all tables. Global so child components pick them up.
+   ------------------------------------------------------------------------ */
+.status-chip {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: 600;
+
+  /* Appointments (0=Scheduled,1=Complete,2=Unscheduled,3=ASAP,4=Cancelled,5=Planned) */
+  &.status-apt-0 { background: #e3f2fd; color: #1565c0; }
+  &.status-apt-1 { background: #e8f5e9; color: #2e7d32; }
+  &.status-apt-2 { background: #f5f5f5; color: #757575; }
+  &.status-apt-3 { background: #fff8e1; color: #f57f17; }
+  &.status-apt-4 { background: #fce4ec; color: #c62828; }
+  &.status-apt-5 { background: #f3e5f5; color: #6a1b9a; }
+
+  /* Claims (U=Unsent,S=Sent,R=Received,H=Hold,W=Waiting,V=Void) */
+  &.status-claim-U { background: #fff3e0; color: #e65100; }
+  &.status-claim-S { background: #e3f2fd; color: #1565c0; }
+  &.status-claim-R { background: #e8f5e9; color: #2e7d32; }
+  &.status-claim-H { background: #fce4ec; color: #c62828; }
+  &.status-claim-W { background: #fff8e1; color: #f57f17; }
+  &.status-claim-V { background: #f5f5f5; color: #757575; }
+
+  /* Procedures (0=Planned,1=Complete,2=Existing,3=Referred) */
+  &.status-proc-0 { background: #fff3e0; color: #e65100; }
+  &.status-proc-1 { background: #e8f5e9; color: #2e7d32; }
+  &.status-proc-2 { background: #e3f2fd; color: #1565c0; }
+  &.status-proc-3 { background: #f3e5f5; color: #6a1b9a; }
+
+  /* Referrals (string: Pending,Scheduled,Completed,Cancelled) */
+  &.status-ref-pending   { background: #fff3e0; color: #e65100; }
+  &.status-ref-scheduled { background: #e3f2fd; color: #1565c0; }
+  &.status-ref-completed { background: #e8f5e9; color: #2e7d32; }
+  &.status-ref-cancelled { background: #f5f5f5; color: #757575; }
+
+  /* Denial IQ claim status */
+  &.status-diq-open        { background: #e3f2fd; color: #1565c0; }
+  &.status-diq-inprogress  { background: #e8eaf6; color: #283593; }
+  &.status-diq-escalated   { background: #fff3e0; color: #e65100; }
+  &.status-diq-pending     { background: #fff8e1; color: #f57f17; }
+  &.status-diq-closed      { background: #f5f5f5; color: #616161; }
+  &.status-diq-adjudicated { background: #e8f5e9; color: #2e7d32; }
+}
+
+html, body {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* -- WCAG 2.1 AA: Skip navigation link -- */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 16px;
+  z-index: 10000;
+  padding: 8px 16px;
+  background: #1e3a5f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 0 0 8px 8px;
+  text-decoration: none;
+  transition: top 0.15s;
+
+  &:focus {
+    top: 0;
+  }
+}
+
+/* -- WCAG 2.1 AA: Global focus-visible ring -- */
+*:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.7);
+  outline-offset: 2px;
+}
+
+/* -- WCAG 2.1 AA: Screen-reader-only utility -- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pointer {
+  display:none;
+}
+
+.speedometer-container svg {
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* App.css or relevant CSS file */
+#semidonutchart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-container {
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px auto;
+  width: 100%;
+  max-width: 100%;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.chart-card__subtitle-change {
+  font-weight: 600;
+}
+
+.chart-card__subtitle-change--positive {
+  color: var(--color-success) !important;
+}
+
+.chart-card__subtitle-change--negative {
+  color: var(--color-danger) !important;
+}
+
+.apexcharts-legend-marker {
+  height:18px !important;
+  width:18px !important;
+  margin-right:7px !important;
+}
+
+.apexcharts-tooltip {
+  background: #111827 !important;   /* near-black */
+  color: #f9fafb !important;        /* off-white text */
+  border-radius: 6px !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+/* Optional: tweak the series name and value styles separately */
+.apexcharts-tooltip-title {
+  background: transparent !important;
+  border-bottom: none !important;
+  font-size: 11px !important;
+  opacity: 0.8;
+}
+
+.apexcharts-tooltip-text-y-value {
+  font-weight: 600 !important;
+}
+
+/* Smooth hover animation for donut segments */
+.apexcharts-donut .apexcharts-series path {
+  transition: transform 0.2s ease-out;
+  transform-origin: 50% 50%;
+}
+
+.page-wrapper, .main-content, .router-outlet-wrapper {
+  min-height: 100%;
+}
+
+:root {
+  --rp-skeleton-base: rgba(30, 41, 59, 0.10);  /* neutral */
+  --rp-skeleton-muted: rgba(30, 41, 59, 0.06); /* lighter */
+  --rp-skeleton-accent: rgba(34, 107, 255, 0.08); /* Accent blue at low opacity */
+  --rp-skeleton-radius: 10px;
+  --rp-skeleton-speed: 1.6s;
+}
+
+/* -- Responsiveness ---------------------------------------------------- */
+
+/* ApexCharts text sizing */
+@media (max-width: 768px) {
+  .apexcharts-title-text { font-size: 14px !important; }
+  .apexcharts-legend-text { font-size: 14px !important; }
+}
+
+@media (min-width: 769px) {
+  .apexcharts-title-text { font-size: 16px !important; }
+  .apexcharts-legend-text { font-size: 16px !important; }
+}
+
+/* Tables: horizontal scroll on narrow viewports */
+@media (max-width: 768px) {
+  .mat-mdc-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Admin tab labels: smaller text to avoid overflow */
+  .mat-mdc-tab .mdc-tab__text-label {
+    font-size: 12px !important;
+  }
+
+  /* Filter menu: stack date row on mobile */
+  .filter-menu.mat-mdc-menu-panel {
+    min-width: 320px !important;
+    width: calc(100vw - 24px) !important;
+  }
+  .filter-menu .date-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Dialogs responsive */
+@media (max-width: 640px) {
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 48px) !important;
+  }
+}
+
+/* -- Command palette dialog -------------------------------------------- */
+.command-palette-panel .mat-mdc-dialog-container {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.command-palette-panel .mdc-dialog__surface {
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.command-palette-backdrop {
+  background: transparent !important;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+html, body { height: 100%; }
+body { margin: 0; font-family: Poppins, "Helvetica Neue", sans-serif; }
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;     //  vertical scroll only
+  overflow-x: hidden;
+}
+
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Poppins, "Helvetica Neue", sans-serif; }
+
+.rp-chart-host {
+  width: 100%;
+  min-height: 320px;
+  display: block;
+}
+
+/* ==========================================================
+   Global Filters - mat-menu overlay sizing + layout
+   Angular Material 16 (MDC)
+   ========================================================== */
+
+.filter-menu.mat-mdc-menu-panel {
+  /* [ok] Force enough width to keep Start/End side-by-side */
+  min-width: 520px !important;
+  width: 520px !important;
+
+  /* [ok] Override any Material max-width constraints */
+  max-width: none !important;
+
+  padding: 0 !important;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  overflow: hidden;
+
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.10),
+    0 2px 10px rgba(15, 23, 42, 0.06);
+}
+
+/* kill default menu padding */
+.filter-menu .mat-mdc-menu-content {
+  padding: 0 !important;
+}
+
+/* header + content + footer spacing */
+.filter-menu .filter-menu__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.filter-menu .filter-menu__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.filter-menu .mat-divider {
+  border-top-color: var(--color-border);
+}
+
+.filter-menu .filter-menu__content {
+  padding: 14px 16px 16px;
+}
+
+/* [ok] FORCE the date row to be 2 columns */
+.filter-menu .date-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 14px !important;
+}
+
+/* field surface */
+.filter-menu .mdc-text-field--outlined {
+  background: var(--color-bg-subtle);
+  border-radius: 12px;
+}
+
+/* footer: Clear left, Apply right */
+.filter-menu .filter-menu__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 14px 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+/* button sizing */
+.filter-menu .filter-menu__footer .mat-mdc-button,
+.filter-menu .filter-menu__footer .mat-mdc-unelevated-button,
+.filter-menu .filter-menu__footer .mat-mdc-raised-button {
+  height: 40px;
+  border-radius: 10px;
+}
+
+/* ---------- Dialog Surface ---------- */
+/* Dialog surface */
+.rp-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+  }
+
+  .mdc-dialog__surface {
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    box-shadow:
+      0 24px 60px rgba(15, 23, 42, 0.18),
+      0 6px 18px rgba(15, 23, 42, 0.10) !important;
+  }
+}
+
+/* 1) Panel: no padding, set explicit background, and clip */
+.mat-mdc-menu-panel.rp-filter-menu-panel {
+  padding: 0 !important;
+  border-radius: 16px;
+  background: var(--color-surface) !important;  /* stops the grey "peek through" */
+  overflow: hidden !important;                   /* clips bottom/rounded corners */
+}
+
+/* 2) Menu content: Material adds padding here too */
+.mat-mdc-menu-panel.rp-filter-menu-panel .mat-mdc-menu-content {
+  padding: 0 !important;
+  background: inherit;
+}
+
+/* 3) If your dialog wrapper doesn't fill height, force it to */
+.mat-mdc-menu-panel.rp-filter-menu-panel .rp-filter-dialog {
+  background: var(--color-surface);
+}
+
+/* App background should live at the shell level, not as a white content panel */
+.mat-drawer-content,
+.mat-sidenav-content {
+  background: transparent !important;
+}
+
+/* -- Shared export button - applied to every dataviz "Export" button -- */
+.btn-export {
+  height: 28px !important;
+  min-width: 0 !important;
+  line-height: 26px !important;
+  padding: 0 var(--space-3) !important;
+  font-size: var(--font-size-xs) !important;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 6px !important;
+  border-color: var(--color-border-strong) !important;
+  color: var(--color-gray-700) !important;
+  background: var(--color-surface) !important;
+  text-transform: none !important;
+  flex-shrink: 0;
+}
+
+/* -- Dark Mode ------------------------------------------------------- */
+html.dark-mode {
+  --rcm-bg: #0f1117;
+  --rcm-nav-bg: #1a1d27;
+
+  /* Override skeleton colors */
+  --rp-skeleton-base: rgba(255, 255, 255, 0.08);
+  --rp-skeleton-muted: rgba(255, 255, 255, 0.04);
+  --rp-skeleton-accent: rgba(0, 188, 212, 0.06);
+
+  color-scheme: dark;
+
+  body {
+    background: #0f1117;
+    color: #e0e0e0;
+  }
+
+  /* Material card surfaces */
+  .mat-mdc-card,
+  .mat-card {
+    background: #1a1d27 !important;
+    color: #e0e0e0 !important;
+  }
+
+  /* Material tables */
+  .mat-mdc-table {
+    background: transparent !important;
+  }
+  .mat-mdc-header-cell {
+    color: #aaa !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  .mat-mdc-cell {
+    color: #ccc !important;
+    border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+  }
+  .mat-mdc-row:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
+  }
+
+  /* Material tabs */
+  .mat-mdc-tab .mdc-tab__text-label {
+    color: #aaa !important;
+  }
+  .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+    color: #00bcd4 !important;
+  }
+  .mat-mdc-tab-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Tab nav bar (InsightFlow, Payer IQ tabs) */
+  .mat-mdc-tab-link .mdc-tab__text-label {
+    color: #aaa !important;
+  }
+  .mat-mdc-tab-link.mdc-tab--active .mdc-tab__text-label {
+    color: #00bcd4 !important;
+  }
+
+  /* Material form fields */
+  .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__leading,
+  .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__notch,
+  .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__trailing {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+  .mat-mdc-form-field .mdc-text-field--outlined {
+    background: rgba(255, 255, 255, 0.04) !important;
+  }
+  .mat-mdc-input-element {
+    color: #e0e0e0 !important;
+  }
+  .mat-mdc-form-field .mat-mdc-floating-label {
+    color: #999 !important;
+  }
+  .mat-mdc-select-value-text {
+    color: #e0e0e0 !important;
+  }
+
+  /* Material menu */
+  .mat-mdc-menu-panel {
+    background: #1e2030 !important;
+  }
+  .mat-mdc-menu-item {
+    color: #e0e0e0 !important;
+  }
+  .mat-mdc-menu-item:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* Material dialog */
+  .mdc-dialog__surface {
+    background: #1a1d27 !important;
+    color: #e0e0e0 !important;
+  }
+
+  /* Material slide toggle */
+  .mat-mdc-slide-toggle .mdc-switch__track {
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  /* Material buttons */
+  .mat-mdc-outlined-button,
+  .mat-mdc-button {
+    color: #ccc !important;
+  }
+
+  /* Material checkbox */
+  .mat-mdc-checkbox .mdc-checkbox__background {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Side nav */
+  .side-nav {
+    background: #12141c !important;
+    border-right-color: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* Top nav */
+  .top-nav {
+    background: #1a1d27 !important;
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* Section cards */
+  rp-section-card .section-card,
+  .section-card {
+    background: #1a1d27 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #e0e0e0 !important;
+  }
+
+  /* Chart container */
+  .chart-container {
+    background: #1a1d27;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* General text overrides */
+  h1, h2, h3, h4, h5, h6 { color: #e0e0e0; }
+  p, span, label { color: #ccc; }
+
+  /* Admin page */
+  .admin-page {
+    background: #0f1117 !important;
+    color: #e0e0e0 !important;
+  }
+
+  /* Page headers */
+  .page-header h1 { color: #e0e0e0 !important; }
+
+  /* Filter menu */
+  .filter-menu.mat-mdc-menu-panel,
+  .mat-mdc-menu-panel.rp-filter-menu-panel {
+    background: #1e2030 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  .filter-menu .filter-menu__title { color: #e0e0e0 !important; }
+  .filter-menu .filter-menu__footer { background: #1a1d27 !important; border-top-color: rgba(255, 255, 255, 0.06) !important; }
+  .filter-menu .mdc-text-field--outlined { background: rgba(255, 255, 255, 0.04) !important; }
+
+  /* Export button */
+  .btn-export {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ccc !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* Main content area */
+  .main-content {
+    background: #0f1117;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f1117;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* ApexCharts in dark mode */
+  .apexcharts-canvas {
+    background: transparent !important;
+  }
+  .apexcharts-text, .apexcharts-title-text {
+    fill: #ccc !important;
+  }
+  .apexcharts-legend-text {
+    color: #ccc !important;
+  }
+  .apexcharts-xaxis-label, .apexcharts-yaxis-label {
+    fill: #999 !important;
+  }
+  .apexcharts-gridline {
+    stroke: rgba(255, 255, 255, 0.06) !important;
+  }
+}
+
+/* Assign-To dialog select panel - prevent clipping inside mat-dialog */
+.assign-select-panel {
+  max-height: 280px !important;
+}
+
+.carc-tooltip {
+  white-space: pre-line;
+  font-size: 12px;
+  max-width: 400px !important;
+}

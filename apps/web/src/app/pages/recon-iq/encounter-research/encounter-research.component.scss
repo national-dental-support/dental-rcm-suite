@@ -1,0 +1,270 @@
+/* Page */
+:host {
+  display: block;
+  background: var(--rcm-bg, var(--color-bg-subtle));
+  min-height: 100vh;
+}
+
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+/* One unified surface */
+.toolbar-shell {
+  background: var(--color-surface);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 14px;
+  overflow: hidden; /* keeps inner divider edges clean */
+}
+
+/* Top row becomes just padding, no border */
+.toolbar-shell__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+/* Filters region: looks like part of same card */
+.toolbar-shell__filters {
+  border-top: 1px solid rgba(17, 24, 39, 0.08);
+  background: #fbfcfe; /* subtle inset so it reads as a region */
+  padding: 12px 16px 14px;
+}
+
+/* Remove "card" styling from inner pieces if you still have them */
+.cmdbar { background: transparent; border: 0; padding: 0; border-radius: 0; }
+.filtersPanel { background: transparent; border: 0; padding: 0; border-radius: 0; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .toolbar-shell__top {
+    align-items: flex-start;
+  }
+  .cmdbar__right {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .cmdbar__search { width: 100%; }
+}
+
+/* Command bar */
+.cmdbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0; /* only top corners, since bottom is shared with filters region */
+}
+
+.cmdbar__left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 240px;
+}
+
+.cmdbar__title {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.cmdbar__hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.cmdbar__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Search field: responsive + consistent */
+.cmdbar__search {
+  width: clamp(280px, 42vw, 560px);
+  min-width: 220px;
+}
+
+::ng-deep .cmdbar__search .mat-mdc-form-field-subscript-wrapper {
+  display: none; /* removes extra height */
+}
+
+::ng-deep .cmdbar__search .mdc-text-field--outlined {
+  background: var(--color-bg-subtle);
+  border-color: pink !important;
+}
+
+/* Buttons */
+.cmdbar__filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  .cmdbar__caret {
+    opacity: 0.7;
+    transition: transform 120ms ease;
+  }
+
+  &.is-open .cmdbar__caret {
+    transform: rotate(180deg);
+  }
+}
+
+.cmdbar__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--color-surface);
+
+  &.is-zero {
+    display: none;
+  }
+}
+
+.cmdbar__clearBtn {
+  white-space: nowrap;
+}
+
+/* Active filter chips row */
+.filterChips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 12px;
+  background: var(--color-surface);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: var(--radius-md);
+}
+
+.filterChips__label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-gray-600);
+}
+
+/* Filters panel */
+.filtersPanel {
+  background: var(--color-surface);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+  padding: 12px;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .cmdbar {
+    align-items: flex-start;
+  }
+  .cmdbar__right {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .cmdbar__search {
+    width: 100%;
+  }
+}
+
+/* [ok] Fix: when the label is NOT floating, center it vertically in 40px */
+.cmdbar__search {
+  width: clamp(280px, 42vw, 560px);
+  min-width: 220px;
+}
+
+/* Remove extra subscript height (you already do this) */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* Make it look like the filter inputs */
+:host ::ng-deep .cmdbar__search .mdc-text-field--outlined {
+  background: var(--color-bg-subtle);           /* same tint */
+  border-radius: var(--radius-md);           /* same roundness */
+   /* vertical centering for 40px control */
+}
+
+/* Match the outline border alpha */
+:host ::ng-deep .cmdbar__search .mdc-notched-outline__leading,
+:host ::ng-deep .cmdbar__search .mdc-notched-outline__notch,
+:host ::ng-deep .cmdbar__search .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.14) !important;
+}
+
+/* Hover border */
+:host ::ng-deep .cmdbar__search:hover .mdc-notched-outline__leading,
+:host ::ng-deep .cmdbar__search:hover .mdc-notched-outline__notch,
+:host ::ng-deep .cmdbar__search:hover .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.28) !important;
+}
+
+/* Focus border (same feel as filters) */
+:host ::ng-deep .cmdbar__search.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .cmdbar__search.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .cmdbar__search.mat-focused .mdc-notched-outline__trailing {
+  border-color: rp-primary-600 !important;
+}
+
+/* Input typography */
+:host ::ng-deep .cmdbar__search input.mat-mdc-input-element {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  padding-top: 6px !important;
+}
+
+/* Placeholder typography (match filters vibe) */
+:host ::ng-deep .cmdbar__search input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+/* Prefix icon sizing + color to match */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-icon-prefix mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  color: var(--color-text-muted);
+}
+
+/* Suffix clear button sizing */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-icon-suffix mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
+/* Optional: align height/density with filter fields */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-infix {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* Claim action buttons inside nested rows */
+.claim-action-spacer {
+  display: inline-block;
+  margin-left: 8px;
+}

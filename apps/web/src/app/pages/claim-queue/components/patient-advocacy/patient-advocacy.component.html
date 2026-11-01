@@ -1,0 +1,159 @@
+<div class="patient-advocacy xen-page">
+
+  <!-- -- Header -- -->
+  <div class="pa-header">
+    <div class="pa-header__title">
+      <mat-icon>support_agent</mat-icon>
+      <h1>Patient Advocacy AI</h1>
+    </div>
+    <p class="pa-header__subtitle">
+      Plain-language explanations of claim denials and personalised next-step guidance for patients.
+    </p>
+  </div>
+
+  <!-- -- Scenario Quick-Select -- -->
+  <div class="pa-scenario-bar">
+    <span class="pa-scenario-bar__label">Quick Scenarios:</span>
+    <button
+      mat-stroked-button
+      *ngFor="let s of scenarios"
+      [class.pa-scenario-btn--active]="selectedClaimId === s.claimId"
+      (click)="selectScenario(s.claimId)"
+      class="pa-scenario-btn"
+    >
+      {{ s.claimId }} &#x2014; {{ s.denialReason }}
+    </button>
+  </div>
+
+  <!-- -- Search bar -- -->
+  <div class="pa-search-row">
+    <mat-form-field class="pa-search-field" appearance="outline">
+      <mat-label>Enter Claim ID or Patient Name</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [(ngModel)]="searchQuery"
+        placeholder="e.g. CL50001 or Jane Smith"
+        (keyup.enter)="lookupClaim()"
+      />
+    </mat-form-field>
+    <button mat-raised-button color="primary" [disabled]="!searchQuery.trim() || loading" (click)="lookupClaim()">
+      <mat-icon>person_search</mat-icon>
+      {{ loading ? 'Looking up&#x2026;' : 'Look Up Claim' }}
+    </button>
+    <button mat-stroked-button *ngIf="currentSummary" (click)="reset()">
+      <mat-icon>refresh</mat-icon>
+      Reset
+    </button>
+  </div>
+
+  <!-- -- Results -- -->
+  <div class="pa-results" *ngIf="currentSummary">
+
+    <!-- Denial Summary Card -->
+    <div class="pa-denial-card">
+      <div class="pa-denial-card__header">
+        <mat-icon>gavel</mat-icon>
+        <span>Denial Summary</span>
+      </div>
+      <div class="pa-denial-card__body">
+        <div class="pa-denial-field">
+          <span class="pa-denial-field__label">Patient</span>
+          <span class="pa-denial-field__value">{{ currentSummary.patientName }}</span>
+        </div>
+        <div class="pa-denial-field">
+          <span class="pa-denial-field__label">Claim ID</span>
+          <span class="pa-denial-field__value pa-mono">{{ currentSummary.claimId }}</span>
+        </div>
+        <div class="pa-denial-field">
+          <span class="pa-denial-field__label">Denial Reason</span>
+          <span class="pa-denial-field__value pa-denial-reason">{{ currentSummary.denialReason }}</span>
+        </div>
+        <div class="pa-denial-field">
+          <span class="pa-denial-field__label">Denial Code</span>
+          <span class="pa-denial-field__value pa-mono">{{ currentSummary.denialCode }}</span>
+        </div>
+        <div class="pa-denial-field">
+          <span class="pa-denial-field__label">Denial Date</span>
+          <span class="pa-denial-field__value">{{ currentSummary.denialDate }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patient-Friendly Explanation -->
+    <div class="pa-explanation-panel">
+      <div class="pa-explanation-panel__header">
+        <mat-icon>record_voice_over</mat-icon>
+        Patient-Friendly Explanation
+        <span class="pa-ai-badge">AI Generated</span>
+      </div>
+      <p class="pa-explanation-panel__text">
+        {{ currentSummary.plainEnglishExplanation }}
+      </p>
+    </div>
+
+    <!-- Recommended Next Steps -->
+    <div class="pa-steps-panel">
+      <h2 class="pa-steps-panel__title">
+        <mat-icon>checklist</mat-icon>
+        Recommended Next Steps
+      </h2>
+      <ol class="pa-steps-list">
+        <li *ngFor="let step of currentSummary.nextSteps; let i = index" class="pa-step-item">
+          <span class="pa-step-num">{{ i + 1 }}</span>
+          <span class="pa-step-text">{{ step }}</span>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Generate Letter Panel -->
+    <div class="pa-letter-panel">
+      <div class="pa-letter-panel__header">
+        <div class="pa-letter-panel__title">
+          <mat-icon>mail_outline</mat-icon>
+          Patient Appeal Letter
+        </div>
+        <div class="pa-letter-panel__actions">
+          <button
+            mat-raised-button
+            color="accent"
+            [disabled]="letterLoading"
+            (click)="generateLetter()"
+          >
+            <mat-icon>auto_fix_high</mat-icon>
+            {{ letterLoading ? 'Generating&#x2026;' : 'Generate Patient Letter' }}
+          </button>
+          <button
+            mat-stroked-button
+            *ngIf="showLetter"
+            [disabled]="letterCopied"
+            (click)="copyLetter()"
+          >
+            <mat-icon>{{ letterCopied ? 'check' : 'content_copy' }}</mat-icon>
+            {{ letterCopied ? 'Copied!' : 'Copy Letter' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="showLetter" class="pa-letter-content">
+        <textarea
+          class="pa-letter-textarea"
+          [value]="generatedLetter"
+          rows="22"
+          readonly
+        ></textarea>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- -- Empty state -- -->
+  <div class="pa-empty" *ngIf="!currentSummary && !loading">
+    <mat-icon>support_agent</mat-icon>
+    <p>Enter a Claim ID or patient name above, or select a quick scenario to get started.</p>
+    <p class="pa-empty__hint">
+      Available demo claims: <strong>CL50001</strong>, <strong>CL50002</strong>, <strong>CL50003</strong>, <strong>CL50004</strong>
+    </p>
+  </div>
+
+</div>

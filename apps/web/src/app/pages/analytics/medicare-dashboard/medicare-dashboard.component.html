@@ -1,0 +1,209 @@
+<div class="container">
+  <!-- Header + actions -->
+  <div class="page-header">
+    <div>
+      <h1>Medicare Dashboard</h1>
+      <p class="subtitle"></p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button color="primary" (click)="openFilters()">Filter&#x2026;</button>
+
+    </div>
+
+  </div>
+
+
+  <!-- Active filter chips -->
+  @if ((chips$ | async); as chips) {
+    <div class="chips">
+      <mat-chip-set>
+        @for (chip of chips; track chip) {
+          <mat-chip [removable]="true" (removed)="removeChip(chip.key, chip.label)">
+            {{ chip.label }}
+            <button matChipRemove aria-label="Remove chip">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip>
+        }
+      </mat-chip-set>
+    </div>
+  }
+
+  <div class="cards-grid">
+    <!-- 1: CPT & Claim Counts by DOS -->
+    <div class="card" appInViewOnce (visible)="showCard1 = true">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            {{ titlePrefixT13M((filters$ | async)!) }} CPT & Claim Counts by DOS
+          </mat-card-title>
+          <span class="spacer"></span>
+          <button mat-button (click)="navigateToSourceData()">
+            <mat-icon>open_in_new</mat-icon>View Table
+          </button>
+        </mat-card-header>
+
+        <mat-card-content>
+          @if (showCard1 && (cptAndClaimCountsChart$ | async); as d) {
+            @if (d?.series?.length && d?.categories?.length) {
+              <app-bar-chart [data]="d"></app-bar-chart>
+            } @else {
+              <div class="muted">No data</div>
+            }
+          } @else {
+            <div class="loading"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- 2: Charges vs Medicare by DOS -->
+    <div class="card" appInViewOnce (visible)="showCard2 = true">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>{{ titlePrefixT13M((filters$ | async)!) }} Charges vs Medicare by DOS</mat-card-title>
+          <span class="spacer"></span>
+          <button mat-button (click)="navigateToSourceData()"><mat-icon>open_in_new</mat-icon>View Table</button>
+        </mat-card-header>
+
+        <mat-card-content>
+          <ng-container >
+            @if (showCard2 && (chargesVsMedicareChart$ | async); as d) {
+              <app-bar-chart [data]="d"></app-bar-chart>
+            } @else {
+              <div class="loading2"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+            }
+          </ng-container>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- 3: Payments vs Medicare by DOS -->
+    <div class="card" appInViewOnce (visible)="showCard3 = true">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>{{ titlePrefixT13M((filters$ | async)!) }} Payments vs Medicare by DOS</mat-card-title>
+          <span class="spacer"></span>
+          <button mat-button (click)="navigateToSourceData()"><mat-icon>open_in_new</mat-icon>View Table</button>
+        </mat-card-header>
+
+        <mat-card-content>
+          <ng-container>
+            @if (showCard2 && (chargesVsMedicareChart$ | async); as d) {
+              <app-bar-chart  [data]="d"></app-bar-chart>
+            } @else {
+              <div class="loading2"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+            }
+          </ng-container>
+          <ng-template #loading3>
+            <div class="loading"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- 4: Uncollected Medicare Per Claim -->
+    <div class="card" appInViewOnce (visible)="showCard4 = true">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>{{ titlePrefixT13M((filters$ | async)!) }} Uncollected Medicare Per Claim</mat-card-title>
+          <span class="spacer"></span>
+          <button mat-button (click)="navigateToSourceData()"><mat-icon>open_in_new</mat-icon>View Table</button>
+        </mat-card-header>
+
+        <mat-card-content>
+          @if (showCard4 && (uncollectedMedicarePerClaimStacked$ | async); as d) {
+            @if (showCard4 && (uncollectedMedicarePerClaimStacked$ | async); as d) {
+              <app-bar-chart [data]="d"></app-bar-chart>
+            } @else {
+              <div class="loading"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+            }
+          } @else {
+            <div class="loading"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- 5: Uncollected MCR Per Claim (Donut) -->
+    <div class="card" appInViewOnce (visible)="showCard5 = true">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>{{ titlePrefixT12M((filters$ | async)!) }} Uncollected MCR Per Claim</mat-card-title>
+          <span class="spacer"></span>
+          <button mat-button (click)="navigateToSourceData()"><mat-icon>open_in_new</mat-icon>View Table</button>
+        </mat-card-header>
+
+        <mat-card-content>
+          @if (showCard5 && (uncollectedMCRPerClaimPie$ | async); as d) {
+            <app-pie-chart [data]="d"></app-pie-chart>
+          } @else {
+            <div class="loading5"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- 6: Uncollected Medicare Per Claim Mix -->
+    <div class="card" appInViewOnce (visible)="showCard6 = true">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>{{ titlePrefixT13M((filters$ | async)!) }} Uncollected Medicare Per Claim Mix</mat-card-title>
+          <span class="spacer"></span>
+          <button mat-button (click)="navigateToSourceData()"><mat-icon>open_in_new</mat-icon>View Table</button>
+        </mat-card-header>
+
+        <mat-card-content>
+          @if (showCard6 && (uncollectedMedicarePerClaimMixChart$ | async); as d) {
+            @if (d?.series?.length && d?.categories?.length) {
+              <app-bar-chart [data]="d"></app-bar-chart>
+            } @else {
+              <div class="muted">No data</div>
+            }
+          } @else {
+            <div class="loading"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- 7: Medicare By CPT Group (Donut) -->
+    <div class="card" appInViewOnce (visible)="showCard7 = true">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>{{ titlePrefixT12M((filters$ | async)!) }} Medicare By CPT Group</mat-card-title>
+          <span class="spacer"></span>
+          <button mat-button (click)="navigateToSourceData()"><mat-icon>open_in_new</mat-icon>View Table</button>
+        </mat-card-header>
+
+        <mat-card-content>
+          @if (showCard7 && (medicareByCptGroupPie$ | async); as d) {
+            <app-pie-chart [data]="d"></app-pie-chart>
+          } @else {
+            <div class="loading"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- 8: Uncollected Medicare By CPT Group (Donut) -->
+    <div class="card" appInViewOnce (visible)="showCard8 = true">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>{{ titlePrefixT12M((filters$ | async)!) }} Uncollected Medicare By CPT Group</mat-card-title>
+          <span class="spacer"></span>
+          <button mat-button (click)="navigateToSourceData()"><mat-icon>open_in_new</mat-icon>View Table</button>
+        </mat-card-header>
+
+        <mat-card-content>
+          @if (showCard8 && (uncollectedMedicareByCptGroupPie$ | async); as d) {
+            <app-pie-chart [data]="d"></app-pie-chart>
+          } @else {
+            <div class="loading"><mat-progress-spinner mode="indeterminate"></mat-progress-spinner></div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </div>
+</div>

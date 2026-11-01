@@ -1,0 +1,75 @@
+<div class="benchmarking-page">
+  <div class="page-intro">
+    <h2>Industry Benchmarking</h2>
+    <p>Compare your practice metrics against ADA and MGMA dental industry benchmarks.</p>
+  </div>
+
+  @if (!loading) {
+    <div class="benchmarks-grid">
+      @for (c of comparisons; track c) {
+        <div class="benchmark-card"
+          [class.benchmark-card--clickable]="!!metricRouteMap[c.metric]"
+          (click)="navigateToBenchmark(c)"
+          matRipple
+          >
+          <div class="card-label">
+            {{ c.label }}
+            <mat-icon class="info-icon"
+              [matTooltip]="c.description"
+              matTooltipPosition="above"
+              matTooltipClass="benchmark-tooltip"
+              (click)="$event.stopPropagation()">info_outline</mat-icon>
+          </div>
+          @if (c.practiceValue != null) {
+            <div class="values-row">
+              <div class="value-col yours">
+                <span class="val-label">Your Practice</span>
+                <span class="val-number" [style.color]="getPerformanceColor(c)">{{ formatValue(c.practiceValue, c.unit) }}</span>
+              </div>
+              <div class="value-col">
+                <span class="val-label">Industry Avg</span>
+                <span class="val-number">{{ formatValue(c.industryAvg, c.unit) }}</span>
+              </div>
+              <div class="value-col">
+                <span class="val-label">Top 25%</span>
+                <span class="val-number top">{{ formatValue(c.industryTop25, c.unit) }}</span>
+              </div>
+            </div>
+            <div class="percentile-bar">
+              <div class="bar-track">
+                <div class="bar-fill" [style.width.%]="c.percentile" [style.backgroundColor]="getPerformanceColor(c)"></div>
+              </div>
+              <span class="percentile-label" [style.color]="getPerformanceColor(c)">
+                {{ getPerformanceLabel(c) }} ({{ c.percentile }}th percentile)
+              </span>
+            </div>
+          } @else {
+            <div class="values-row values-row--empty">
+              <span class="no-data-label">No data available</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (generatedAt) {
+    <p class="generated-at">
+      Data generated {{ generatedAt | date:'medium' }}
+    </p>
+  }
+
+  @if (loading) {
+    <div class="loading-state">
+      <mat-spinner diameter="32"></mat-spinner>
+      <span>Loading benchmarks...</span>
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <span>Unable to load benchmark data. <a (click)="ngOnInit()">Retry</a></span>
+    </div>
+  }
+</div>

@@ -1,0 +1,104 @@
+/* rule-create-page.component.scss */
+
+/* Overall page background */
+.page {
+  min-height: 100vh;
+  background-color: #f5f7fb; // light gray/blue canvas
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top header bar */
+.page-header {
+  background-color: #f5f7fb;
+  padding: 0 0 24px 0;
+
+  display: flex;
+  align-items: center;
+}
+
+
+/* Back to Rules link */
+.breadcrumbs__back {
+  display: inline-flex;
+  align-items: center;
+ 
+
+  margin-left: 24px; // left padding inside header
+
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-info); // blue link color
+}
+
+.breadcrumbs__back:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbs__icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* "New Rule" title */
+.page-title {
+  padding: 18px 24px 8px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-text); // near-black
+}
+
+/* Position the editor card like the Figma layout */
+rp-rule-editor {
+  display: block;
+  padding: 0 24px 32px;
+}
+
+/* Small-screen tweaks */
+@media (max-width: 768px) {
+  .breadcrumbs__back {
+    margin-left: 16px;
+  }
+
+  .page-title {
+    padding: 16px 16px 8px;
+    font-size: 20px;
+  }
+
+  rp-rule-editor {
+    padding: 0 16px 24px;
+  }
+}
+
+.sim-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid var(--mat-divider-color, #e0e0e0);
+  border-radius: 8px;
+  background: var(--mat-app-background-color, #fafafa);
+
+  &--loading { flex-direction: row; align-items: center; }
+  &--error   { flex-direction: row; align-items: center; color: var(--color-danger, #d32f2f); }
+
+  &__header { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  &__note   { font-size: 0.8rem; color: var(--mat-secondary-text-color, #757575); margin: 0; }
+}
+
+.sim-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--mat-divider-color, #e0e0e0); }
+  th     { font-weight: 600; }
+}

@@ -1,0 +1,112 @@
+:host {
+  display: block;
+}
+
+/* =====================================================
+   RP MIXED CHART (Highcharts-style enterprise layout)
+   - clear header band
+   - plot area breathing room
+   - legend doesn't feel glued to the title
+   ===================================================== */
+
+.rp-mixed-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Header band */
+.rp-mixed-chart__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  padding: 2px 2px 0;   // <- tighter
+}
+
+
+.rp-mixed-chart__title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--color-text);
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+}
+
+/* Plot band */
+.rp-mixed-chart__body {
+  width: 100%;
+
+  /* gives legend + plot some breathing space inside apx-chart */
+  padding-top: 6px;
+}
+
+/* Empty state */
+.rp-mixed-chart__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  border-radius: var(--radius);
+  background: var(--color-bg-muted);
+  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--font-size-md);
+  font-style: italic;
+  opacity: 0.75;
+}
+
+/* =====================================================
+   ApexCharts DOM tweaks (safe, targeted)
+   - keep chart ink minimal
+   - make legend spacing feel intentional
+   ===================================================== */
+
+/* Add spacing between legend and plot area */
+:host ::ng-deep .apexcharts-legend {
+  padding: 0 0 6px 0 !important;
+}
+
+/* Make legend items feel cleaner */
+:host ::ng-deep .apexcharts-legend-series {
+  margin-right: 10px !important;
+}
+
+/* Slightly reduce legend marker visual weight */
+:host ::ng-deep .apexcharts-legend-marker {
+  width: 10px !important;
+  height: 10px !important;
+  margin-right: 6px !important;
+}
+
+/* Keep axis label typography calm */
+:host ::ng-deep .apexcharts-xaxis text,
+:host ::ng-deep .apexcharts-yaxis text {
+  font-size: var(--font-size-xs) !important;
+}
+
+.rp-mixed-chart__title-wrap {
+  min-width: 0;
+}
+
+.rp-mixed-chart__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* If the action is a small label like "This year", style it subtly */
+.rp-mixed-chart__actions :host ::ng-deep,
+.rp-mixed-chart__actions {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+:host ::ng-deep .apexcharts-legend {
+  padding: 0 0 2px 0 !important;   // <- pulls legend up
+  justify-content: center !important;
+}
+
+

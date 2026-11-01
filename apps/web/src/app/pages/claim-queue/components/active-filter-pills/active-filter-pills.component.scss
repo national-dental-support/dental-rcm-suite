@@ -1,0 +1,66 @@
+/* Tokens consistent with Denial-IQ / InsightFlow */
+$textMuted:  var(--color-text-muted);
+$border:     #e7edf5;
+$chipBg:     #0BA5EC;
+$chipText:   var(--color-text);
+$successBg:  #e9f9ee;   /* soft green */
+$successText:#178f47;   /* green text */
+$linkBlue:   #0BA5EC;
+
+.filters-row {
+  display: flex;
+  padding: 6px 24px 0;
+}
+
+/* visually hidden but accessible */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; clip: rect(0 0 0 0); overflow: hidden;
+}
+
+.label { font-size: var(--font-size-xs); color: $textMuted; }
+
+/* Right-aligned container (pills + Clear all) */
+.right {
+  margin-left: auto;              /* push to the right */
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;            /* keep on one line like Figma */
+  overflow-x: auto;               /* allow horizontal scroll if too many pills */
+  padding-bottom: 2px;            /* align baseline with toolbar */
+}
+
+.pill-set {
+  display: inline-flex;
+  gap: 8px;
+}
+
+/* Make MDC chips look like Figma soft pills */
+:host ::ng-deep .mat-mdc-chip.pill {
+  --mat-chip-container-height: 30px;
+  border-radius: 999px !important;
+  background: $chipBg !important;
+  color: $chipText !important;
+  box-shadow: none !important;
+  border: 1px solid $border !important;
+
+  .mdc-evolution-chip__action--primary { padding: 0 10px !important; }
+  .mat-mdc-chip-remove { margin-left: 6px !important; }
+  .mat-mdc-chip-remove mat-icon { font-size: var(--font-size-base); height: var(--font-size-base); width: var(--font-size-base); }
+}
+
+:host ::ng-deep .mat-mdc-chip.pill.success {
+  background: $successBg !important;
+  color: $successText !important;
+  border-color: rgba(23,143,71,.25) !important;
+}
+
+.key   { font-weight: 700; }
+.value { font-weight: 700; }
+
+/* Clear all looks like a link, stays on same line */
+.clear-all {
+  border: 0; background: transparent; color: $linkBlue; font-weight: 700;
+  cursor: pointer; padding: 6px var(--radius-sm); border-radius: 6px;
+  &:hover { text-decoration: underline; }
+}

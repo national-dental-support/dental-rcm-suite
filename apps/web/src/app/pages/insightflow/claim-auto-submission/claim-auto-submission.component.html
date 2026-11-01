@@ -1,0 +1,129 @@
+<div class="xen-page auto-submit-page">
+  <div class="xen-toolbar">
+    <h2 class="page-title">Claim Auto-Submission</h2>
+  </div>
+
+  <div class="xen-loading" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading auto-submission data&#x2026;</p>
+  </div>
+
+  <div class="xen-empty" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <p>Failed to load data. <button mat-button color="primary" (click)="load()">Retry</button></p>
+  </div>
+
+  <ng-container *ngIf="!loading && !error && stats">
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Auto-Submitted Today</div>
+          <div class="kpi-value">{{ stats.autoSubmittedToday }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="xen-card kpi-card highlight">
+        <mat-card-content>
+          <div class="kpi-label">This Month</div>
+          <div class="kpi-value">{{ stats.autoSubmittedMonth | number }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Manual Overrides</div>
+          <div class="kpi-value">{{ stats.manualOverrideCount }}</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-card-content>
+          <div class="kpi-label">Clean Claim Rate</div>
+          <div class="kpi-value">{{ stats.cleanClaimRate }}%</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tabs -->
+    <mat-tab-group [(selectedIndex)]="activeTab" class="sub-tabs">
+      <!-- Rules Tab -->
+      <mat-tab label="Rules">
+        <mat-card class="xen-card tab-card">
+          <mat-card-content>
+            <table mat-table [dataSource]="rules" class="xen-table">
+              <ng-container matColumnDef="enabled">
+                <th mat-header-cell *matHeaderCellDef>Active</th>
+                <td mat-cell *matCellDef="let r">
+                  <mat-slide-toggle [checked]="r.enabled" (change)="toggleRule(r)"></mat-slide-toggle>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Rule Name</th>
+                <td mat-cell *matCellDef="let r"><strong>{{ r.name }}</strong></td>
+              </ng-container>
+              <ng-container matColumnDef="description">
+                <th mat-header-cell *matHeaderCellDef>Description</th>
+                <td mat-cell *matCellDef="let r">{{ r.description }}</td>
+              </ng-container>
+              <ng-container matColumnDef="conditions">
+                <th mat-header-cell *matHeaderCellDef>Conditions</th>
+                <td mat-cell *matCellDef="let r">
+                  <div *ngFor="let c of r.conditions" class="condition-chip">{{ c }}</div>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="volume">
+                <th mat-header-cell *matHeaderCellDef>Claims (30d)</th>
+                <td mat-cell *matCellDef="let r">{{ r.claimsProcessedLast30d | number }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="['enabled','name','description','conditions','volume']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['enabled','name','description','conditions','volume']"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+
+      <!-- Queue Tab -->
+      <mat-tab label="Pending Queue ({{ queue.length }})">
+        <mat-card class="xen-card tab-card">
+          <mat-card-content>
+            <table mat-table [dataSource]="queue" class="xen-table">
+              <ng-container matColumnDef="claimId">
+                <th mat-header-cell *matHeaderCellDef>Claim ID</th>
+                <td mat-cell *matCellDef="let q"><code>{{ q.claimId }}</code></td>
+              </ng-container>
+              <ng-container matColumnDef="patient">
+                <th mat-header-cell *matHeaderCellDef>Patient</th>
+                <td mat-cell *matCellDef="let q">{{ q.patientName }}</td>
+              </ng-container>
+              <ng-container matColumnDef="payer">
+                <th mat-header-cell *matHeaderCellDef>Payer</th>
+                <td mat-cell *matCellDef="let q">{{ q.payer }}</td>
+              </ng-container>
+              <ng-container matColumnDef="procedure">
+                <th mat-header-cell *matHeaderCellDef>Procedure</th>
+                <td mat-cell *matCellDef="let q"><code>{{ q.procedure }}</code></td>
+              </ng-container>
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef>Amount</th>
+                <td mat-cell *matCellDef="let q">${{ q.amount | number }}</td>
+              </ng-container>
+              <ng-container matColumnDef="rule">
+                <th mat-header-cell *matHeaderCellDef>Rule Applied</th>
+                <td mat-cell *matCellDef="let q">{{ q.ruleApplied }}</td>
+              </ng-container>
+              <ng-container matColumnDef="confidence">
+                <th mat-header-cell *matHeaderCellDef>Confidence</th>
+                <td mat-cell *matCellDef="let q">
+                  <div class="confidence-bar-wrap">
+                    <div class="confidence-bar" [style.width.%]="q.confidence"></div>
+                    <span>{{ q.confidence }}%</span>
+                  </div>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="['claimId','patient','payer','procedure','amount','rule','confidence']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['claimId','patient','payer','procedure','amount','rule','confidence']"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+    </mat-tab-group>
+  </ng-container>
+</div>

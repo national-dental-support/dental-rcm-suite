@@ -1,0 +1,175 @@
+<section class="recon-iq-dashboard">
+
+  <!-- KPI ROW -->
+
+  @if (kpis; as k) {
+    <div class="kpi-cards">
+      <app-data-card
+        [value]="toCardValue(k.paymentsWithoutEra)"
+        [title]="'Needs Matching'"
+        [subtitle]="'Payments received &#x2014; no ERA/EOB on file'"
+        [tooltip]="'Bank deposits received during the period that have no corresponding ERA or EOB remittance on file. These represent unreconciled revenue that requires manual matching or follow-up with the payer.'"
+        [showAction]="true"
+        actionIcon="chevron_right"
+        actionAriaLabel="View unmatched payments"
+        (actionClick)="onNeedsMatching()"
+      ></app-data-card>
+      <app-data-card
+        [value]="toCardValue(k.eraWithoutPayments)"
+        [title]="'Pending Payment'"
+        [subtitle]="'ERA/EOB received &#x2014; no deposit yet'"
+        [tooltip]="'Remittance files (ERA/EOB) received that have no corresponding bank deposit. May indicate delayed payments, pending ACH, or mailing delays. Requires follow-up with the payer to confirm when the deposit will arrive.'"
+        [showAction]="true"
+        actionIcon="chevron_right"
+        actionAriaLabel="View pending payments"
+        (actionClick)="onNeedsMatching()"
+      ></app-data-card>
+      <app-data-card
+        [value]="toCardValue(k.paymentEraMatched)"
+        [title]="'Matched &#x2014; Ready to Post'"
+        [subtitle]="'Payment + ERA matched, awaiting PM posting'"
+        [tooltip]="'Payments that have been matched to their corresponding ERA/EOB remittance and are ready to be posted to the practice management system. Requires staff action to finalize posting.'"
+        [showAction]="true"
+        actionIcon="chevron_right"
+        actionAriaLabel="Post matched items"
+      (actionClick)="onNeedsReconciliation()"></app-data-card>
+      <app-data-card
+        [value]="toCardValue(k.fullyReconciledPosted)"
+        [title]="'Posted & Complete'"
+        [subtitle]="'Matched, reconciled, and posted to PM'"
+        [tooltip]="'Remittances that have been matched, reconciled, and fully posted to the practice management system. No further action required &#x2014; these represent completed revenue cycle events.'"
+        [showAction]="true"
+        actionIcon="chevron_right"
+        actionAriaLabel="View completed"
+        (actionClick)="onPostedCardClick()">
+      </app-data-card>
+      <!-- Optional: keeps layout visible while loading -->
+      @if (!kpis) {
+        <div class="kpi-cards">
+          <app-section-card title="Payment and EOB/ERA Matched" [tooltip]="'Count and dollar total of claims where an electronic payment (bank deposit) was matched to a corresponding EOB or ERA remittance file. Calculated from the reconciliation engine that joins bank transactions to remittance records.'"><app-data-card value="&#x2014;"></app-data-card></app-section-card>
+          <app-section-card title="Payments without EOB/ERA" [tooltip]="'Bank payments received during the period that could not be matched to any EOB or ERA remittance file. These represent potential revenue at risk if not reconciled. Calculated as unmatched rows in the bank transaction feed.'"><app-data-card value="&#x2014;"></app-data-card></app-section-card>
+          <app-section-card title="EOB/ERA without Payments" [tooltip]="'Remittance files (EOB or ERA) received during the period that have no corresponding bank payment. May indicate delayed deposits or posting issues. Calculated as unmatched remittance rows.'"><app-data-card value="&#x2014;"></app-data-card></app-section-card>
+          <app-section-card title="Escalated Bank Issues" [tooltip]="'Payments flagged for manual review due to matching discrepancies &#x2014; e.g., amount mismatches, duplicate payments, or unresolved split transactions.'"><app-data-card value="&#x2014;"></app-data-card></app-section-card>
+          <app-section-card title="Fully Reconciled and Posted" [tooltip]="'Claims that have been matched, reconciled, and fully posted to the practice management system. Calculated as matched remittances where PostStatus = Posted.'"><app-data-card value="&#x2014;"></app-data-card></app-section-card>
+        </div>
+      }
+    </div>
+  }
+
+
+  <app-section-card class="card--chart" [title]="'Total Denied Claims & Non Payments'" [tooltip]="'Trend of denied claims and total non-payment amounts over the selected period. Calculated from remittance records where CARC denial codes are present, grouped by month.'">
+    <!-- [ok] top-right scope control -->
+    <div cardHeaderActions>
+      <button
+        class="period-btn"
+        mat-button
+        type="button"
+        [matMenuTriggerFor]="periodMenu"
+        aria-label="Select period">
+        {{ periodLabel }}
+        <mat-icon class="period-btn__icon">expand_more</mat-icon>
+      </button>
+
+      <mat-menu #periodMenu="matMenu">
+        <button mat-menu-item (click)="setPeriod('All time')">All time</button>
+        <button mat-menu-item (click)="setPeriod('Last 30 days')">Last 30 days</button>
+        <button mat-menu-item (click)="setPeriod('Last 90 days')">Last 90 days</button>
+        <button mat-menu-item (click)="setPeriod('Last 6 months')">Last 6 months</button>
+        <button mat-menu-item (click)="setPeriod('Last 12 months')">Last 12 months</button>
+        <button mat-menu-item (click)="setPeriod('MTD')">MTD</button>
+        <button mat-menu-item (click)="setPeriod('QTD')">QTD</button>
+        <button mat-menu-item (click)="setPeriod('YTD')">YTD</button>
+        <button mat-menu-item (click)="setPeriod('This year')">This year</button>
+      </mat-menu>
+    </div>
+
+    <!-- [ok] subtitle sits just under header inside content -->
+    <div class="chart-subtitle">{{ denialsPeriodText }}</div>
+
+    <!-- [ok] loading / empty / chart -->
+    @if (denialsState === 'loading') {
+      <div class="chart-state chart-state--loading">
+        <div class="skeleton skeleton--title"></div>
+        <div class="skeleton skeleton--chart"></div>
+        <div class="chart-state__hint">Loading trend&#x2026;</div>
+      </div>
+    } @else {
+      @if (denialsState === 'empty') {
+        <div class="chart-state chart-state--empty">
+          <div class="chart-state__title">No data for this period</div>
+          <div class="chart-state__hint">Try a different time range.</div>
+        </div>
+      } @else {
+        <apx-chart
+          #denialsChart
+          [series]="lineOpts.series!"
+          [chart]="lineOpts.chart!"
+          [xaxis]="lineOpts.xaxis!"
+          [colors]="lineOpts.colors || []"
+          [yaxis]="lineOpts.yaxis!"
+          [stroke]="lineOpts.stroke!"
+          [dataLabels]="lineOpts.dataLabels!"
+          [legend]="lineOpts.legend!"
+          [markers]="lineOpts.markers!"
+          [tooltip]="lineOpts.tooltip!"
+          [grid]="lineOpts.grid!">
+        </apx-chart>
+      }
+    }
+
+
+  </app-section-card>
+
+  <app-section-card class="card--chart" [title]="'Payment Sources'" [tooltip]="'Distribution of total payments received by source type (Insurance, Patient, Other) over the selected period. Calculated as the sum of TrxAmt grouped by payment source category.'">
+    <div cardHeaderActions>
+      <button
+        class="period-btn"
+        mat-button
+        type="button"
+        [matMenuTriggerFor]="paymentSourcesMenu"
+        aria-label="Select period">
+        {{ paymentSourcesLabel }}
+        <mat-icon class="period-btn__icon">expand_more</mat-icon>
+      </button>
+
+      <mat-menu #paymentSourcesMenu="matMenu">
+        <button mat-menu-item (click)="setPaymentSourcesPeriod('All time')">All time</button>
+        <button mat-menu-item (click)="setPaymentSourcesPeriod('Last 30 days')">Last 30 days</button>
+        <button mat-menu-item (click)="setPaymentSourcesPeriod('Last 90 days')">Last 90 days</button>
+        <button mat-menu-item (click)="setPaymentSourcesPeriod('Last 6 months')">Last 6 months</button>
+        <button mat-menu-item (click)="setPaymentSourcesPeriod('Last 12 months')">Last 12 months</button>
+        <button mat-menu-item (click)="setPaymentSourcesPeriod('MTD')">MTD</button>
+        <button mat-menu-item (click)="setPaymentSourcesPeriod('QTD')">QTD</button>
+        <button mat-menu-item (click)="setPaymentSourcesPeriod('YTD')">YTD</button>
+        <button mat-menu-item (click)="setPaymentSourcesPeriod('This year')">This year</button>
+      </mat-menu>
+    </div>
+
+    <div class="chart-subtitle">{{ paymentSourcesText }}</div>
+
+    @if (paymentSourcesState === 'loading') {
+      <div class="chart-state chart-state--loading">
+        <div class="skeleton skeleton--title"></div>
+        <div class="skeleton skeleton--chart"></div>
+        <div class="chart-state__hint">Loading chart&#x2026;</div>
+      </div>
+    } @else {
+      @if (paymentSourcesState === 'empty') {
+        <div class="chart-state chart-state--empty">
+          <div class="chart-state__title">No data for this period</div>
+          <div class="chart-state__hint">Try a different time range.</div>
+        </div>
+      } @else {
+        @if (mixedCfg; as cfg) {
+          <rp-mixed-chart [cfg]="cfg" [debug]="false"></rp-mixed-chart>
+        }
+      }
+    }
+
+
+  </app-section-card>
+
+
+
+
+</section>

@@ -1,0 +1,102 @@
+<div class="analytics-page">
+
+  <div *ngIf="loading" class="xen-loading">
+    <mat-spinner diameter="36"></mat-spinner>
+  </div>
+
+  <div *ngIf="error && !loading" class="xen-empty err">
+    <mat-icon>error_outline</mat-icon>
+    <span>Failed to load pre-auth data.</span>
+    <button mat-stroked-button (click)="load()">Retry</button>
+  </div>
+
+  <ng-container *ngIf="data && !loading">
+
+    <!-- Summary Cards -->
+    <div class="kpi-row">
+      <div class="kpi-card primary" [ngClass]="ragClass(data.summary.approvalRate)">
+        <div class="kpi-label">Overall Approval Rate</div>
+        <div class="kpi-value">{{ data.summary.approvalRate | number:'1.0-1' }}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Processing Time</div>
+        <div class="kpi-value">{{ data.summary.avgProcessingDays | number:'1.0-1' }} <span class="kpi-unit">days</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Claims</div>
+        <div class="kpi-value">{{ data.summary.totalClaims | number }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Denied Claims</div>
+        <div class="kpi-value">{{ data.summary.deniedClaims | number }}</div>
+        <div class="kpi-sub">{{ (data.summary.deniedClaims / (data.summary.totalClaims || 1) * 100) | number:'1.0-1' }}% denial rate</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Approval Rate by Payer (Worst to Best)</div>
+        <apx-chart
+          [series]="payerChartOptions.series"
+          [chart]="payerChartOptions.chart"
+          [xaxis]="payerChartOptions.xaxis"
+          [yaxis]="payerChartOptions.yaxis"
+          [dataLabels]="payerChartOptions.dataLabels"
+          [tooltip]="payerChartOptions.tooltip"
+          [plotOptions]="payerChartOptions.plotOptions"
+          [fill]="payerChartOptions.fill">
+        </apx-chart>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Monthly Approval Rate Trend</div>
+        <apx-chart
+          [series]="trendChartOptions.series"
+          [chart]="trendChartOptions.chart"
+          [xaxis]="trendChartOptions.xaxis"
+          [yaxis]="trendChartOptions.yaxis"
+          [stroke]="trendChartOptions.stroke"
+          [dataLabels]="trendChartOptions.dataLabels"
+          [tooltip]="trendChartOptions.tooltip">
+        </apx-chart>
+      </div>
+    </div>
+
+    <!-- Procedure Codes Table -->
+    <div class="table-card">
+      <div class="table-title">Procedure Code Approval Rates</div>
+      <table mat-table [dataSource]="data.byProcedure" class="xen-table">
+
+        <ng-container matColumnDef="procedureCode">
+          <th mat-header-cell *matHeaderCellDef>Procedure Code</th>
+          <td mat-cell *matCellDef="let r"><strong>{{ r.procedureCode }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="totalClaims">
+          <th mat-header-cell *matHeaderCellDef class="num">Claims</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.totalClaims | number }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="approvalRate">
+          <th mat-header-cell *matHeaderCellDef class="num">Approval Rate</th>
+          <td mat-cell *matCellDef="let r" class="num">
+            <span [ngClass]="ragClass(r.approvalRate)" class="rate-badge">
+              {{ r.approvalRate | number:'1.0-1' }}%
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="denialRate">
+          <th mat-header-cell *matHeaderCellDef class="num">Denial Rate</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.denialRate | number:'1.0-1' }}%</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="procedureColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: procedureColumns;" class="xen-row"></tr>
+      </table>
+    </div>
+
+  </ng-container>
+
+</div>

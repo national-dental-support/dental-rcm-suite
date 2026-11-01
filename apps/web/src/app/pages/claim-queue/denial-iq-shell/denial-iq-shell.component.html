@@ -1,0 +1,85 @@
+<div class="denial-iq-shell">
+  <!-- Tab nav bar -->
+  <nav class="diq-tab-nav" aria-label="Denial IQ navigation">
+    <button
+      type="button"
+      class="diq-tab"
+      [class.diq-tab--active]="activeLink === 'dashboard'"
+      (click)="navigate('dashboard')"
+      >
+      <mat-icon class="diq-tab__icon">dashboard</mat-icon>
+      Dashboard
+    </button>
+
+    <button
+      type="button"
+      class="diq-tab"
+      [class.diq-tab--active]="activeLink === 'claim-queue'"
+      (click)="navigateToQueue()"
+      >
+      <mat-icon class="diq-tab__icon">inbox</mat-icon>
+      Claim Queue
+    </button>
+
+    @if (showManagerTab) {
+      <button
+        type="button"
+        class="diq-tab"
+        [class.diq-tab--active]="activeLink === 'manager'"
+        (click)="navigate('manager')"
+        >
+        <mat-icon class="diq-tab__icon">manage_accounts</mat-icon>
+        Manager
+      </button>
+    }
+
+    @if (showManagerTab) {
+      <button
+        type="button"
+        class="diq-tab"
+        [class.diq-tab--active]="activeLink === 'write-offs'"
+        (click)="navigate('write-offs')"
+        >
+        <mat-icon class="diq-tab__icon">money_off</mat-icon>
+        Transactional Adjustment Request
+      </button>
+    }
+
+    <button
+      type="button"
+      class="diq-tab"
+      [class.diq-tab--active]="activeLink === 'compliance-checker'"
+      (click)="navigate('compliance-checker')"
+    >
+      <mat-icon class="diq-tab__icon">fact_check</mat-icon>
+      Compliance
+    </button>
+
+    <button
+      type="button"
+      class="diq-tab"
+      [class.diq-tab--active]="activeLink === 'patient-advocacy'"
+      (click)="navigate('patient-advocacy')"
+    >
+      <mat-icon class="diq-tab__icon">support_agent</mat-icon>
+      Patient Advocacy
+    </button>
+
+    @if (showAdminTab) {
+      <button
+        type="button"
+        class="diq-tab"
+        [class.diq-tab--active]="activeLink === 'admin-settings'"
+        (click)="navigate('admin-settings')"
+      >
+        <mat-icon class="diq-tab__icon">admin_panel_settings</mat-icon>
+        Admin Settings
+      </button>
+    }
+  </nav>
+
+  <!-- Routed content -->
+  <div class="diq-shell-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>

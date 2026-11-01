@@ -1,0 +1,70 @@
+<div class="cv-container">
+  <div class="claim-vision-page">
+    <!-- Header -->
+    <header class="page-header">
+      <div class="page-header-row">
+        <h1>Claim Vision</h1>
+        <button type="button" mat-icon-button
+          matTooltip="Rule engine combines clearinghouse, payer and practice rules to reduce denials"
+          matTooltipPosition="right"
+          matTooltipClass="info-tooltip"
+          aria-label="About Claim Vision rule engine">
+          <mat-icon class="info-icon">info_outline</mat-icon>
+        </button>
+      </div>
+      <p class="subtitle">
+        The following batch claim submissions contain claims showing as rejected.
+      </p>
+    </header>
+
+    <!-- Trend Chart -->
+    @if (trendData.length > 0) {
+      <section class="trend-card">
+        <div class="trend-header">
+          <h3 class="trend-title">Monthly Rejection Trend</h3>
+          <button type="button" mat-stroked-button (click)="exportTrend()">
+            <mat-icon>download</mat-icon> Export
+          </button>
+        </div>
+        <div class="trend-chart">
+          @for (point of trendData; track point) {
+            <div class="trend-bar-group">
+              <div class="trend-bar-wrapper">
+                <span class="trend-bar-count">{{ point.rejectedCount }}</span>
+                <div class="trend-bar" [style.height]="getBarHeight(point.rejectedCount)"></div>
+              </div>
+              <span class="trend-bar-label">{{ formatMonth(point.month) }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Table card -->
+    <section class="table-card">
+      <rp-advanced-table
+        [data]="batches"
+        [columns]="columns"
+        [uniqueValues]="uniqueValues"
+        [groupedValues]="groupedValues"
+        [pageSize]="10"
+        [pageSizeOptions]="[5, 10, 25]"
+        [enableGlobalSearch]="true"
+    [globalSearchPlaceholder]="
+      'Rule Name, Category, Rule Type, Rejection Message'
+    "
+        [idField]="'id'"
+        (actionClicked)="onTableAction($event)"
+        >
+        <!-- Custom cell template for ruleType column to show badge -->
+        <ng-template rpCell="ruleType" let-row>
+          <span class="rule-type-badge"
+            [class.system]="row.ruleType === 'System'"
+            [class.custom]="row.ruleType === 'Custom'">
+            {{ row.ruleType }}
+          </span>
+        </ng-template>
+      </rp-advanced-table>
+    </section>
+  </div>
+</div>

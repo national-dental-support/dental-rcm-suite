@@ -1,0 +1,1020 @@
+/* =============================================================================
+   rp-advanced-table (V2) - CLEANED + CONSOLIDATED
+   - same visuals
+   - no duplicates
+   - mat-mdc-only
+   - safe focus state (keyboard visible)
+   ========================================================================== */
+
+/* ============================
+   V2 TOKENS
+   ============================ */
+
+:host {
+  --rp-surface-0: var(--color-bg-subtle); /* canvas tint */
+  --rp-surface-100: var(--color-surface); /* card */
+  --rp-surface-200: var(--color-bg-subtle); /* header */
+  --rp-surface-altrow: rgb(253, 253, 255); /* zebra */
+  --rp-surface-child: var(--color-bg-subtle); /* child rows */
+
+  --rp-text-900: var(--color-text);
+  --rp-text-700: var(--color-gray-700);
+  --rp-text-600: var(--color-text-muted);
+
+  --rp-border-subtle: rgba(17, 24, 39, 0.08);
+  --rp-border-row: rgba(17, 24, 39, 0.06);
+
+  --rp-primary-600: var(--color-info);
+  --rp-primary-050: #eef2ff;
+
+  --rp-level-0: var(--rp-surface-100); /* payer */
+  --rp-level-1: var(--color-bg-subtle);               /* CPT */
+  --rp-level-2: #fbfcff;               /* Claim (slightly different from CPT) */
+
+  /* Density defaults (comfortable) */
+  --rp-cell-py: 12px;
+  --rp-cell-px: 16px;
+  --rp-font: 13px;
+  --rp-font-child: 12.5px;
+  --rp-row-hover: rgba(17, 24, 39, 0.04);
+  --rp-topbar-control-h: 40px;
+  --rp-zebra: var(--rp-surface-altrow);
+}
+
+/* Optional density mode hook */
+:host(.rp-density--compact) {
+  --rp-cell-py: 10px;
+  --rp-cell-px: 14px;
+  --rp-font: 12.5px;
+  --rp-font-child: 12px;
+}
+
+/* ============================
+   CARD + TOPBAR
+   ============================ */
+
+.rp-table-card {
+  background: var(--rp-surface-100);
+  border: 1px solid var(--rp-border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden; /* clip header corners */
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+}
+
+.rp-table-topbar {
+  background: var(--rp-surface-100);
+}
+
+.rp-table-topbar--has-filters {
+  border-bottom: 1px solid var(--rp-border-row);
+}
+
+/* ============================
+   GLOBAL SEARCH TOOLBAR
+   ============================ */
+
+.rp-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 12px 10px;
+}
+
+.rp-table-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.rp-export-btn {
+  border-radius: 999px;
+  height: 40px;
+  padding: 0 14px;
+}
+
+/* Search field sizing inside the toolbar */
+.rp-table-toolbar .rp-filter-field {
+  width: auto;
+  min-width: 260px;
+  max-width: 400px;
+}
+
+/* If you keep both classes on the mat-form-field:
+   class="rp-filter-field rp-advanced-table-search" */
+.cmdbar__search.rp-filter-field {
+  width: auto;
+  min-width: 260px;
+  max-width: 500px;
+}
+
+/* Infix = area that holds prefix icon + input */
+/* Infix = area that holds prefix icon + input */
+:host ::ng-deep mat-form-field.cmdbar__search.mat-mdc-form-field-infix {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  box-sizing: border-box;
+  overflow: visible; /* allow label to move vertically */
+
+  /* vertical centering for 40px control */
+  min-height: var(--rp-topbar-control-h);
+  display: flex;
+  align-items: center;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Notch = outline cutout that contains the floating label */
+:host ::ng-deep
+  mat-form-field.cmdbar__search
+  .mdc-notched-outline__notch {
+  max-width: 100%;
+  padding-right: 8px;
+  box-sizing: border-box;
+}
+
+/* If you ever add a real input placeholder, clamp it */
+:host ::ng-deep
+  mat-form-field.cmdbar__search
+  .mat-mdc-input-element::placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================================
+   ADVANCED TABLE SEARCH - label + vertical centering polish
+   Requires: <mat-label>Search</mat-label> in template
+   ========================================================= */
+
+
+/* [ok] Fix: when the label is NOT floating, center it vertically in 40px */
+.cmdbar__search {
+  width: clamp(280px, 42vw, 560px);
+  min-width: 220px;
+}
+
+/* Remove extra subscript height (you already do this) */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* Make it look like the filter inputs */
+:host ::ng-deep .cmdbar__search .mdc-text-field--outlined {
+  background: var(--color-bg-subtle);           /* same tint */
+  border-radius: var(--radius-md);           /* same roundness */
+   /* vertical centering for 40px control */
+}
+
+/* Match the outline border alpha */
+:host ::ng-deep .cmdbar__search .mdc-notched-outline__leading,
+:host ::ng-deep .cmdbar__search .mdc-notched-outline__notch,
+:host ::ng-deep .cmdbar__search .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.14) !important;
+}
+
+/* Hover border */
+:host ::ng-deep .cmdbar__search:hover .mdc-notched-outline__leading,
+:host ::ng-deep .cmdbar__search:hover .mdc-notched-outline__notch,
+:host ::ng-deep .cmdbar__search:hover .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.28) !important;
+}
+
+/* Focus border (same feel as filters) */
+:host ::ng-deep .cmdbar__search.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .cmdbar__search.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .cmdbar__search.mat-focused .mdc-notched-outline__trailing {
+  border-color: rp-primary-600 !important;
+}
+
+/* Input typography */
+:host ::ng-deep .cmdbar__search input.mat-mdc-input-element {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  padding-top: 6px !important;
+}
+
+/* Placeholder typography (match filters vibe) */
+:host ::ng-deep .cmdbar__search input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+/* Prefix icon sizing + color to match */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-icon-prefix mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  color: var(--color-text-muted);
+}
+
+/* Suffix clear button sizing */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-icon-suffix mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
+/* Optional: align height/density with filter fields */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-infix {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+/* ============================
+   FILTER SUMMARY (V2)
+   ============================ */
+
+.rp-filter-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 12px;
+  flex-wrap: wrap;
+}
+
+.rp-filter-summary__label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--rp-text-600);
+  white-space: nowrap;
+}
+
+.rp-filter-summary__pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 240px;
+}
+
+.rp-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: var(--rp-primary-050);
+  color: var(--rp-text-900);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  cursor: pointer;
+  max-width: 340px;
+}
+
+.rp-filter-pill__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp-filter-pill__x {
+  font-size: var(--font-size-base);
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+}
+
+.rp-filter-pill:hover {
+  border-color: rgba(37, 99, 235, 0.28);
+  filter: brightness(0.98);
+}
+
+.rp-filter-summary__clear {
+  border: none;
+  background: transparent;
+  color: var(--rp-primary-600);
+  font-weight: 800;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+
+.rp-filter-summary__clear:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* ============================
+   TABLE BASELINE (V2)
+   ============================ */
+
+.rp-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.rp-table.mat-elevation-z1 {
+  box-shadow: none !important;
+}
+
+/* Header cells */
+.rp-table th.mat-mdc-header-cell {
+  background: var(--rp-surface-200);
+  color: var(--rp-text-900);
+  font-weight: 700;
+  font-size: 12.75px;
+  letter-spacing: 0.2px;
+  padding: calc(var(--rp-cell-py) + 2px) var(--rp-cell-px);
+  border-bottom: 1px solid var(--rp-border-subtle);
+}
+
+/* Body cells */
+// .rp-table td.mat-mdc-cell {
+//   padding: var(--rp-cell-py) var(--rp-cell-px);
+//   border-bottom: 1px solid var(--rp-border-row);
+//   font-size: var(--rp-font);
+//   color: var(--rp-text-900);
+//   background: var(--rp-surface-100);
+// }
+
+/* Hover (subtle overlay feel) */
+.rp-table.rp-table-hover tr.mat-mdc-row:hover td.mat-mdc-cell {
+  background: var(--rp-row-hover);
+}
+
+/* Parent vs child hierarchy */
+.rp-row--parent td.mat-mdc-cell {
+  font-weight: 700;
+}
+
+.rp-row--child td.mat-mdc-cell {
+  font-weight: 500;
+  color: var(--rp-text-700);
+  background: var(--rp-surface-child);
+  font-size: var(--rp-font-child);
+}
+
+/* Alignment helpers */
+.rp-align-end {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-align-center {
+  text-align: center;
+}
+
+/* Cell inner wrapper */
+.rp-cell-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* =========================================================
+   ISOLATED CENTERING: only these two columns
+   ========================================================= */
+
+/* Body cells */
+.rp-table td.mat-mdc-cell.mat-column-claimsWithMoney,
+.rp-table td.mat-mdc-cell.mat-column-numberClaimsZeroOpen {
+  text-align: center;
+  
+}
+
+/* If cell content is wrapped in .rp-cell-inner */
+.rp-table td.mat-mdc-cell.mat-column-claimsWithMoney .rp-cell-inner,
+.rp-table td.mat-mdc-cell.mat-column-numberClaimsZeroOpen .rp-cell-inner {
+  width: 65%;
+  justify-content: center;
+  
+}
+
+/* Right-align sort header for rp-align-end columns */
+:host ::ng-deep
+.rp-table th.mat-mdc-header-cell.rp-align-end .mat-sort-header-container {
+  justify-content: flex-end;
+}
+
+/* Header: center the label + sort arrow together */
+:host ::ng-deep
+.rp-table th.mat-mdc-header-cell.mat-column-claimsWithMoney .mat-sort-header-container,
+:host ::ng-deep
+.rp-table th.mat-mdc-header-cell.mat-column-numberClaimsZeroOpen .mat-sort-header-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-right: 10px;
+}
+
+
+/* Child text + rail (aligns with dynamic indentation) */
+.rp-cell-inner--child {
+  color: #5f6368;
+  font-size: var(--rp-font-child);
+  position: relative;
+  padding-left: 0;
+}
+
+.rp-cell-inner--child::before {
+  content: "";
+  position: absolute;
+  left: -10px; /* sits just left of the text after indentation */
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: rgba(17, 24, 39, 0.08);
+  border-radius: 2px;
+}
+
+/* Remove last border for a clean card bottom */
+.rp-table tr.mat-mdc-row:last-child td.mat-mdc-cell {
+  border-bottom: none;
+}
+
+/* =========================================================
+   FORCE cell wrapper to span full cell width
+   ========================================================= */
+
+
+/* End alignment for flex wrapper - body cells */
+.rp-table td.mat-mdc-cell.rp-align-end .rp-cell-inner {
+  justify-content: flex-end;
+}
+
+/* End alignment for flex wrapper - footer cells */
+.rp-footer-row td.mat-mdc-footer-cell.rp-align-end .rp-cell-inner {
+  justify-content: flex-end;
+}
+
+/* ============================
+   HEADER FILTER ICON / LAYOUT
+   ============================ */
+
+.rp-header-with-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Let header text take remaining space */
+.rp-header-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* (Optional) Make header obey alignment when using rp-header-text */
+.rp-table th.mat-mdc-header-cell.rp-align-end .rp-header-text {
+  text-align: right;
+}
+.rp-table th.mat-mdc-header-cell.rp-align-center .rp-header-text {
+  text-align: center;
+}
+.rp-table th.mat-mdc-header-cell.rp-align-end .rp-header-with-filter {
+  justify-content: flex-end;
+}
+
+/* Filter icon calmness + active state */
+.rp-filter-icon-btn .rp-filter-icon {
+  opacity: 0.4;
+  transition: opacity 120ms ease-out;
+}
+
+th:hover .rp-filter-icon-btn .rp-filter-icon,
+.rp-filter-icon.active {
+  opacity: 1;
+}
+
+.rp-filter-icon.active {
+  color: var(--rp-primary-600);
+}
+
+
+
+/* ============================
+   EXPANDER (DEDICATED COLUMN)
+   ============================ */
+
+.rp-select-col {
+  width: 48px;
+  padding: 0 8px !important;
+}
+
+.rp-expand-col {
+  width: 44px;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+.rp-expand-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  flex: 0 0 auto;
+}
+
+/* Kill Material ripple/focus bubble, keep accessibility */
+:host ::ng-deep .rp-expand-btn {
+  --mat-icon-button-state-layer-size: 0px;
+}
+
+:host ::ng-deep .rp-expand-btn .mdc-icon-button__ripple,
+:host ::ng-deep .rp-expand-btn .mdc-icon-button__focus-ring {
+  display: none !important;
+}
+
+/* SAFE focus state (keyboard) */
+.rp-expand-btn:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.6);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* ============================
+   FOOTER TOTALS (V2)
+   ============================ */
+
+.rp-footer-row td.mat-mdc-footer-cell {
+  padding: var(--rp-cell-py) var(--rp-cell-px);
+  font-size: var(--rp-font);
+  color: var(--rp-text-900);
+  background: var(--color-bg-subtle);
+  font-weight: 800;
+  border-top: 2px solid rgba(17, 24, 39, 0.15);
+  border-bottom: none;
+}
+
+/* Footer uses same inner wrapper */
+.rp-footer-row td.mat-mdc-footer-cell .rp-cell-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Ensure center alignment works with flex */
+.rp-footer-row td.mat-mdc-footer-cell.rp-align-center .rp-cell-inner {
+  justify-content: center;
+}
+
+/* Optional empty footer background class (toggled via rp-footer-row--empty) */
+.rp-footer-row--empty td.mat-mdc-footer-cell {
+  background: var(--rp-surface-100);
+  border-top: 1px solid var(--rp-border-row);
+  font-weight: 600;
+  color: var(--rp-text-600);
+}
+
+/* ============================
+   EMPTY STATE (V2)
+   ============================ */
+
+.rp-table-empty {
+  padding: 24px 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  text-align: center;
+  background: var(--rp-surface-100);
+}
+
+.rp-table-empty__title {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--rp-text-900);
+}
+
+.rp-table-empty__subtitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--rp-text-600);
+  max-width: 520px;
+}
+
+.rp-table-empty__btn {
+  margin-top: 10px;
+  border-radius: 999px !important;
+}
+
+/* ============================
+   FILTER DIALOG (MAT-MENU) SHELL
+   ============================ */
+
+.rp-filter-dialog {
+  max-width: 320px;
+  min-width: 280px;
+  width: 100%;
+  border-radius: 18px;
+  padding: 16px 16px 12px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+  background: var(--color-surface);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+/* Remove extra mat-menu padding in this overlay context */
+:host ::ng-deep .mat-mdc-menu-content,
+:host ::ng-deep .mat-mdc-menu-content .mat-mdc-menu-item,
+:host ::ng-deep .mat-mdc-menu-content .mat-mdc-menu-item .mat-mdc-menu-item-text {
+  padding: 0 !important;
+}
+
+/* Scope styles to THIS filter menu only:
+   <mat-menu class="rp-filter-menu-panel"> */
+:host ::ng-deep .mat-mdc-menu-panel.rp-filter-menu-panel {
+  padding: 0 !important;
+  border-radius: var(--radius-lg);
+  height: auto;
+  max-width: 360px;
+  min-width: 280px;
+  width: auto;
+  box-sizing: border-box;
+  overflow-x: hidden; /* kill horizontal scrollbar */
+}
+
+/* Header */
+.rp-filter-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.rp-filter-dialog__title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.rp-filter-dialog__close {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 10px;
+  margin-right: 7px;
+}
+
+:host ::ng-deep .rp-filter-dialog__close .mat-mdc-button-persistent-ripple {
+  display: none !important;
+}
+
+:host ::ng-deep .rp-filter-dialog__close:hover,
+:host ::ng-deep .rp-filter-dialog__close:focus {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Safe focus for the close icon */
+.rp-filter-dialog__close:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.6);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* Body */
+.rp-filter-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rp-filter-dialog__subtitle {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+/* Footer buttons */
+.rp-filter-dialog__footer {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rp-filter-dialog__btn {
+  flex: 1;
+  border-radius: 999px !important;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+/* ============================
+   CHECKBOX LABEL WRAPPING
+   ============================ */
+
+:host ::ng-deep .rp-filter-dialog .mat-mdc-checkbox .mdc-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+/* Align multi-line checkbox labels nicely */
+:host ::ng-deep .rp-filter-dialog .mat-mdc-checkbox .mdc-form-field {
+  align-items: flex-start;
+}
+
+/* ============================
+   VALUE LIST / GROUPED FILTERS
+   ============================ */
+
+.rp-value-filter {
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+  padding: 8px 10px 8px;
+  border: 1px solid #e3eaf5;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.rp-value-filter__list {
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rp-value-filter__item {
+  font-size: var(--font-size-xs);
+}
+
+:host ::ng-deep .rp-filter-dialog .rp-value-filter__item .mdc-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+/* Groups */
+.rp-filter-group {
+  border-radius: var(--radius);
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  transition: background-color 0.15s ease-out;
+}
+
+.rp-filter-group--active {
+  background: #eef2ff;
+}
+
+.rp-filter-group--active .rp-filter-group__header {
+  background: var(--color-info);
+  border-radius: 10px;
+  padding: 4px 8px;
+}
+
+.rp-filter-group--active .rp-filter-group__chevron {
+  color: var(--color-surface);
+}
+
+.rp-filter-group--active .rp-filter-group__checkbox .mdc-checkbox__background {
+  border-color: #bfdbfe;
+  background-color: var(--color-surface);
+}
+
+.rp-filter-group--active .rp-filter-group__checkbox .mdc-label {
+  color: var(--color-surface);
+}
+
+.rp-filter-group--active .rp-filter-group__count-pill {
+  background: var(--color-info);
+  color: var(--color-surface);
+}
+
+.rp-filter-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+  padding: 2px 4px;
+}
+
+.rp-filter-group__toggle {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.rp-filter-group__toggle:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.6);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.rp-filter-group__chevron {
+  font-size: var(--font-size-base);
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+  margin-right: 4px;
+  transition: transform 0.15s ease-out;
+}
+
+.rp-filter-group__chevron--collapsed {
+  transform: rotate(-90deg);
+}
+
+:host ::ng-deep .rp-filter-dialog .rp-filter-group__checkbox .mdc-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.rp-filter-group__count-pill {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-info);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.rp-filter-group__children {
+  padding-left: 24px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+:host ::ng-deep .rp-filter-dialog .rp-filter-group__leaf .mdc-label {
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+/* ============================
+   OPERATOR + VALUE FIELDS (MDC)
+   ============================ */
+
+:host ::ng-deep .rp-filter-dialog .rp-filter-field {
+  width: 100%;
+  margin-top: 12px;
+}
+
+:host ::ng-deep .rp-filter-dialog .rp-filter-field--operator {
+  margin-top: 16px;
+}
+
+/* Wrapper: rounded, light gray background like Figma */
+:host ::ng-deep .rp-filter-dialog .rp-filter-field .mat-mdc-text-field-wrapper {
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+  min-height: 40px;
+  padding: 0 12px;
+  align-items: center;
+}
+
+/* Outline color (default) */
+:host ::ng-deep
+  .rp-filter-dialog
+  .rp-filter-field.mat-mdc-form-field
+  .mdc-notched-outline__leading,
+:host ::ng-deep
+  .rp-filter-dialog
+  .rp-filter-field.mat-mdc-form-field
+  .mdc-notched-outline__notch,
+:host ::ng-deep
+  .rp-filter-dialog
+  .rp-filter-field.mat-mdc-form-field
+  .mdc-notched-outline__trailing {
+  border-color: var(--color-border);
+}
+
+/* Outline color when focused */
+:host ::ng-deep
+  .rp-filter-dialog
+  .rp-filter-field.mat-mdc-form-field.mat-mdc-form-field-focus
+  .mdc-notched-outline__leading,
+:host ::ng-deep
+  .rp-filter-dialog
+  .rp-filter-field.mat-mdc-form-field.mat-mdc-form-field-focus
+  .mdc-notched-outline__notch,
+:host ::ng-deep
+  .rp-filter-dialog
+  .rp-filter-field.mat-mdc-form-field.mat-mdc-form-field-focus
+  .mdc-notched-outline__trailing {
+  border-color: rp-primary-600;
+}
+
+/* Label + text styles */
+:host ::ng-deep .rp-filter-dialog .rp-filter-field {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+:host ::ng-deep .rp-filter-dialog .rp-filter-field .mat-mdc-input-element {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+:host ::ng-deep .rp-filter-dialog .rp-filter-field .mat-mdc-select-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+:host ::ng-deep .rp-filter-dialog .rp-filter-field .mat-mdc-select-arrow {
+  margin-right: 4px;
+}
+
+/* ============================
+   CHIPS
+   ============================ */
+
+.rp-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+/* stoplight */
+.rp-chip.risk-low {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-success);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.rp-chip.risk-medium {
+  background: rgba(234, 179, 8, 0.18);
+  color: #a16207;
+  border-color: rgba(234, 179, 8, 0.45);
+}
+
+.rp-chip.risk-high {
+  background: rgba(239, 68, 68, 0.18);
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+/* neutral */
+.rp-chip.neutral {
+  background: #eef2f7;
+  color: var(--color-gray-600);
+  border-color: #e5ebf3;
+}
+
+.rp-chip.rp-risk-pill {
+  min-width: 84px; /* tweak to taste (72-96px) */
+  height: 24px; /* chip height */
+  padding: 0 10px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* DATA ROW STRIPING (stable): applies to visible data rows only */
+.rp-table tr.mat-mdc-row:nth-of-type(even) td.mat-mdc-cell {
+  background: var(--rp-surface-altrow, #fafbfe);
+}
+
+/* Child rows still get their own tint (overrides zebra) */
+.rp-table tr.mat-mdc-row.rp-row--child td.mat-mdc-cell {
+  background: var(--rp-surface-child, #fbfbfd);
+}
+
+/* Parent vs child */
+.rp-table tr.mat-mdc-row.rp-row--parent td.mat-mdc-cell {
+  font-weight: 700;
+}
+
+.rp-table tr.mat-mdc-row.rp-row--child td.mat-mdc-cell {
+  font-weight: 500;
+  color: var(--rp-text-700, var(--color-gray-700));
+  background: var(--rp-surface-child, #fbfbfd);
+}
+
+/* ============================
+   ROW SURFACES (single source of truth)
+   ============================ */
+
+/* Default surface per row level (beats baseline td background) */
+.rp-table tr.mat-mdc-row.rp-level-0 td.mat-mdc-cell { background: var(--rp-level-0); }
+.rp-table tr.mat-mdc-row.rp-level-1 td.mat-mdc-cell { background: var(--rp-level-1); }
+.rp-table tr.mat-mdc-row.rp-level-2 td.mat-mdc-cell { background: var(--rp-level-2); }
+
+/* Zebra striping - ONLY for level 0 (payer rows) */
+.rp-table tr.mat-mdc-row.rp-level-0:nth-of-type(even) td.mat-mdc-cell {
+  background: var(--rp-zebra);
+}
+
+/* Hover - always last so it visually wins */
+.rp-table.rp-table-hover tr.mat-mdc-row:hover td.mat-mdc-cell {
+  background: var(--rp-row-hover, rgba(17, 24, 39, 0.04));
+}
+
+tr.is-selected {
+  background: rgba(25, 118, 210, 0.10); // light primary tint
+}
+tr.is-selected:hover {
+  background: rgba(25, 118, 210, 0.14);
+}
+

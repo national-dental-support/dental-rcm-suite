@@ -1,0 +1,373 @@
+<div class="piq-contracts">
+
+  <!-- -- Page Header ------------------------------------------------------- -->
+  <div class="piq-contracts__header">
+    <div class="header-title">
+      <h2>Payer Contracts &amp; Routing Arbitrage</h2>
+      <p class="header-sub">
+        Clearinghouses silently route to the cheapest path for them &#x2014; Payer-IQ finds the best rate for you.
+      </p>
+    </div>
+  </div>
+
+  <!-- -- KPI Summary Row --------------------------------------------------- -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <span class="kpi-label">Claims Routed (90 days)</span>
+      <span class="kpi-value">{{ fmt(summary?.TotalClaims) }}</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Total Billed</span>
+      <span class="kpi-value">{{ fmtCurrency(summary?.TotalBilled) }}</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Total Collected</span>
+      <span class="kpi-value">{{ fmtCurrency(summary?.TotalPaid) }}</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Contractual Adjustments</span>
+      <span class="kpi-value kpi-value--amber">{{ fmtCurrency(summary?.TotalContractualAdj) }}</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Unique Payers Routed</span>
+      <span class="kpi-value">{{ fmt(summary?.UniquePayersRouted) }}</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Claims with Contracted Rate</span>
+      <span class="kpi-value kpi-value--green">{{ fmt(summary?.ClaimsWithContractedRate) }}</span>
+    </div>
+  </div>
+
+  <!-- -- Main Tab Group ---------------------------------------------------- -->
+  <mat-tab-group animationDuration="0ms" class="piq-tabs">
+
+    <!-- Tab 1: Contract Portfolio -->
+    <mat-tab label="Contract Portfolio">
+      <div class="tab-content">
+
+        @if (loadingContracts) {
+          <div class="loading-row">
+            <mat-spinner [diameter]="32"></mat-spinner>
+            <span>Loading contracts&#x2026;</span>
+          </div>
+        }
+
+        @if (errorContracts) {
+          <div class="error-banner">{{ errorContracts }}</div>
+        }
+
+        @if (!loadingContracts && !errorContracts) {
+          @if (contracts.length === 0) {
+            <div class="empty-state">
+              <mat-icon>description</mat-icon>
+              <p>No active payer contracts found. Run migration 200 to seed demo data.</p>
+            </div>
+          } @else {
+            <div class="table-wrap">
+              <table mat-table [dataSource]="contracts" class="piq-table">
+
+                <!-- Payer Name -->
+                <ng-container matColumnDef="PayerName">
+                  <th mat-header-cell *matHeaderCellDef>Payer</th>
+                  <td mat-cell *matCellDef="let row">
+                    <strong>{{ row.PayerName }}</strong>
+                    @if (row.CarrierName) {
+                      <br /><span class="sub-text">{{ row.CarrierName }}</span>
+                    }
+                  </td>
+                </ng-container>
+
+                <!-- Contract Name -->
+                <ng-container matColumnDef="ContractDisplayName">
+                  <th mat-header-cell *matHeaderCellDef>Contract</th>
+                  <td mat-cell *matCellDef="let row">{{ row.ContractDisplayName }}</td>
+                </ng-container>
+
+                <!-- Network -->
+                <ng-container matColumnDef="NetworkKey">
+                  <th mat-header-cell *matHeaderCellDef>Routing Network</th>
+                  <td mat-cell *matCellDef="let row">
+                    @if (row.PrimaryNetworkKey) {
+                      <mat-chip class="chip chip--network">{{ row.PrimaryNetworkKey }}</mat-chip>
+                    } @else {
+                      <span class="muted">Unassigned</span>
+                    }
+                  </td>
+                </ng-container>
+
+                <!-- Fee Schedule Count -->
+                <ng-container matColumnDef="FeeScheduleCount">
+                  <th mat-header-cell *matHeaderCellDef>Fee Codes</th>
+                  <td mat-cell *matCellDef="let row">
+                    {{ row.FeeScheduleCount || row.FeeScheduleDetailCount || 0 }}
+                  </td>
+                </ng-container>
+
+                <!-- Claims 90d -->
+                <ng-container matColumnDef="ClaimsLast90d">
+                  <th mat-header-cell *matHeaderCellDef>Claims (90d)</th>
+                  <td mat-cell *matCellDef="let row">{{ fmt(row.ClaimsLast90d) }}</td>
+                </ng-container>
+
+                <!-- Avg Payment -->
+                <ng-container matColumnDef="AvgPaymentAmt">
+                  <th mat-header-cell *matHeaderCellDef>Avg Payment</th>
+                  <td mat-cell *matCellDef="let row">{{ fmtCurrency(row.AvgPaymentAmt) }}</td>
+                </ng-container>
+
+                <!-- Status -->
+                <ng-container matColumnDef="Status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="status-badge"
+                          [class.status-badge--active]="contractStatus(row) === 'Active'"
+                          [class.status-badge--warn]="contractStatus(row) === 'Expiring Soon'"
+                          [class.status-badge--error]="contractStatus(row) === 'Expired'">
+                      {{ contractStatus(row) }}
+                    </span>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="contractColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: contractColumns;"
+                    class="click-row"
+                    [class.row--expanded]="isExpanded(row.PayerContractID)"
+                    (click)="toggleContractRow(row.PayerContractID)">
+                </tr>
+
+              </table>
+            </div>
+
+            <!-- Expanded routing paths detail -->
+            @if (expandedContractId !== null) {
+              <div class="routing-detail">
+                @if (loadingRoutingPaths) {
+                  <mat-spinner [diameter]="20"></mat-spinner>
+                } @else if (routingPaths.length === 0) {
+                  <span class="muted">No routing paths configured for this contract.</span>
+                } @else {
+                  <table class="paths-table">
+                    <thead>
+                      <tr>
+                        <th>Network</th>
+                        <th>Route Type</th>
+                        <th>Gov/Commercial</th>
+                        <th>Agreement</th>
+                        <th>Match Method</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (path of routingPaths; track path.LeaseNetworkID) {
+                        <tr>
+                          <td>{{ path.LeaseNetworkKey }}</td>
+                          <td>{{ path.DirectIndirect }}</td>
+                          <td>{{ path.GovernmentCommercial }}</td>
+                          <td>{{ path.AgreementKnown }}</td>
+                          <td>{{ path.MatchMethod || '&#x2014;' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+              </div>
+            }
+          }
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: Routing Arbitrage Analysis -->
+    <mat-tab label="Routing Arbitrage">
+      <div class="tab-content">
+
+        <div class="arbitrage-controls">
+          <mat-form-field appearance="outline" class="cpt-filter">
+            <mat-label>Filter by CPT/CDT Code</mat-label>
+            <input matInput [formControl]="cptFilterCtrl" placeholder="e.g. D0120 or 99213" />
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          @if (!loadingArbitrage && arbitrageData.length > 0) {
+            <div class="opportunity-banner" [class.opportunity-banner--active]="opportunityCount > 0">
+              <mat-icon>{{ opportunityCount > 0 ? 'trending_up' : 'check_circle' }}</mat-icon>
+              @if (opportunityCount > 0) {
+                <span>
+                  <strong>{{ opportunityCount }}</strong> payer{{ opportunityCount !== 1 ? 's have' : ' has' }}
+                  routing opportunities &#x2014; estimated
+                  <strong>{{ fmtCurrency(totalOpportunityValue) }}</strong> recoverable per period.
+                </span>
+              } @else {
+                <span>All payers are routed optimally.</span>
+              }
+            </div>
+          }
+        </div>
+
+        @if (loadingArbitrage) {
+          <div class="loading-row">
+            <mat-spinner [diameter]="28"></mat-spinner>
+            <span>Analyzing routing paths&#x2026;</span>
+          </div>
+        }
+
+        @if (errorArbitrage) {
+          <div class="error-banner">{{ errorArbitrage }}</div>
+        }
+
+        @if (!loadingArbitrage && !errorArbitrage) {
+          @if (arbitrageData.length === 0) {
+            <div class="empty-state">
+              <mat-icon>route</mat-icon>
+              <p>No routing data available. Seed the demo data and ensure payers have active contracts.</p>
+            </div>
+          } @else {
+            @for (entry of arbitrageData; track entry.payerId) {
+              <div class="arbitrage-card" [class.arbitrage-card--opportunity]="entry.opportunityExists">
+                <div class="arb-card-header">
+                  <div class="arb-payer-name">
+                    <strong>{{ entry.payerName }}</strong>
+                    @if (entry.opportunityExists) {
+                      <span class="opp-badge">
+                        <mat-icon>bolt</mat-icon>
+                        Opportunity: {{ fmtCurrency(entry.arbitrageSpread) }} spread
+                      </span>
+                    }
+                  </div>
+                  <div class="arb-summary">
+                    Best: <strong>{{ fmtCurrency(entry.bestRate) }}</strong>
+                    &nbsp;Worst: <strong>{{ fmtCurrency(entry.worstRate) }}</strong>
+                  </div>
+                </div>
+
+                <div class="route-grid">
+                  @for (route of entry.routes; track route.PayerContractID) {
+                    <div class="route-card"
+                         [class.route-card--best]="route.AvgContractedRate === entry.bestRate && entry.bestRate > 0">
+                      <div class="route-name">{{ route.NetworkKey }}</div>
+                      <div class="route-type">{{ routeTypeLabel(route.RouteType) }}</div>
+                      <div class="route-rate">
+                        {{ fmtCurrency(route.AvgContractedRate) }}
+                        <span class="route-rate-label">contracted</span>
+                      </div>
+                      @if (route.AvgActualPaid > 0) {
+                        <div class="route-actual">
+                          {{ fmtCurrency(route.AvgActualPaid) }} actual avg
+                        </div>
+                      }
+                      @if (route.ClaimVolume > 0) {
+                        <div class="route-volume">{{ fmt(route.ClaimVolume) }} claims (90d)</div>
+                      }
+                      @if (route.AvgContractedRate === entry.bestRate && entry.bestRate > 0) {
+                        <div class="route-optimal-badge">
+                          <mat-icon>star</mat-icon> Optimal Route
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Tab 3: Fee Schedule Explorer -->
+    <mat-tab label="Fee Schedule Explorer">
+      <div class="tab-content">
+
+        <div class="fee-controls">
+          <mat-form-field appearance="outline" class="contract-selector">
+            <mat-label>Select Contract</mat-label>
+            <mat-select [formControl]="contractSelectorCtrl">
+              <mat-option [value]="null">&#x2014; Select a contract &#x2014;</mat-option>
+              @for (c of contracts; track c.PayerContractID) {
+                <mat-option [value]="c.PayerContractID">
+                  {{ c.PayerName }} &#x2014; {{ c.ContractDisplayName }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          @if (feeScheduleData.length > 0) {
+            <button type="button" mat-stroked-button (click)="downloadCsv()" class="export-btn">
+              <mat-icon>download</mat-icon>
+              Export CSV
+            </button>
+          }
+        </div>
+
+        @if (loadingFeeSchedule) {
+          <div class="loading-row">
+            <mat-spinner [diameter]="28"></mat-spinner>
+            <span>Loading fee schedule&#x2026;</span>
+          </div>
+        }
+
+        @if (errorFeeSchedule) {
+          <div class="error-banner">{{ errorFeeSchedule }}</div>
+        }
+
+        @if (!loadingFeeSchedule && contractSelectorCtrl.value === null) {
+          <div class="empty-state">
+            <mat-icon>table_chart</mat-icon>
+            <p>Select a contract above to view its CPT/CDT-level fee schedule.</p>
+          </div>
+        }
+
+        @if (!loadingFeeSchedule && !errorFeeSchedule && contractSelectorCtrl.value !== null) {
+          @if (feeScheduleData.length === 0) {
+            <div class="empty-state">
+              <mat-icon>search_off</mat-icon>
+              <p>No fee schedule lines found for this contract.</p>
+            </div>
+          } @else {
+            <div class="table-wrap">
+              <table mat-table [dataSource]="feeScheduleData" class="piq-table piq-table--fee">
+
+                <!-- CPT Code -->
+                <ng-container matColumnDef="ProcedureCode">
+                  <th mat-header-cell *matHeaderCellDef>CPT/CDT</th>
+                  <td mat-cell *matCellDef="let row">
+                    <code>{{ row.ProcedureCode }}</code>
+                  </td>
+                </ng-container>
+
+                <!-- Service Code -->
+                <ng-container matColumnDef="ServiceCode">
+                  <th mat-header-cell *matHeaderCellDef>Service Description</th>
+                  <td mat-cell *matCellDef="let row">{{ row.ServiceCode || '&#x2014;' }}</td>
+                </ng-container>
+
+                <!-- Contracted Rate -->
+                <ng-container matColumnDef="ContractedRate">
+                  <th mat-header-cell *matHeaderCellDef>Contracted Rate</th>
+                  <td mat-cell *matCellDef="let row" class="rate-cell">
+                    {{ fmtCurrency(row.ContractedRate ?? row.AllowedAmount) }}
+                  </td>
+                </ng-container>
+
+                <!-- Effective Date -->
+                <ng-container matColumnDef="EffectiveDate">
+                  <th mat-header-cell *matHeaderCellDef>Effective</th>
+                  <td mat-cell *matCellDef="let row">
+                    {{ row.EffectiveDate ? (row.EffectiveDate | date:'MM/dd/yyyy') : '&#x2014;' }}
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="feeScheduleColumns; sticky: true"></tr>
+                <tr mat-row *matRowDef="let row; columns: feeScheduleColumns;"></tr>
+              </table>
+            </div>
+
+            <div class="fee-footer">
+              {{ feeScheduleData.length }} procedure codes
+            </div>
+          }
+        }
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+
+</div>

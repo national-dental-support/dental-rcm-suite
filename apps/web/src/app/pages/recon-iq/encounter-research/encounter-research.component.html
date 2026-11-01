@@ -1,0 +1,142 @@
+<section class="page-content">
+
+  <div class="toolbar-card" aria-label="encounter research">
+    <div class="cmdbar" aria-label="Encounter Research toolbar">
+      <div class="cmdbar__left">
+        <div class="cmdbar__title">Encounter Research</div>
+        <div class="cmdbar__hint">Search patients and drill into claims & EOBs</div>
+      </div>
+
+      <div class="cmdbar__right">
+        <app-rp-filter-form
+          class="cmdbar__search"
+          mode="search"
+          [enableSearch]="true"
+          [searchLabel]="'Search'"
+          [searchPlaceholder]="'search patients'"
+          [(searchValue)]="encounterGlobalSearch"
+          (searchChange)="onEncounterSearchChanged($event)"
+        ></app-rp-filter-form>
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          class="cmdbar__filterBtn"
+          [class.is-open]="showFilters"
+          (click)="toggleFilters()">
+          <mat-icon>tune</mat-icon>
+          <span>Filters</span>
+          @if (activeFilterCount; as n) {
+            <span class="cmdbar__badge" [class.is-zero]="n===0">{{ n }}</span>
+          }
+          <mat-icon class="cmdbar__caret">expand_more</mat-icon>
+        </button>
+
+        <button mat-stroked-button type="button" class="cmdbar__clearBtn" (click)="onFilterReset()">
+          Clear
+        </button>
+
+        <button mat-stroked-button type="button" (click)="exportCsv()">
+          <mat-icon>download</mat-icon>
+          Export CSV
+        </button>
+      </div>
+    </div>
+
+    @if (activeFilters?.length) {
+      <div class="filterChips">
+        <span class="filterChips__label">Active:</span>
+        <mat-chip-listbox>
+          @for (chip of activeFilters; track chip) {
+            <mat-chip-option (removed)="removeFilterChip(chip)">
+              {{ chip.label }}: {{ chip.value }}
+              <button matChipRemove type="button" aria-label="Remove filter">
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+    }
+
+    @if (showFilters) {
+      <div class="filtersPanel" role="region" aria-label="Encounter filters">
+        <app-rp-filter-form
+          [config]="config"
+          [initialFilters]="initialFilters"
+          (filtersChange)="onEncounterFiltersChanged($event)"
+          (reset)="onFilterReset()">
+        </app-rp-filter-form>
+      </div>
+    }
+  </div>
+
+  <app-section-card
+    [title]="'Patients'"
+    [tooltip]="'Click a patient row to expand their claims inline. Click again to collapse.'">
+    <rp-advanced-table
+      [columns]="patientEncounter"
+      [data]="patientEncounterData"
+      [autoGenerateValueLists]="true"
+      [initialFilterState]="patientTableFilterState"
+      [externalGlobal]="encounterGlobalSearch"
+      (externalGlobalChange)="encounterGlobalSearch = $event"
+      [idField]="'patientAccount'"
+      [enableNestedRows]="true"
+      [childrenAccessor]="childrenAccessor"
+      [hasChildrenAccessor]="hasChildrenAccessor"
+      [expandOnRowClick]="true"
+      [childIndentPx]="childIndentPx"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 25, 50, 100]"
+      [enablePagination]="true"
+      [enableGlobalSearch]="false"
+      (rowExpanded)="onPatientRowExpanded($event)"
+      (rowClicked)="onPatientRowClick($event)">
+
+      <ng-template rpCell="actions" let-row="row">
+        @if (row.rowType === 'claim') {
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            (click)="onPatientClaimAction('claim', row); $event.stopPropagation()">
+            View Claim
+          </button>
+          <span
+            class="claim-action-spacer"
+            [matTooltip]="!hasEob(row) ? 'No EOB received yet' : ''"
+            [matTooltipDisabled]="hasEob(row)"
+            matTooltipPosition="above">
+            <button
+              mat-stroked-button
+              color="primary"
+              type="button"
+              [disabled]="!hasEob(row)"
+              (click)="onPatientClaimAction('eob', row); $event.stopPropagation()">
+              View EOB
+            </button>
+          </span>
+          <span
+            class="claim-action-spacer"
+            [matTooltip]="!hasEob(row) ? 'No EOB received yet' : ''"
+            [matTooltipDisabled]="hasEob(row)"
+            matTooltipPosition="above">
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="!hasEob(row)"
+              [class.disabled-primary]="!hasEob(row)"
+              (click)="onPatientClaimAction('both', row); $event.stopPropagation()">
+              View Both
+            </button>
+          </span>
+        }
+      </ng-template>
+
+    </rp-advanced-table>
+  </app-section-card>
+
+</section>

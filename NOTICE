@@ -1,0 +1,82 @@
+Dental RCM Suite
+Copyright 2026 Dental RCM Suite contributors
+
+This product includes software developed by the Dental RCM Suite contributors,
+licensed under the Apache License, Version 2.0. See the LICENSE file.
+
+
+ORIGIN
+------
+
+The API server began life as the MIT-0 licensed project
+"node-express-typescript-starter-2022" by Carter Adams. MIT-0 imposes no
+attribution requirement; the acknowledgement is made here as a courtesy. Almost
+nothing of the original template remains.
+
+
+TRADEMARKS
+----------
+
+Apache License 2.0 section 6 grants no trademark rights, and none are granted
+here. The licence covers the source code. It does not grant permission to use
+the names "Dental RCM Suite", "Denial-IQ", "Recon-IQ", "Payer-IQ",
+"InsightFlow" or "Claim Vision", or any associated logo, to identify a derived
+or modified version.
+
+You may use, modify and redistribute this code freely under the licence. If you
+distribute a modified version, please give it your own name, so that users can
+tell your work from this project's.
+
+
+THIRD-PARTY CODE SETS AND REFERENCE DATA
+----------------------------------------
+
+This repository ships database schema for storing procedure and diagnosis
+codes. It does not ship the code sets themselves, and deliberately so:
+
+  - CDT procedure codes are copyrighted by the American Dental Association.
+  - CPT procedure codes are copyrighted by the American Medical Association.
+
+Both require a licence from their respective owners. Obtain one and load the
+codes into your own installation; do not commit them to a public fork.
+
+CARC and RARC claim adjustment and remark codes are published openly by X12 and
+the Washington Publishing Company, and the schema for them is populated by a
+migration in this repository.
+
+
+DEPENDENCY LICENCES
+-------------------
+
+All runtime and build dependencies are under permissive licences (MIT, ISC,
+Apache-2.0, BSD-2-Clause, BSD-3-Clause, BlueOak-1.0.0, 0BSD, Zlib, Unlicense,
+CC0-1.0). No GPL, AGPL, LGPL, SSPL or BUSL dependency is present in either
+workspace.
+
+Licence elections, verifications and ambiguous metadata are recorded here:
+
+  - jszip is offered under "MIT OR GPL-3.0-or-later". This project elects MIT.
+  - pako is "MIT AND Zlib". Both are permissive and both are satisfied.
+  - flatbuffers declares "SEE LICENSE IN LICENSE"; the shipped text is
+    Apache-2.0.
+  - buffers declares no SPDX identifier, only a repository URL. Its author
+    releases these packages under MIT, and no other terms accompany it.
+  - chainsaw carries an MIT licence text without an SPDX field, so tooling
+    reports it as inferred rather than declared.
+
+Attribution-only dependencies worth naming explicitly:
+
+  - argparse            Python-2.0
+  - caniuse-lite        CC-BY-4.0
+
+Run `npx license-checker --summary` in either workspace to reproduce the audit.
+
+
+ICONS AND FONTS
+---------------
+
+User-interface icons are Material Icons, licensed Apache-2.0 by Google, loaded
+at runtime from Google Fonts. The Poppins typeface is licensed under the SIL
+Open Font License, also loaded from Google Fonts.
+
+No icon or font files are redistributed in this repository.

@@ -1,0 +1,18 @@
+<nav mat-tab-nav-bar [tabPanel]="tabPanel">
+  @for (t of tabs; track t) {
+    <a
+      mat-tab-link
+      [routerLink]="t.link"
+      routerLinkActive
+      [routerLinkActiveOptions]="{ exact: true }"
+      #rla="routerLinkActive"
+      [active]="rla.isActive">
+      {{ t.label }}
+    </a>
+  }
+</nav>
+<!-- <app-custom-tab-strip></app-custom-tab-strip> -->
+<!-- The ONLY place children render -->
+<mat-tab-nav-panel #tabPanel>
+  <router-outlet></router-outlet>
+</mat-tab-nav-panel>

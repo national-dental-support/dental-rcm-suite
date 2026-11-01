@@ -1,0 +1,37 @@
+<mat-form-field appearance="outline" class="patient-search-field">
+  <mat-label>{{ placeholder }}</mat-label>
+  <input
+    matInput
+    [formControl]="searchControl"
+    [matAutocomplete]="auto"
+    [placeholder]="placeholder"
+    />
+    <mat-icon matSuffix>search</mat-icon>
+    <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onSelect($event.option.value)">
+      @if (loading) {
+        <mat-option disabled>
+          <span class="search-loading">Searching...</span>
+        </mat-option>
+      }
+      @for (patient of results; track patient) {
+        <mat-option [value]="patient">
+          <div class="patient-option">
+            <span class="patient-name">{{ patient.name }}</span>
+            <span class="patient-meta">
+              @if (patient.dob) {
+                <span class="patient-dob">DOB: {{ patient.dob }}</span>
+              }
+              @if (patient.id) {
+                <span class="patient-id">ID: {{ patient.id }}</span>
+              }
+            </span>
+          </div>
+        </mat-option>
+      }
+      @if (!loading && results.length === 0 && searchControl.value && searchControl.value.length >= 2) {
+        <mat-option disabled>
+          No patients found
+        </mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>

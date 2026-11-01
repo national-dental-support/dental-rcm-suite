@@ -1,0 +1,329 @@
+/* --- Page background & container --- */
+:host {
+  display: block;
+  background: var(--color-bg-subtle); /* light grey app bg */
+  min-height: 100%;
+}
+
+.trend-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  vertical-align: middle;
+  margin-left: 6px;
+
+  &.trend-up   { color: var(--color-success, #16a34a); }
+  &.trend-down { color: var(--color-danger,  #dc2626); }
+  &.trend-flat { color: var(--color-text-muted); }
+}
+
+.info-tip {
+  font-size: var(--font-size-md);
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  color: var(--color-text-subtle);
+  cursor: help;
+  flex-shrink: 0;
+  vertical-align: middle;
+
+  &:hover { color: var(--color-text-muted); }
+}
+
+.rcm-container {
+  max-width: 95%;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* --- Header --- */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--color-text);
+    letter-spacing: 0.2px;
+  }
+
+  .subtitle {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* --- Chips beside Filter --- */
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+
+  .mat-mdc-standard-chip {
+    background: #eaf2ff;
+    color: var(--color-info);
+    border-radius: var(--radius-lg);
+    --mat-chip-container-height: 28px;
+    --mat-chip-label-text-size: 12.5px;
+    --mat-chip-label-text-weight: 600;
+  }
+
+  .mat-mdc-chip-remove {
+    color: var(--color-info);
+  }
+}
+
+/* --- KPI cards --- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 12px 0 24px;
+}
+
+.kpi-card {
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+
+  ::ng-deep .mat-mdc-card-header {
+    padding: 0;
+    margin-bottom: 12px;
+  }
+
+  ::ng-deep .mat-mdc-card-header-text {
+    margin: 0;
+  }
+
+  ::ng-deep .mat-mdc-card-title {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: none;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+
+  .btn-export {
+    min-width: auto;
+    padding: 4px 12px;
+    font-size: var(--font-size-xs);
+    line-height: 1.2;
+  }
+
+  ::ng-deep .mat-mdc-card-content {
+    padding: 0;
+  }
+
+  .mat-mdc-card-title,
+  mat-card-title {
+    margin: 0;
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--color-text);
+  }
+
+  .muted {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  &.loading {
+    opacity: 0.6;
+  }
+}
+
+/* --- Table card --- */
+.table-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Header bar above the grid */
+.table-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+
+  &__title {
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  &__spacer {
+    flex: 1 1 auto;
+  }
+
+  &__progress {
+    flex: 0 0 120px;
+    margin-right: 16px;
+  }
+
+  &__export {
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--color-info);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  &__export-icon {
+    font-size: var(--font-size-md);
+    line-height: 1;
+  }
+}
+
+.table-header-actions{
+display: flex;
+justify-content: flex-end;
+margin-bottom: 5px;
+}
+.export-btn {
+  display: flex;
+  justify-content: flex-end;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 10px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  background: var(--color-surface);
+}
+
+
+/* paginator footer line */
+.mat-mdc-paginator {
+  border-top: 1px solid var(--color-border);
+  padding: 8px 16px !important;
+  font-size: var(--font-size-xs);
+}
+
+/* === Charts grid like Figma (3-up on wide, 2-up on md, 1-up on small) === */
+.rcm-charts-grid {
+  margin-top: 16px;
+  display: grid;
+  gap: 16px;
+
+  // 2 columns on desktop (Figma)
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr; // stack on smaller screens
+  }
+}
+
+/* === Chart cards === */
+.chart-card {
+  border: 1px solid #e6e8ef;
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  background: var(--color-surface);
+  padding: 12px 12px 16px;
+
+  .chart-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 4px 8px;
+
+    .title {
+      font-weight: 700;
+      font-size: var(--font-size-md);
+      color: #0f1728;
+    }
+
+    .meta {
+      margin-left: 8px;
+      margin-top: 1px;
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      b {
+        color: var(--color-gray-700);
+      }
+    }
+
+    .spacer {
+      flex: 1 1 auto;
+    }
+
+  }
+
+  .chart-host {
+    width: 100%;
+    height: 260px;
+    border-radius: 10px;
+    background: #fbfcfe;
+    border: 1px dashed #d9dde6;
+  }
+}
+
+/* Optional: tighter MatCard defaults only inside these panels */
+.chart-card ::ng-deep .mat-card-content {
+  padding: 0 !important;
+}
+
+/* --- Responsiveness --- */
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .rcm-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* Tweak: center the "Insurance Collections" header text,
+   but keep the column values right-aligned */
+.rcm-grid__header .cell--insuranceCollections {
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;  /* prevent awkward wrapping */
+}

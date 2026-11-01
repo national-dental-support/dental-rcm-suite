@@ -1,0 +1,260 @@
+<div class="escalation-admin">
+
+  <!-- Sub-tabs -->
+  <div class="sub-tabs">
+    <button mat-button [class.active]="activeTab === 'chains'" (click)="switchTab('chains')">
+      <mat-icon>account_tree</mat-icon> Chains
+    </button>
+    <button mat-button [class.active]="activeTab === 'sla'" (click)="switchTab('sla')">
+      <mat-icon>timer</mat-icon> SLA Monitor
+    </button>
+  </div>
+
+  <!-- =========== CHAINS TAB =========== -->
+  @if (activeTab === 'chains') {
+    <div class="tab-content">
+      @if (!editingChain) {
+        <div class="section-header">
+          <h3>Escalation Chains</h3>
+          <button mat-flat-button color="primary" (click)="addChain()">
+            <mat-icon>add</mat-icon> New Chain
+          </button>
+        </div>
+      }
+      <!-- Loading -->
+      @if (loading) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      }
+      <!-- Chain list -->
+      @if (!loading && !editingChain) {
+        <div>
+          @for (chain of chains; track trackById($index, chain)) {
+            <div class="chain-card">
+              <div class="chain-header">
+                <div class="chain-title">
+                  <span class="chain-name">{{ chain.name }}</span>
+                  <span class="status-badge" [class.active]="chain.isActive" [class.inactive]="!chain.isActive">
+                    {{ chain.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+                <div class="chain-actions">
+                  <mat-slide-toggle
+                    [checked]="chain.isActive"
+                    (change)="toggleActive(chain)"
+                    matTooltip="Toggle active">
+                  </mat-slide-toggle>
+                  <button mat-icon-button (click)="editChain(chain)" matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteChain(chain)" matTooltip="Delete">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+              @if (chain.description) {
+                <p class="chain-desc">{{ chain.description }}</p>
+              }
+              <!-- Level flow -->
+              <div class="level-flow">
+                @for (lv of chain.levels; track lv; let last = $last) {
+                  <div class="level-node">
+                    <div class="level-role">{{ lv.targetRole }}</div>
+                    <div class="level-sla">{{ formatHours(lv.slaHours) }} SLA</div>
+                    <div class="level-notify">Alert at {{ lv.notifyAtPct }}%</div>
+                    @if (!last) {
+                      <mat-icon class="level-arrow">arrow_forward</mat-icon>
+                    }
+                    @if (last) {
+                      <mat-icon class="level-arrow">check_circle_outline</mat-icon>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          <!-- Empty state -->
+          @if (chains.length === 0) {
+            <div class="empty-state">
+              <mat-icon>account_tree</mat-icon>
+              <p>No escalation chains configured yet.</p>
+              <button mat-flat-button color="primary" (click)="addChain()">Create First Chain</button>
+            </div>
+          }
+        </div>
+      }
+      <!-- -- Edit / Create form -- -->
+      @if (editingChain) {
+        <div class="form-section">
+          <h4>{{ isNew ? 'Create Escalation Chain' : 'Edit Escalation Chain' }}</h4>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Chain Name</mat-label>
+              <input matInput [(ngModel)]="editingChain.name" placeholder="e.g. Default Escalation">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Description</mat-label>
+              <input matInput [(ngModel)]="editingChain.description" placeholder="Optional description">
+            </mat-form-field>
+          </div>
+          @if (!isNew) {
+            <div class="form-row">
+              <mat-slide-toggle [(ngModel)]="editingChain.isActive">Active</mat-slide-toggle>
+            </div>
+          }
+          <!-- Levels -->
+          <div class="levels-section">
+            <div class="levels-header">
+              <h5>Escalation Levels</h5>
+              <button mat-stroked-button (click)="addLevel()">
+                <mat-icon>add</mat-icon> Add Level
+              </button>
+            </div>
+            <div class="level-edit-list">
+              @for (lv of editLevels; track $index; let i = $index) {
+                <div class="level-edit-row">
+                  <span class="level-order">{{ i + 1 }}</span>
+                  <mat-form-field appearance="outline" class="role-field">
+                    <mat-label>Role</mat-label>
+                    <mat-select [(ngModel)]="lv.targetRole">
+                      @for (r of availableRoles; track r) {
+                        <mat-option [value]="r">{{ r }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="narrow">
+                    <mat-label>SLA (hours)</mat-label>
+                    <input matInput type="number" [(ngModel)]="lv.slaHours" min="1">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="narrow">
+                    <mat-label>Alert at %</mat-label>
+                    <input matInput type="number" [(ngModel)]="lv.notifyAtPct" min="1" max="100">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="desc-field">
+                    <mat-label>Description</mat-label>
+                    <input matInput [(ngModel)]="lv.description" placeholder="Optional">
+                  </mat-form-field>
+                  <div class="level-btns">
+                    <button mat-icon-button (click)="moveLevel(i, -1)" [disabled]="i === 0" matTooltip="Move up">
+                      <mat-icon>arrow_upward</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="moveLevel(i, 1)" [disabled]="i === editLevels.length - 1" matTooltip="Move down">
+                      <mat-icon>arrow_downward</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="removeLevel(i)" matTooltip="Remove">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+            @if (editLevels.length === 0) {
+              <p class="empty-hint">
+                Add at least one escalation level.
+              </p>
+            }
+          </div>
+          <div class="form-actions">
+            <button mat-button (click)="cancelEdit()">Cancel</button>
+            <button mat-flat-button color="primary" (click)="saveChain()"
+              [disabled]="saving || !editingChain.name || editLevels.length === 0">
+              {{ saving ? 'Saving...' : (isNew ? 'Create Chain' : 'Update Chain') }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- =========== SLA MONITOR TAB =========== -->
+  @if (activeTab === 'sla') {
+    <div class="tab-content">
+      <div class="section-header">
+        <h3>SLA Status Monitor</h3>
+        <div class="sla-actions">
+          <button mat-stroked-button (click)="loadSla()" [disabled]="slaLoading">
+            <mat-icon>refresh</mat-icon> Refresh
+          </button>
+          <button mat-flat-button color="warn" (click)="triggerEscalation()" [disabled]="escalating">
+            <mat-icon>flash_on</mat-icon>
+            {{ escalating ? 'Running...' : 'Run Auto-Escalation' }}
+          </button>
+        </div>
+      </div>
+      @if (slaLoading) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      }
+      <!-- Summary cards -->
+      @if (!slaLoading) {
+        <div class="sla-summary">
+          <div class="stat-card alert">
+            <div class="stat-value">{{ slaSummary.breached }}</div>
+            <div class="stat-label">Breached</div>
+          </div>
+          <div class="stat-card warn">
+            <div class="stat-value">{{ slaSummary.warning }}</div>
+            <div class="stat-label">Warning</div>
+          </div>
+          <div class="stat-card ok">
+            <div class="stat-value">{{ slaSummary.ok }}</div>
+            <div class="stat-label">On Track</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ slaSummary.total }}</div>
+            <div class="stat-label">Total Monitored</div>
+          </div>
+        </div>
+      }
+      <!-- Claims table -->
+      @if (!slaLoading && slaRows.length > 0) {
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Claim ID</th>
+              <th>Patient</th>
+              <th>Assigned To</th>
+              <th>Role</th>
+              <th>CARC</th>
+              <th>Balance</th>
+              <th>Hours Open</th>
+              <th>SLA (hrs)</th>
+              <th>Remaining</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of slaRows; track row) {
+              <tr
+                [class.row-breached]="row.slaStatus === 'breached'"
+                [class.row-warning]="row.slaStatus === 'warning'">
+                <td>
+                  <span class="sla-badge" [ngClass]="slaStatusClass(row.slaStatus)">
+                    {{ row.slaStatus | uppercase }}
+                  </span>
+                </td>
+                <td>{{ row.claimId }}</td>
+                <td>{{ row.patientName }}</td>
+                <td>{{ row.assignedTo }}</td>
+                <td>{{ row.assignedRole }}</td>
+                <td>{{ row.carcCode }}</td>
+                <td>{{ row.balanceDue | currency }}</td>
+                <td>{{ formatHours(row.hoursOpen) }}</td>
+                <td>{{ formatHours(row.slaHours) }}</td>
+                <td>
+                  <span [class.overdue]="row.hoursRemaining <= 0">
+                    {{ row.hoursRemaining > 0 ? formatHours(row.hoursRemaining) : 'OVERDUE' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      @if (!slaLoading && slaRows.length === 0) {
+        <div class="empty-state">
+          <mat-icon>check_circle</mat-icon>
+          <p>No claims currently tracked by SLA timers.</p>
+        </div>
+      }
+    </div>
+  }
+</div>

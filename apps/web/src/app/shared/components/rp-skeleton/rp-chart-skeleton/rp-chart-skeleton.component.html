@@ -1,0 +1,66 @@
+<section class="rp-chart-skeleton">
+  @if (title) {
+    <div class="header">
+      <div class="title">{{ title }}</div>
+    </div>
+  }
+
+  <div class="body">
+    <!-- DONUT -->
+    @if (type === 'pie') {
+      <div class="donut">
+        <rp-skeleton variant="circle" w="180px" h="180px" animate="pulse"></rp-skeleton>
+        <div class="donut-hole"></div>
+      </div>
+    }
+
+    <!-- BAR -->
+    @if (type === 'bar' || type === 'stacked') {
+      <div class="bar">
+        @if (showAxes) {
+          <div class="axis">
+            <rp-skeleton tone="muted" w="100%" h="2px"></rp-skeleton>
+          </div>
+        }
+        <div class="bars">
+          @for (b of bars; track b) {
+            <rp-skeleton w="10%" [h]="b" radius="8px"></rp-skeleton>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- LINE -->
+    @if (type === 'line' || type === 'area') {
+      <div class="line">
+        @if (showAxes) {
+          <div class="axis">
+            <rp-skeleton tone="muted" w="100%" h="2px"></rp-skeleton>
+          </div>
+        }
+        <div class="line-frame">
+          <rp-skeleton tone="muted" w="100%" h="140px" radius="12px"></rp-skeleton>
+          <div class="line-stroke"></div>
+        </div>
+      </div>
+    }
+
+    <!-- Legend -->
+    @if (showLegend) {
+      <div class="legend">
+        @for (_ of legendItems; track _) {
+          <div class="legend-item">
+            <rp-skeleton variant="circle" w="10px" h="10px" tone="muted"></rp-skeleton>
+            <rp-skeleton variant="text" w="90px" h="12px" tone="muted"></rp-skeleton>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (message) {
+    <div class="footer">
+      <div class="msg">{{ message }}</div>
+    </div>
+  }
+</section>

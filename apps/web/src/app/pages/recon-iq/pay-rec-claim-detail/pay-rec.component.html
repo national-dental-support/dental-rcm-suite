@@ -1,0 +1,209 @@
+<section class="page-content">
+  <div class="toolbar-card" aria-label="encounter research">
+    <div class="cmdbar" aria-label="Encounter Research toolbar">
+      <div class="cmdbar__left">
+        <div class="cmdbar__title">Payment Reconciliation</div>
+        <div class="cmdbar__hint">Search Payments and drill into claims</div>
+      </div>
+
+      <div class="cmdbar__right">
+        <app-rp-filter-form
+          class="cmdbar__search"
+          mode="search"
+          [enableSearch]="true"
+          [searchLabel]="'Search'"
+          [searchPlaceholder]="'search reconciliation table'"
+          [searchValue]="(search$ | async) ?? ''"
+          (searchChange)="onReconciliationSearchChanged($event)"
+        ></app-rp-filter-form>
+
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          class="cmdbar__filterBtn"
+          [class.is-open]="showFilters"
+          (click)="toggleFilters()">
+          <mat-icon>tune</mat-icon>
+          <span>Filters</span>
+          @if (activeFilterCount; as n) {
+            <span class="cmdbar__badge" [class.is-zero]="n===0">{{ n }}</span>
+          }
+          <mat-icon class="cmdbar__caret">expand_more</mat-icon>
+        </button>
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="cmdbar__clearBtn"
+          (click)="onFilterReset()">
+          Clear
+        </button>
+
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="exportCsv()">
+          <mat-icon>download</mat-icon>
+          Export CSV
+        </button>
+
+        <!-- Bank account selector for posting -->
+        @if (bankAccounts.length > 0) {
+          <mat-form-field appearance="outline" class="bank-acct-select">
+            <mat-label>Source Account</mat-label>
+            <mat-select [(ngModel)]="selectedBankAccountId">
+              <mat-option [value]="null">&#x2014; Any / Unspecified &#x2014;</mat-option>
+              @for (a of bankAccounts; track a) {
+                <mat-option [value]="a.id">
+                  {{ a.bank_name }}{{ a.account_number_last4 ? ' &#x2022;&#x2022;' + a.account_number_last4 : '' }}
+                  @if (a.nickname) {
+                    <span> ({{ a.nickname }})</span>
+                  }
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="selectedCount === 0"
+          (click)="postSelected()">
+          Post Selected{{ selectedCount ? ' (' + selectedCount + ')' : '' }}
+        </button>
+
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="postAllReady()">
+          Post All Ready
+        </button>
+      </div>
+    </div>
+
+    <!-- Optional: Active filter chips row -->
+    @if (activeFilters?.length) {
+      <div class="filterChips">
+        <span class="filterChips__label">Active:</span>
+        <mat-chip-listbox>
+          @for (chip of activeFilters; track chip) {
+            <mat-chip-option
+              (removed)="removeFilterChip(chip)">
+              {{ chip.label }}: {{ chip.value }}
+              <button matChipRemove type="button" aria-label="Remove filter">
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+    }
+
+    <!-- Collapsible filter panel -->
+    @if (showFilters) {
+      <div class="filtersPanel" role="region" aria-label="Encounter filters">
+        <app-rp-filter-form
+          [config]="payRecFilterConfig"
+          [initialFilters]="initialFilters"
+          [value]="(filtersForm$ | async) ?? { eobId:'', date:'', amount:'', locationTaxId:'' }"
+          (filtersChange)="onReconciliationFiltersChanged($event)"
+          (reset)="onFilterReset()">
+        </app-rp-filter-form>
+      </div>
+    }
+  </div>
+  <app-section-card [title]="'Reconciliation'">
+    <rp-advanced-table
+      [columns]="payRecColumns"
+      [data]="(payRecRows$ | async) ?? []"
+      [idField]="'id'"
+      [enableNestedRows]="true"
+      [childrenAccessor]="childrenAccessor"
+      [childIndentPx]="childIndentPx"
+      [externalGlobal]="(search$ | async) ?? ''"
+      (externalGlobalChange)="onReconciliationSearchChanged($event)"
+      (filterStateChanged)="onTableFilterStateChanged($event)"
+      [initialFilterState]="(tableFilterState$ | async) ?? { global:'', columns:{} }"
+      [enableGlobalSearch]="false"
+      >
+      <ng-template rpCell="action" let-row="row">
+        <div class="payrec-actions">
+          @if (row.rowType === 'eob') {
+            <mat-checkbox
+              [checked]="isSelected(row.eobId)"
+              (change)="toggleEobSelection(row.eobId)"
+              (click)="$event.stopPropagation()"
+              class="payrec-actions__checkbox"
+            ></mat-checkbox>
+          }
+          @if (row.rowType !== 'eob') {
+            <div class="payrec-actions__checkbox-spacer"></div>
+          }
+
+          <div class="payrec-actions__slot1">
+            @if (row.rowType === 'eob') {
+              <button
+                class="payrec-actions__view"
+                mat-stroked-button
+                type="button"
+                (click)="onViewEobClick(row, $event)"
+                >
+                View EOB
+              </button>
+            } @else {
+              @if (row.rowType === 'claim') {
+                <button
+                  class="payrec-actions__view"
+                  mat-stroked-button
+                  type="button"
+                  (click)="onViewClaimClick(row, $event)"
+                  >
+                  View Claim
+                </button>
+              } @else {
+                <div class="payrec-actions__spacer" aria-hidden="true"></div>
+              }
+            }
+
+          </div>
+
+          <button
+            mat-flat-button
+            type="button"
+            [disabled]="isPmButtonDisabled(row)"
+            [ngClass]="pmButtonClass(row)"
+            (click)="onPmButtonClick(row, $event)"
+            >
+            Post to PM System
+          </button>
+        </div>
+      </ng-template>
+      <ng-template rpCell="locationTaxId" let-row="row">
+        <div class="loc-tax-cell">
+          <!-- Claims: show status normally (single line) -->
+          @if (row.rowType === 'claim') {
+            <span class="loc-tax__single">{{ row.locationTaxId }}</span>
+          } @else {
+            <div class="loc-tax">
+              <div class="loc-tax__loc">
+                {{ row.locationName }}
+              </div>
+              <!-- [ok] only show if present -->
+              @if (row.taxId) {
+                <div class="loc-tax__tax">
+                  {{ row.taxId }}
+                </div>
+              }
+            </div>
+          }
+
+          <!-- EOBs: split Location / TaxId onto 2 lines -->
+        </div>
+      </ng-template>
+
+    </rp-advanced-table>
+  </app-section-card>
+</section>

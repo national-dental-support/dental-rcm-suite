@@ -1,0 +1,58 @@
+.denial-iq-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+// -- Tab navigation bar ------------------------------------------------------
+.diq-tab-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 24px;
+  background: var(--surface-card, var(--color-surface));
+  border-bottom: 1px solid var(--border-color, var(--color-border));
+  flex-shrink: 0;
+}
+
+.diq-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 48px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--text-secondary, var(--color-text-muted));
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  margin-bottom: -1px; // overlap the nav border-bottom
+
+  &:hover {
+    color: var(--text-primary, var(--color-text));
+    background: var(--surface-hover, var(--color-bg-subtle));
+  }
+
+  &--active {
+    color: var(--primary, var(--color-info));
+    border-bottom-color: var(--primary, var(--color-info));
+    font-weight: 600;
+  }
+
+  &__icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+  }
+}
+
+// -- Content area -------------------------------------------------------------
+.diq-shell-content {
+  flex: 1;
+  overflow: auto;
+}

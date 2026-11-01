@@ -1,0 +1,49 @@
+:host {
+  display: block;
+  background: var(--rcm-bg, var(--color-bg-subtle));
+  min-height: 100vh;
+}
+
+.network-leases {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: transparent;
+  min-height: 100%;
+}
+
+/* Base unknown payer row */
+:host ::ng-deep tr.rp-row-unknown-payer > td.mat-mdc-cell {
+  background-color: var(--rp-primary, #84caff) !important;
+
+  /* Softer white for readability */
+  color: black;
+
+  /* Slightly heavier text helps numbers pop */
+  font-weight: 700 !important;
+}
+
+/* Network / payer name column a bit stronger */
+:host ::ng-deep
+tr.rp-row-unknown-payer
+> td.mat-mdc-cell:first-child {
+  font-weight: 600!important;
+}
+
+/* Numbers stay crisp */
+:host ::ng-deep
+tr.rp-row-unknown-payer
+> td.mat-mdc-cell.mat-column-totalChargeAmount,
+:host ::ng-deep
+tr.rp-row-unknown-payer
+> td.mat-mdc-cell.mat-column-totalPayment,
+:host ::ng-deep
+tr.rp-row-unknown-payer
+> td.mat-mdc-cell.mat-column-totalPatientVolume,
+:host ::ng-deep
+tr.rp-row-unknown-payer
+> td.mat-mdc-cell.mat-column-totalCPTVolume {
+  color: black !important;
+  letter-spacing: 0.2px;
+}

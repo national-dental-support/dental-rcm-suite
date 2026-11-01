@@ -1,0 +1,106 @@
+# Dental RCM Suite - local stack.
+#
+#   cp .env.example .env    # fill in the passwords and secrets first
+#   docker compose up
+#
+# Brings up SQL Server, applies the schema, seeds one administrator, then starts
+# the API and the web app. First run takes a few minutes while the database
+# initialises.
+#
+# This is a development and evaluation stack. It binds to 127.0.0.1 only and is
+# not hardened for anything else.
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DB_SA_PASSWORD:?set DB_SA_PASSWORD in .env}"
+      MSSQL_PID: Developer
+    ports:
+      # Host port only. Override DB_PORT_HOST when 1433 is already taken.
+      - "127.0.0.1:${DB_PORT_HOST:-1433}:1433"
+    volumes:
+      - db-data:/var/opt/mssql
+    healthcheck:
+      # The container reports healthy only once it answers queries, so migrate
+      # does not start against a half-initialised server.
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  migrate:
+    build:
+      context: ./apps/api
+    command: >
+      sh -c "node /app/db/migrate.js"
+    environment:
+      DB_SERVER: db
+      DB_PORT: "1433"
+      DB_NAME: "${DB_NAME:-dental_rcm}"
+      MIGRATE_DB_USER: sa
+      MIGRATE_DB_PASSWORD: "${DB_SA_PASSWORD}"
+      BOOTSTRAP_ADMIN_EMAIL: "${BOOTSTRAP_ADMIN_EMAIL:-admin@localhost}"
+      # Set this to keep the published default password out of the database.
+      BOOTSTRAP_ADMIN_PASSWORD: "${BOOTSTRAP_ADMIN_PASSWORD:-}"
+      DATA_PROFILE: "${DATA_PROFILE:-clean}"
+      # Creates the restricted, non-db_owner login the API connects as. Without
+      # it the tenant security policy is inert for the API. See 903.
+      APP_DB_USER: "${APP_DB_USER:-dental_rcm_app}"
+      APP_DB_PASSWORD: "${APP_DB_PASSWORD:-}"
+    volumes:
+      - ./db:/app/db:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ./apps/api
+    environment:
+      NODE_ENV: production
+      PORT: "8080"
+      DB_SERVER: db
+      DB_PORT: "1433"
+      DB_NAME: "${DB_NAME:-dental_rcm}"
+      DB_USER: "${DB_USER:-sa}"
+      DB_PASSWORD: "${DB_PASSWORD:-${DB_SA_PASSWORD}}"
+      JWT_SECRET: "${JWT_SECRET:?set JWT_SECRET in .env - the API will not start without it}"
+      FIELD_ENCRYPTION_KEY: "${FIELD_ENCRYPTION_KEY}"
+      API_KEY: "${API_KEY}"
+      CORS_ORIGIN: http://127.0.0.1:${WEB_PORT:-4200}
+      SESSION_TIMEOUT_MINUTES: "${SESSION_TIMEOUT_MINUTES:-30}"
+      # Deliberately not set: cross-tenant administration stays off unless the
+      # operator opts in. See .env.example.
+      VENDOR_CUSTOMER_ID: "${VENDOR_CUSTOMER_ID:-}"
+      OIDC_ISSUER: "${OIDC_ISSUER:-}"
+      OIDC_AUDIENCE: "${OIDC_AUDIENCE:-}"
+      OIDC_JWKS_URL: "${OIDC_JWKS_URL:-}"
+    ports:
+      - "127.0.0.1:${API_PORT_HOST:-8080}:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8080/api/health-monitor').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  web:
+    build:
+      context: ./apps/web
+    ports:
+      - "127.0.0.1:${WEB_PORT:-4200}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db-data:

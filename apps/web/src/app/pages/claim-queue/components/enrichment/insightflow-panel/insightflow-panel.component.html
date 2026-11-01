@@ -1,0 +1,62 @@
+<mat-expansion-panel class="enrichment-panel insightflow-panel">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon class="panel-icon">insights</mat-icon>
+      InsightFlow &#x2014; Denial Context
+    </mat-panel-title>
+    @if (data && !loading) {
+      <mat-panel-description>
+        {{ data.denialRate90d }}% denial rate (90d) &#x00B7; Code {{ data.reasonCode }}
+      </mat-panel-description>
+    }
+  </mat-expansion-panel-header>
+
+  @if (loading) {
+    <div class="panel-loading">
+      <mat-spinner diameter="28"></mat-spinner>
+    </div>
+  }
+
+  @if (notSubscribed) {
+    <div class="panel-upgrade">
+      <mat-icon>lock</mat-icon>
+      <span>Subscribe to InsightFlow to unlock denial context insights.</span>
+    </div>
+  }
+
+  @if (error && !notSubscribed) {
+    <div class="panel-error">Failed to load InsightFlow context.</div>
+  }
+
+  @if (!loading && !error && !data) {
+    <div class="panel-empty">No reason code available.</div>
+  }
+
+  @if (!loading && !error && data) {
+    <div class="insight-grid">
+      <div class="stat-card">
+        <div class="stat-value">{{ data.denialRate90d }}%</div>
+        <div class="stat-label">Denial Rate (90d)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ data.denialCount90d }}</div>
+        <div class="stat-label">Denials (90d)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ data.totalClaims90d }}</div>
+        <div class="stat-label">Total Claims (90d)</div>
+      </div>
+      @if (data.topPayers?.length) {
+        <div class="top-payers">
+          <div class="section-label">Top Payers by Denial Count</div>
+          @for (p of data.topPayers; track p) {
+            <div class="payer-row">
+              <span class="payer-name">{{ p.payerName }}</span>
+              <span class="payer-count">{{ p.deniedCount }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</mat-expansion-panel>

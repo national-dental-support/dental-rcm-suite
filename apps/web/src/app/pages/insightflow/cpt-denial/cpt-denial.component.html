@@ -1,0 +1,160 @@
+<div class="xen-page cpt-denial-page">
+  <div class="xen-toolbar">
+    <h2 class="page-title">Claim Denial Prediction by CPT &amp; Payer</h2>
+    <span class="spacer"></span>
+    <button mat-icon-button (click)="load()" matTooltip="Refresh">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="xen-loading" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading CPT denial risk data&hellip;</p>
+  </div>
+
+  <!-- Error -->
+  <div class="xen-empty" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <p>Failed to load risk data.
+      <button mat-button color="primary" (click)="load()">Retry</button>
+    </p>
+  </div>
+
+  <ng-container *ngIf="!loading && !error && stats">
+
+    <!-- KPI Cards -->
+    <div class="kpi-row">
+      <mat-card class="xen-card kpi-card danger">
+        <mat-icon class="kpi-icon">warning</mat-icon>
+        <div class="kpi-label">High Risk Combos</div>
+        <div class="kpi-value red">{{ stats.highRiskCombos }}</div>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-icon class="kpi-icon">percent</mat-icon>
+        <div class="kpi-label">Avg Denial Rate</div>
+        <div class="kpi-value" [style.color]="rateColor(stats.avgDenialRateCovered)">{{ stats.avgDenialRateCovered }}%</div>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-icon class="kpi-icon" style="color:#4caf50">trending_down</mat-icon>
+        <div class="kpi-label">Improved This Month</div>
+        <div class="kpi-value green">{{ stats.improvedLastMonth }}</div>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <mat-icon class="kpi-icon">code</mat-icon>
+        <div class="kpi-label">Top Risk CPT</div>
+        <div class="kpi-value accent"><code>{{ stats.topRiskCpt }}</code></div>
+      </mat-card>
+    </div>
+
+    <!-- Risk Heatmap -->
+    <mat-card class="xen-card heatmap-card" *ngIf="matrix">
+      <mat-card-header>
+        <mat-card-title>Denial Risk Heatmap &#x2014; CPT Codes &times; Payers</mat-card-title>
+        <mat-card-subtitle>Hover a cell to see exact denial rate. Darker red = higher risk.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="heatmap-wrapper">
+          <!-- Tooltip -->
+          <div class="heatmap-tooltip"
+               *ngIf="tooltipVisible"
+               [style.left.px]="tooltipX"
+               [style.top.px]="tooltipY">{{ tooltipText }}</div>
+
+          <div class="heatmap-grid"
+               [style.grid-template-columns]="'120px repeat(' + matrix.payers.length + ', 1fr)'">
+            <!-- Header row -->
+            <div class="cell header-cell corner"></div>
+            <div class="cell header-cell payer-header" *ngFor="let p of matrix.payers; trackBy: trackByIdx">
+              {{ p }}
+            </div>
+
+            <!-- Data rows -->
+            <ng-container *ngFor="let cpt of matrix.cptCodes; let ci = index; trackBy: trackByIdx">
+              <div class="cell row-header">{{ cpt }}</div>
+              <div class="cell data-cell"
+                   *ngFor="let p of matrix.payers; let pi = index; trackBy: trackByIdx"
+                   [style.background-color]="cellBg(cellRisk(ci, pi))"
+                   [style.color]="cellFg(cellRisk(ci, pi))"
+                   (mouseenter)="showTooltip($event, cpt, p, cellRisk(ci, pi))"
+                   (mouseleave)="hideTooltip()">
+                {{ cellRisk(ci, pi) }}%
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Legend -->
+          <div class="heatmap-legend">
+            <span class="legend-label">Low Risk</span>
+            <div class="legend-gradient"></div>
+            <span class="legend-label">High Risk</span>
+          </div>
+
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- High Risk Table -->
+    <mat-card class="xen-card table-card">
+      <mat-card-header class="table-toolbar">
+        <mat-card-title>High Risk CPT + Payer Combinations ({{ filtered.length }})</mat-card-title>
+        <span class="spacer"></span>
+        <mat-slide-toggle [(ngModel)]="showHighOnly" (change)="onFilterToggle()" color="warn">
+          Show &gt;40% only
+        </mat-slide-toggle>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="filtered" class="xen-table" [trackBy]="trackByCode">
+          <ng-container matColumnDef="cptCode">
+            <th mat-header-cell *matHeaderCellDef>CPT Code</th>
+            <td mat-cell *matCellDef="let r"><code>{{ r.cptCode }}</code></td>
+          </ng-container>
+          <ng-container matColumnDef="procedure">
+            <th mat-header-cell *matHeaderCellDef>Procedure</th>
+            <td mat-cell *matCellDef="let r">{{ r.procedure }}</td>
+          </ng-container>
+          <ng-container matColumnDef="payer">
+            <th mat-header-cell *matHeaderCellDef>Payer</th>
+            <td mat-cell *matCellDef="let r">{{ r.payer }}</td>
+          </ng-container>
+          <ng-container matColumnDef="denialRate">
+            <th mat-header-cell *matHeaderCellDef>Denial Rate</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="rate-chip" [style.color]="rateColor(r.denialRate)">{{ r.denialRate }}%</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="sampleSize">
+            <th mat-header-cell *matHeaderCellDef>Sample Size</th>
+            <td mat-cell *matCellDef="let r">n={{ r.sampleSize }}</td>
+          </ng-container>
+          <ng-container matColumnDef="trend">
+            <th mat-header-cell *matHeaderCellDef>Trend</th>
+            <td mat-cell *matCellDef="let r">
+              <mat-icon [style.color]="trendColor(r.trend)" class="trend-icon">{{ trendIcon(r.trend) }}</mat-icon>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="mitigation">
+            <th mat-header-cell *matHeaderCellDef>Mitigation Tip</th>
+            <td mat-cell *matCellDef="let r" class="mitigation-cell">{{ r.mitigation }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="['cptCode','procedure','payer','denialRate','sampleSize','trend','mitigation']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['cptCode','procedure','payer','denialRate','sampleSize','trend','mitigation']"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+  </ng-container>
+
+  <!-- CPT definition popout - position:fixed escapes all overflow clipping -->
+  <div class="cpt-def-popout"
+       [style.display]="cptPopup.visible ? 'block' : 'none'"
+       [style.left.px]="cptPopup.x"
+       [style.top.px]="cptPopup.y">
+    <div class="cpt-def-header">
+      <code class="cpt-def-code">{{ cptPopup.code }}</code>
+      <span class="cpt-def-category">{{ cptPopup.category }}</span>
+    </div>
+    <div class="cpt-def-name">{{ cptPopup.name }}</div>
+    <div class="cpt-def-desc">{{ cptPopup.description }}</div>
+  </div>
+</div>

@@ -1,0 +1,103 @@
+@if (!loading) {
+  <div class="thresholds-container">
+    <app-section-card title="RAG Thresholds" subtitle="Configure when Executive Summary metrics show Green, Yellow, or Red status">
+      <table class="threshold-table">
+        <thead>
+          <tr>
+            <th class="metric-col">Metric</th>
+            <th class="value-col green-col">
+              <span class="dot green"></span> Green
+            </th>
+            <th class="range-col yellow-col">
+              <span class="dot yellow"></span> Yellow Range
+            </th>
+            <th class="value-col red-col">
+              <span class="dot red"></span> Red
+            </th>
+          </tr>
+        </thead>
+        <tbody [formGroup]="form">
+          <ng-container formGroupName="rag">
+            @for (m of metrics; track m) {
+              <tr [formGroupName]="m.key">
+                <td class="metric-col">{{ m.label }}</td>
+                <!-- Green threshold input -->
+                <td class="value-col green-col">
+                  <mat-form-field appearance="outline" class="threshold-input">
+                    <input matInput type="number" [formControlName]="m.field1">
+                    @if (m.unit) {
+                      <span matSuffix>{{ m.unit }}</span>
+                    }
+                  </mat-form-field>
+                  @if (m.direction === 'below') {
+                    <span class="direction-label">&le;</span>
+                  }
+                  @if (m.direction === 'above') {
+                    <span class="direction-label">&ge;</span>
+                  }
+                </td>
+                <!-- Yellow range (auto-calculated) -->
+                <td class="range-col yellow-col">
+                  <span class="yellow-range">{{ getYellowRange(m) }}</span>
+                </td>
+                <!-- Red threshold input -->
+                <td class="value-col red-col">
+                  <mat-form-field appearance="outline" class="threshold-input">
+                    <input matInput type="number" [formControlName]="m.field2">
+                    @if (m.unit) {
+                      <span matSuffix>{{ m.unit }}</span>
+                    }
+                  </mat-form-field>
+                  @if (m.direction === 'below') {
+                    <span class="direction-label">&gt;</span>
+                  }
+                  @if (m.direction === 'above') {
+                    <span class="direction-label">&lt;</span>
+                  }
+                </td>
+              </tr>
+            }
+          </ng-container>
+        </tbody>
+      </table>
+    </app-section-card>
+    <app-section-card title="Cross-Product Insight Triggers" subtitle="Configure when cross-product insights appear on the Executive Summary">
+      <div class="triggers-grid" [formGroup]="form">
+        <ng-container formGroupName="triggers">
+          @for (t of triggerRows; track t) {
+            <div class="trigger-card" [formGroupName]="t.key">
+              <div class="trigger-label">{{ t.label }}</div>
+              <div class="trigger-fields">
+                @for (f of t.fields; track f) {
+                  <div class="trigger-field">
+                    <span class="field-label">{{ f.label }}</span>
+                    <mat-form-field appearance="outline" class="threshold-input">
+                      <input matInput type="number" [formControlName]="f.path">
+                      @if (f.unit) {
+                        <span matSuffix>{{ f.unit }}</span>
+                      }
+                    </mat-form-field>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </ng-container>
+      </div>
+    </app-section-card>
+    <div class="actions-bar">
+      <button mat-stroked-button color="warn" (click)="reset()" [disabled]="saving">
+        Reset to Defaults
+      </button>
+      <button mat-flat-button color="primary" (click)="save()" [disabled]="saving">
+        {{ saving ? 'Saving...' : 'Save Thresholds' }}
+      </button>
+    </div>
+  </div>
+}
+
+@if (loading) {
+  <div class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+}

@@ -1,0 +1,92 @@
+<!-- src/app/pages/insightflow/insightflow.component.html -->
+<div class="page">
+
+  <!-- ===== LIST VIEW CARD ===== -->
+  <mat-card class="menu-card">
+    <div class="menu-header">
+      <h2>Insights Menu</h2>
+
+      <div class="header-actions">
+        <span class="muted">{{ viewMode === 'list' ? 'List view' : 'Grid view' }}</span>
+        <button
+          mat-icon-button
+          (click)="toggleView()"
+          [attr.aria-label]="viewMode === 'list' ? 'Switch to grid view' : 'Switch to list view'"
+          matTooltip="{{ viewMode === 'list' ? 'Grid view' : 'List view' }}"
+          >
+          @if (viewMode === 'list') {
+            <mat-icon>grid_view</mat-icon>
+          }
+          @if (viewMode === 'grid') {
+            <mat-icon>view_list</mat-icon>
+          }
+        </button>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    @switch (viewMode) {
+      <!-- ===== LIST VIEW ===== -->
+      @case ('list') {
+        <mat-nav-list>
+          @for (item of insights; track trackByTitle($index, item)) {
+            <a mat-list-item class="menu-row"
+              [routerLink]="['/app','insightflow','view', item.route]"
+              (click)="trackMenuClick(item)">
+              <span class="leading-icon color-{{ item.color }}"><mat-icon>{{ item.icon }}</mat-icon></span>
+              <div class="row-text"><div class="title">{{ item.title }}</div></div>
+              <span class="spacer"></span>
+              <div class="meta-block">
+                @if (item.metric) {
+                  <span class="meta muted">{{ item.metric }}</span>
+                }
+                @if (!item.metric && item.updatedAt) {
+                  <span class="meta muted">Updated: {{ item.updatedAt }}</span>
+                }
+              </div>
+              <mat-icon class="status" [ngClass]="statusClass(item)"
+                [matTooltip]="item.metric || ''"
+              >{{ statusIcon(item) }}</mat-icon>
+              <mat-icon class="chevron">chevron_right</mat-icon>
+            </a>
+          }
+        </mat-nav-list>
+      }
+      <!-- ===== GRID VIEW ===== -->
+      @case ('grid') {
+        <div class="grid">
+          @for (item of insights; track trackByTitle($index, item)) {
+            <a class="grid-card"
+              [routerLink]="['/app','insightflow','view', item.route]"
+              (click)="trackMenuClick(item)"
+              matRipple>
+              <div class="grid-card-header">
+                <span class="leading-icon color-{{ item.color }}"><mat-icon>{{ item.icon }}</mat-icon></span>
+                <div class="title">{{ item.title }}</div>
+              </div>
+              <div class="grid-meta">
+                @if (item.metric) {
+                  <div class="row">
+                    <span class="label">Health:</span>
+                    <span class="value">{{ item.metric }}</span>
+                  </div>
+                }
+                @if (item.updatedAt) {
+                  <div class="row">
+                    <span class="label">Updated:</span>
+                    <span class="value">{{ item.updatedAt }}</span>
+                  </div>
+                }
+                <div class="row">
+                  <span class="label">Status:</span>
+                  <mat-icon class="status" [ngClass]="statusClass(item)">{{ statusIcon(item) }}</mat-icon>
+                </div>
+              </div>
+            </a>
+          }
+        </div>
+      }
+    }
+  </mat-card>
+</div>

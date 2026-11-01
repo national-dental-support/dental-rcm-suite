@@ -1,0 +1,25 @@
+<div class="skel-table">
+  <!-- Header row -->
+  <div class="skel-header">
+    @for (c of colArray; track c) {
+      <div class="skel-header-cell">
+        <rp-skeleton variant="text" w="70%" h="12px"></rp-skeleton>
+      </div>
+    }
+  </div>
+
+  <!-- Data rows -->
+  @for (r of rowArray; track r) {
+    <div class="skel-row">
+      @for (c of colArray; track c; let i = $index) {
+        <div class="skel-cell">
+          <rp-skeleton
+            variant="text"
+            [w]="i === 0 ? '45%' : i === columns - 1 ? '50px' : '80%'"
+            h="14px"
+          ></rp-skeleton>
+        </div>
+      }
+    </div>
+  }
+</div>

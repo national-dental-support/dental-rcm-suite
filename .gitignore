@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.angular/
+coverage/
+*.tsbuildinfo
+
+# Environment and secrets - never commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.jks
+*.publishsettings
+id_rsa*
+secrets.yaml
+secrets.yml
+
+# Data files. Claim, remittance and patient data must never enter the repo,
+# and these extensions are how it gets in by accident.
+*.csv
+# Exception: the CARC/RARC claim-adjustment code list. These are published
+# openly by X12 and the Washington Publishing Company, so unlike CDT and CPT
+# they are safe to ship. It is reference data, not anyone's records.
+!apps/api/src/data/carcs.csv
+*.xlsx
+*.xls
+*.837
+*.835
+*.bak
+*.mdf
+*.ldf
+*.dmp
+db-dump*.sql
+uploads/
+
+# Logs - these have carried PHI before.
+# Anchored to the repository root: a bare "logs/" also matches source
+# directories named logs, which silently excluded a component from the commit.
+*.log
+/logs/
+npm-debug.log*
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Markdown is not published in this repository, apart from the README. The
+# remaining files still exist on disk for local reference; they are simply
+# never committed. GitHub's own private vulnerability reporting stands in for
+# SECURITY.md.
+*.md
+# Anchored to the repository root. An unanchored "!README.md" also re-included
+# apps/api/src/controllers/*/readme.md, because this filesystem is
+# case-insensitive and the pattern matched those too.
+!/README.md
+
+# Tool scratch
+.claude/
+playwright-report/
+test-results/
+scratchpad/
+tmp/

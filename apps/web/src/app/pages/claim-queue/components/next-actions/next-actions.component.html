@@ -1,0 +1,36 @@
+<mat-expansion-panel [expanded]="true">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon style="margin-right: 8px; color: #7c4dff;">auto_awesome</mat-icon>
+      AI Recommended Next Actions
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  @if (loading) {
+    <div class="na-loading">
+      <mat-spinner diameter="24" style="margin: 0 auto;"></mat-spinner>
+      <p>AI is analyzing this claim...</p>
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="na-error">
+      <mat-icon>error_outline</mat-icon>
+      <span>Recommendations unavailable &#x2014; try again later. <a (click)="loadActions()">Retry</a></span>
+    </div>
+  }
+
+  @if (!loading && !error && actions) {
+    <div class="na-content">
+      {{ actions }}
+    </div>
+  }
+
+  @if (!loading && !error && !actions) {
+    <div class="na-empty">
+      <mat-icon>lightbulb_outline</mat-icon>
+      <span>No recommendations available for this claim.</span>
+    </div>
+  }
+
+</mat-expansion-panel>

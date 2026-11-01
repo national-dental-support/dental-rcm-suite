@@ -1,0 +1,31 @@
+.skel-table {
+  width: 100%;
+}
+
+.skel-header {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.skel-header-cell {
+  flex: 1;
+}
+
+.skel-row {
+  display: flex;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-bg-muted);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.skel-cell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}

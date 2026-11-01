@@ -1,0 +1,156 @@
+<div class="container">
+  <div class="page-header">
+    <div>
+      <div class="subtitle">Last update: {{ formattedLastUpdated }}</div>
+    </div>
+  </div>
+
+  <!-- Filter chips -->
+  @if ((chips$ | async); as chips) {
+    <div class="chips-row">
+      <mat-chip-set>
+        @for (c of chips; track c) {
+          <mat-chip (removed)="removeChip(c)" color="primary" selected>
+            {{ c.label }}
+            <button matChipRemove aria-label="Remove filter">
+              <mat-icon>Close</mat-icon>
+            </button>
+          </mat-chip>
+        }
+      </mat-chip-set>
+    </div>
+  }
+
+  <!-- Error state -->
+  @if (loadError) {
+    <div class="data-error">
+      <mat-icon>error_outline</mat-icon>
+      Unable to load AR data. Please try refreshing the page or contact support if the issue persists.
+      <button mat-stroked-button type="button" (click)="reload()">Retry</button>
+    </div>
+  }
+
+  @if (!loadError && (data$ | async); as data) {
+    <div class="grid">
+      <!-- KPI: Total AR Balance -->
+      <app-data-card
+        class="kpi-card"
+        title="AR Balance Past 12 Months"
+        tooltip="Total outstanding AR balance for claims whose charge was billed in the last 12 months. Includes all transactions on those claims (charges, payments, adjustments, write-offs, refunds) regardless of when they posted. All-time balance shown below for reference."
+        [value]="(data.last12MonthsARBalance | currency:'USD':'symbol':'1.0-0') ?? '--'"
+        [subtitle]="'AR Balance All Time: ' + ((data.arBalance | currency:'USD':'symbol':'1.0-0') ?? '--')">
+      </app-data-card>
+      <!-- KPI: Days in AR -->
+      <app-data-card
+        class="kpi-card"
+        title="Days in AR Past 12 Months"
+        tooltip="Average number of days receivables remain outstanding for claims billed in the last 12 months. Calculated as the outstanding AR balance for those claims divided by average daily charges (trailing 13-month charge base &#x00F7; 395). Industry benchmark is under 40 days."
+        [value]="data.last12MonthsDaysInAR != null ? ((data.last12MonthsDaysInAR | number:'1.0-2') + ' days') : '--'"
+        [subtitle]="'Days in AR All Time: ' + (data.averageDaysInAR != null ? (data.averageDaysInAR | number:'1.0-2') + ' days' : '--')">
+      </app-data-card>
+      <!-- AR Aging (Donut) -->
+      <app-section-card class="aging-card" title="AR Aging" [tooltip]="'Outstanding balance segmented by age bucket (0-30, 31-60, 61-90, 91-120, 120+ days). Calculated from open claims where DateOfService + aging thresholds determine the bucket. Shows how long receivables have been outstanding.'">
+        @if (hasValidAging(data.agingData?.details || [])) {
+          <app-pie-chart [data]="data.agingData!.details" [isCurrency]="true"></app-pie-chart>
+        } @else {
+          <div class="empty">Not enough data to display the chart at this time. Please try again later.</div>
+        }
+      </app-section-card>
+      <!-- AR Trends (Line) -->
+      <app-section-card class="trends-card" title="AR Trends Over Time" [tooltip]="'Total outstanding AR balance over time, optionally viewed at 30, 60, or 90-day intervals. Calculated from the rolling snapshot of open claim balances, showing whether AR is growing or shrinking.'">
+        <button cardHeaderActions mat-stroked-button class="btn-export" (click)="exportTrends()">Export</button>
+        <mat-button-toggle-group
+          cardHeaderActions
+          appearance="legacy"
+          name="arTrendWindow"
+          [value]="'90d'"
+          class="condensed"
+          (change)="onTrendWindowChange($event.value)">
+          <mat-button-toggle value="30d">30 Days</mat-button-toggle>
+          <mat-button-toggle value="60d">60 Days</mat-button-toggle>
+          <mat-button-toggle value="90d">90 Days</mat-button-toggle>
+        </mat-button-toggle-group>
+        @if (trendDetails$ | async; as trendDetails) {
+          @if ((trendDetails?.length || 0) > 0) {
+            <app-line-chart [data]="trendDetails"></app-line-chart>
+          } @else {
+            <div class="empty">Not enough data to display the chart at this time. Please try again later.</div>
+          }
+        }
+      </app-section-card>
+      <!-- AR by Specialty (Donut) -->
+      <app-section-card class="specialty-card" title="AR by Specialty" [tooltip]="'Outstanding AR balance distributed across clinical specialties or procedure categories. Calculated as the sum of open balances grouped by specialty code, showing which service lines carry the most receivable risk.'">
+        @if ((data.specialtyData?.details?.length || 0) > 0) {
+          <app-pie-chart [data]="data.specialtyData!.details" [isCurrency]="true"></app-pie-chart>
+        } @else {
+          <div class="empty">Not enough data to display the chart at this time. Please try again later.</div>
+        }
+      </app-section-card>
+      <!-- Days in AR . by Practice (Table) -->
+      <app-section-card class="days-practice-card" title="Days in AR &#x00B7; by Practice" [tooltip]="'Average number of days claims remain unpaid, broken down by practice location. Calculated as total outstanding charges divided by average daily charges (using a 90-day charge average). Industry benchmark is under 40 days.'">
+        <button cardHeaderActions mat-stroked-button class="btn-export" (click)="exportDaysInARByPractice()">Export</button>
+        @if ((data.daysInARByPractice?.rows?.length || 0) > 0) {
+          <rp-advanced-table
+            [data]="data.daysInARByPractice!.rows"
+            [columns]="daysByPracticeColumns"
+            [enablePagination]="true"
+            [pageSize]="10"
+            exportFileName="days-in-ar-by-practice.xlsx">
+          </rp-advanced-table>
+        } @else {
+          <div class="empty">No practice-level Days in AR available.</div>
+        }
+      </app-section-card>
+      <!-- #88: Net Collection by Type - Insurance vs Patient -->
+      @if (netCollectionSplit$ | async; as split) {
+        <app-data-card
+          class="kpi-card"
+          title="Insurance Net Collection"
+          tooltip="Net collection rate for insurance claims: Insurance Collections &#x00F7; Insurance Billed. Excludes patient-pay and cash claims."
+          [value]="split.insurancePct != null ? (split.insurancePct + '%') : '--'">
+        </app-data-card>
+        <app-data-card
+          class="kpi-card"
+          title="Patient Net Collection"
+          tooltip="Patient collections as a percentage of gross collections. Represents cash-pay and self-pay revenue relative to total collections."
+          [value]="split.patientPct != null ? (split.patientPct + '%') : '--'">
+        </app-data-card>
+      }
+      <!-- AR & Collections Breakdown - #87: columns reordered (adjustments before net rate); #88: ins/patient columns last -->
+      <app-section-card class="breakdown-card" title="AR &amp; Collections Breakdown (Past 12 Months)" [tooltip]="'Summary of total charges, collections, adjustments, and net collection rate for the period. Net collection rate = (Payments / (Charges &#x2212; Contractual Adjustments)) &#x00D7; 100.'">
+        <button cardHeaderActions mat-stroked-button class="btn-export" (click)="exportBreakdown()">Export</button>
+        @if ((data.breakdown?.rows?.length || 0) > 0) {
+          <rp-advanced-table
+            [data]="data.breakdown!.rows"
+            [columns]="breakdownColumns"
+            [enablePagination]="true"
+            [pageSize]="10"
+            exportFileName="ar-collections-breakdown.xlsx">
+          </rp-advanced-table>
+        } @else {
+          <div class="empty">No AR/Collections breakdown available.</div>
+        }
+      </app-section-card>
+      <!-- AR Distribution Across Open Balances (Table) -->
+      <app-section-card class="distribution-card" title="AR Distribution Across Open Balances" [tooltip]="'Count and dollar distribution of all open claim balances bucketed by dollar range (e.g., $0&#x2013;$100, $100&#x2013;$500, etc.). Helps identify concentration of small vs. large outstanding balances.'">
+        <button cardHeaderActions mat-stroked-button class="btn-export" (click)="exportDistribution()">Export</button>
+        @if ((data.distribution?.rows?.length || 0) > 0) {
+          <rp-advanced-table
+            [data]="data.distribution!.rows"
+            [columns]="distributionColumns"
+            [enablePagination]="true"
+            [pageSize]="10"
+            exportFileName="ar-distribution.xlsx">
+          </rp-advanced-table>
+        } @else {
+          <div class="empty">No distribution data available.</div>
+        }
+      </app-section-card>
+    </div>
+  } @else {
+    @if (!loadError) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+  }
+
+</div>

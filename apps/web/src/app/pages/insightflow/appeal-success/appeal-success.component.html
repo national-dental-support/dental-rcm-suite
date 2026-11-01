@@ -1,0 +1,174 @@
+<div class="xen-page appeal-success-page">
+  <div class="xen-toolbar">
+    <h2 class="page-title">Appeal Success Rate by Payer</h2>
+    <span class="spacer"></span>
+    <button mat-icon-button (click)="load()" matTooltip="Refresh">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="xen-loading" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading appeal data&hellip;</p>
+  </div>
+
+  <!-- Error -->
+  <div class="xen-empty" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <p>Failed to load appeal data.
+      <button mat-button color="primary" (click)="load()">Retry</button>
+    </p>
+  </div>
+
+  <ng-container *ngIf="!loading && !error && stats">
+
+    <!-- KPI Cards -->
+    <div class="kpi-row">
+      <mat-card class="xen-card kpi-card">
+        <div class="kpi-label">Overall Win Rate</div>
+        <div class="kpi-value" [style.color]="winRateColor(stats.overallWinRate)">{{ stats.overallWinRate }}%</div>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <div class="kpi-label">Revenue Recovered YTD</div>
+        <div class="kpi-value green">${{ stats.revenueRecovered | number }}</div>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <div class="kpi-label">Avg Days to Decision</div>
+        <div class="kpi-value">{{ stats.avgDaysToDecision }}</div>
+      </mat-card>
+      <mat-card class="xen-card kpi-card">
+        <div class="kpi-label">Total Appeals YTD</div>
+        <div class="kpi-value">{{ stats.totalAppealsYtd | number }}</div>
+      </mat-card>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <mat-card class="xen-card chart-card bar-chart-card">
+        <mat-card-header>
+          <mat-card-title>Win Rate by Payer</mat-card-title>
+          <mat-card-subtitle>Green &ge;60% &bull; Yellow 40&ndash;60% &bull; Red &lt;40%</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <apx-chart
+            [series]="barChartOptions.series"
+            [chart]="barChartOptions.chart"
+            [plotOptions]="barChartOptions.plotOptions"
+            [colors]="barChartOptions.colors"
+            [dataLabels]="barChartOptions.dataLabels"
+            [xaxis]="barChartOptions.xaxis"
+            [yaxis]="barChartOptions.yaxis"
+            [legend]="barChartOptions.legend"
+            [grid]="barChartOptions.grid"
+            [tooltip]="barChartOptions.tooltip">
+          </apx-chart>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="xen-card chart-card trend-chart-card">
+        <mat-card-header>
+          <mat-card-title>Monthly Appeal Outcomes</mat-card-title>
+          <mat-card-subtitle>Won vs. lost per month (12 months)</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <apx-chart
+            [series]="trendChartOptions.series"
+            [chart]="trendChartOptions.chart"
+            [colors]="trendChartOptions.colors"
+            [xaxis]="trendChartOptions.xaxis"
+            [yaxis]="trendChartOptions.yaxis"
+            [legend]="trendChartOptions.legend"
+            [grid]="trendChartOptions.grid"
+            [tooltip]="trendChartOptions.tooltip"
+            [dataLabels]="trendChartOptions.dataLabels">
+          </apx-chart>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Sub-tabs -->
+    <mat-card class="xen-card table-card">
+      <mat-card-header class="table-header">
+        <mat-card-title>Detailed Breakdown</mat-card-title>
+        <span class="spacer"></span>
+        <mat-button-toggle-group [(value)]="activeSubTab" class="sub-tabs">
+          <mat-button-toggle value="payer">By Payer</mat-button-toggle>
+          <mat-button-toggle value="carc">By Denial Reason</mat-button-toggle>
+        </mat-button-toggle-group>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Payer Table -->
+        <table mat-table [dataSource]="payerRows" class="xen-table" *ngIf="activeSubTab === 'payer'"
+               [trackBy]="trackByPayer">
+          <ng-container matColumnDef="payer">
+            <th mat-header-cell *matHeaderCellDef>Payer</th>
+            <td mat-cell *matCellDef="let r">{{ r.payer }}</td>
+          </ng-container>
+          <ng-container matColumnDef="totalAppeals">
+            <th mat-header-cell *matHeaderCellDef>Total Appeals</th>
+            <td mat-cell *matCellDef="let r">{{ r.totalAppeals | number }}</td>
+          </ng-container>
+          <ng-container matColumnDef="won">
+            <th mat-header-cell *matHeaderCellDef>Won</th>
+            <td mat-cell *matCellDef="let r" class="won-cell">{{ r.won }}</td>
+          </ng-container>
+          <ng-container matColumnDef="lost">
+            <th mat-header-cell *matHeaderCellDef>Lost</th>
+            <td mat-cell *matCellDef="let r" class="lost-cell">{{ r.lost }}</td>
+          </ng-container>
+          <ng-container matColumnDef="pending">
+            <th mat-header-cell *matHeaderCellDef>Pending</th>
+            <td mat-cell *matCellDef="let r">{{ r.pending }}</td>
+          </ng-container>
+          <ng-container matColumnDef="winRate">
+            <th mat-header-cell *matHeaderCellDef>Win Rate</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="rate-badge" [style.color]="winRateColor(r.winRate)">{{ r.winRate }}%</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="avgDays">
+            <th mat-header-cell *matHeaderCellDef>Avg Days</th>
+            <td mat-cell *matCellDef="let r">{{ r.avgDaysToDecision }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="['payer','totalAppeals','won','lost','pending','winRate','avgDays']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['payer','totalAppeals','won','lost','pending','winRate','avgDays']"></tr>
+        </table>
+
+        <!-- CARC Table -->
+        <table mat-table [dataSource]="carcRows" class="xen-table" *ngIf="activeSubTab === 'carc'"
+               [trackBy]="trackByCarc">
+          <ng-container matColumnDef="carcCode">
+            <th mat-header-cell *matHeaderCellDef>CARC Code</th>
+            <td mat-cell *matCellDef="let r"><code>{{ r.carcCode }}</code></td>
+          </ng-container>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let r">{{ r.description }}</td>
+          </ng-container>
+          <ng-container matColumnDef="totalAppeals">
+            <th mat-header-cell *matHeaderCellDef>Total Appeals</th>
+            <td mat-cell *matCellDef="let r">{{ r.totalAppeals | number }}</td>
+          </ng-container>
+          <ng-container matColumnDef="winRate">
+            <th mat-header-cell *matHeaderCellDef>Win Rate</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="rate-badge" [style.color]="winRateColor(r.winRate)">{{ r.winRate }}%</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="trend">
+            <th mat-header-cell *matHeaderCellDef>Trend</th>
+            <td mat-cell *matCellDef="let r">
+              <mat-icon [style.color]="trendColor(r.trend)" class="trend-icon">{{ trendIcon(r.trend) }}</mat-icon>
+              <span class="trend-label" [style.color]="trendColor(r.trend)">{{ r.trend | titlecase }}</span>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="['carcCode','description','totalAppeals','winRate','trend']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['carcCode','description','totalAppeals','winRate','trend']"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+  </ng-container>
+</div>

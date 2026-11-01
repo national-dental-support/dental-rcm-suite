@@ -1,0 +1,212 @@
+<div class="sso-admin">
+  <app-section-card>
+    <div class="view-header">
+      <h3>Customer SSO Configurations</h3>
+      <button mat-raised-button color="primary" (click)="openCreate()">+ Add SSO Config</button>
+    </div>
+
+    <p class="description">
+      Configure Single Sign-On for customer organizations. Each domain maps to an identity provider
+      (SAML 2.0, OIDC, or Azure AD). Users with matching email domains will be redirected to their
+      organization's IdP on login.
+    </p>
+
+    <!-- Form -->
+    @if (showForm) {
+      <div class="form-card">
+        <h4>{{ editingId ? 'Edit SSO Configuration' : 'New SSO Configuration' }}</h4>
+        <div class="form-section">
+          <h5>General</h5>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Display Name</mat-label>
+              <input matInput [(ngModel)]="form.displayName" placeholder="e.g. Acme Dental SSO" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Email Domain</mat-label>
+              <input matInput [(ngModel)]="form.domain" placeholder="e.g. acmedental.com" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Provider Type</mat-label>
+              <mat-select [(ngModel)]="form.providerType">
+                @for (p of providerTypes; track p) {
+                  <mat-option [value]="p.id">{{ p.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Customer ID</mat-label>
+              <input matInput type="number" [(ngModel)]="form.customerId" />
+            </mat-form-field>
+          </div>
+        </div>
+        <!-- OIDC / Azure AD fields -->
+        @if (!isSaml) {
+          <div class="form-section">
+            <h5>OIDC / Azure AD Settings</h5>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Client ID</mat-label>
+                <input matInput [(ngModel)]="form.clientId" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Client Secret</mat-label>
+                <input matInput [(ngModel)]="form.clientSecret" type="password"
+                  [placeholder]="editingId ? '(leave blank to keep current)' : ''" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Issuer</mat-label>
+                  <input matInput [(ngModel)]="form.issuer" placeholder="https://your-idp.example.com/v2.0" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Authorization URL</mat-label>
+                  <input matInput [(ngModel)]="form.authorizationUrl" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Token URL</mat-label>
+                  <input matInput [(ngModel)]="form.tokenUrl" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Discovery URL (optional)</mat-label>
+                  <input matInput [(ngModel)]="form.metadataUrl"
+                    placeholder="https://.../.well-known/openid-configuration" />
+                  </mat-form-field>
+                </div>
+              </div>
+            }
+            <!-- SAML fields -->
+            @if (isSaml) {
+              <div class="form-section">
+                <h5>SAML 2.0 Settings</h5>
+                <div class="form-grid">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Entity ID</mat-label>
+                    <input matInput [(ngModel)]="form.clientId" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Metadata URL</mat-label>
+                    <input matInput [(ngModel)]="form.metadataUrl" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>SSO URL</mat-label>
+                    <input matInput [(ngModel)]="form.authorizationUrl" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>X.509 Certificate (PEM)</mat-label>
+                    <textarea matInput [(ngModel)]="form.certificate" rows="4"
+                    placeholder="-----BEGIN CERTIFICATE-----..."></textarea>
+                  </mat-form-field>
+                </div>
+              </div>
+            }
+            <!-- User provisioning -->
+            <div class="form-section">
+              <h5>User Provisioning</h5>
+              <div class="toggles-row">
+                <mat-slide-toggle [(ngModel)]="form.autoProvisionUsers">
+                  Auto-provision users on first login
+                </mat-slide-toggle>
+                <mat-slide-toggle [(ngModel)]="form.enforceSso">
+                  Enforce SSO (block password login for this domain)
+                </mat-slide-toggle>
+                @if (editingId) {
+                  <mat-slide-toggle [(ngModel)]="form.isActive">
+                    Active
+                  </mat-slide-toggle>
+                }
+              </div>
+              @if (form.autoProvisionUsers) {
+                <mat-form-field appearance="outline" class="role-field">
+                  <mat-label>Default Role for New Users</mat-label>
+                  <mat-select [(ngModel)]="form.defaultRole">
+                    @for (r of roles; track r) {
+                      <mat-option [value]="r">{{ r }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+            </div>
+            <div class="form-actions">
+              <button mat-button (click)="cancelForm()">Cancel</button>
+              <button mat-raised-button color="primary" (click)="saveForm()"
+                [disabled]="!form.displayName || !form.domain || !form.providerType">
+                {{ editingId ? 'Update' : 'Create' }}
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Config list -->
+        @if (!showForm) {
+          <div class="configs-list">
+            @if (loading) {
+              <div class="loading-state">Loading SSO configurations...</div>
+            }
+            @if (!loading && !configs.length) {
+              <div class="empty-state">
+                No SSO configurations. Click "Add SSO Config" to set up Single Sign-On for a customer organization.
+              </div>
+            }
+            @for (c of configs; track c) {
+              <div class="config-card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <strong>{{ c.displayName }}</strong>
+                    <span class="provider-badge">{{ providerLabel(c.providerType) }}</span>
+                    <span class="domain-badge">{{ c.domain }}</span>
+                    <span class="status-badge" [class.active]="c.isActive" [class.inactive]="!c.isActive">
+                      {{ c.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                    @if (c.enforceSso) {
+                      <span class="enforce-badge">Enforced</span>
+                    }
+                  </div>
+                  <div class="card-actions">
+                    <button mat-icon-button matTooltip="Test Configuration" (click)="testConfig(c)"
+                      [disabled]="testing.has(c.id)">
+                      <mat-icon>{{ testing.has(c.id) ? 'hourglass_empty' : 'verified' }}</mat-icon>
+                    </button>
+                    <button mat-icon-button matTooltip="Edit" (click)="openEdit(c)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button matTooltip="Delete" (click)="deleteConfig(c)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-details">
+                  @if (c.customerName) {
+                    <span>Customer: {{ c.customerName }}</span>
+                  }
+                  @if (c.autoProvisionUsers) {
+                    <span>Auto-provision: {{ c.defaultRole }}</span>
+                  }
+                  <span>Created: {{ c.createdAt | date:'mediumDate' }}</span>
+                </div>
+                <!-- Test results -->
+                @if (testResults[c.id]) {
+                  <div class="test-results">
+                    <div class="test-header">
+                      <mat-icon [class.pass]="testResults[c.id].success" [class.fail]="!testResults[c.id].success">
+                        {{ testResults[c.id].success ? 'check_circle' : 'error' }}
+                      </mat-icon>
+                      <span>{{ testResults[c.id].success ? 'Configuration valid' : 'Configuration issues found' }}</span>
+                    </div>
+                    @for (check of testResults[c.id].checks; track check) {
+                      <div class="test-check">
+                        <mat-icon [class.pass]="check.status === 'pass'" [class.warn]="check.status === 'warn'"
+                          [class.fail]="check.status === 'fail'" class="check-icon">
+                          {{ check.status === 'pass' ? 'check' : check.status === 'warn' ? 'warning' : 'close' }}
+                        </mat-icon>
+                        <span class="check-name">{{ check.check }}:</span>
+                        <span class="check-detail">{{ check.detail }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </app-section-card>
+    </div>

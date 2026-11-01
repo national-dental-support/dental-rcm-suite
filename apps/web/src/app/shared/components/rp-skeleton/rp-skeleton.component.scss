@@ -1,0 +1,40 @@
+.rp-skel {
+  background: var(--rp-skeleton-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.rp-skel.tone-muted {
+  background: var(--rp-skeleton-muted);
+}
+
+/* Pulse = safest enterprise default */
+.rp-skel.anim-pulse {
+  animation: rpPulse var(--rp-skeleton-speed) ease-in-out infinite;
+}
+
+/* Shimmer = optional (keep subtle) */
+.rp-skel.anim-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--rp-skeleton-accent),
+    transparent
+  );
+  animation: rpShimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes rpPulse {
+  0% { opacity: 0.85; }
+  50% { opacity: 1; }
+  100% { opacity: 0.85; }
+}
+
+@keyframes rpShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}

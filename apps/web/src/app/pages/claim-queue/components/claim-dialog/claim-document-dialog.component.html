@@ -1,0 +1,134 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>{{ data.title || 'Claim Documents' }}</h2>
+    <button mat-icon-button (click)="onClose()" class="close-button" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    <mat-tab-group [(selectedIndex)]="activeTab" class="doc-tabs">
+
+      <!-- Tab 0: Documents -->
+      <mat-tab label="Documents">
+        <!-- Upload bar -->
+        <div class="upload-bar">
+          <mat-form-field appearance="outline" class="type-select">
+            <mat-label>Type</mat-label>
+            <mat-select [(value)]="uploadDocType">
+              <mat-option value="eob">EOB</mat-option>
+              <mat-option value="claim-form">Claim Form</mat-option>
+              <mat-option value="appeal">Appeal Letter</mat-option>
+              <mat-option value="correspondence">Correspondence</mat-option>
+              <mat-option value="other">Other</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-stroked-button color="primary" class="upload-btn"
+            (click)="fileInput.click()" [disabled]="uploading">
+            <mat-icon>cloud_upload</mat-icon>
+            {{ uploading ? 'Uploading...' : 'Upload File' }}
+          </button>
+          <input #fileInput type="file" hidden
+            accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.tiff,.bmp,.doc,.docx"
+            (change)="onFileSelected($event)">
+          </div>
+
+          @if (uploading) {
+            <mat-progress-bar mode="indeterminate" class="upload-progress"></mat-progress-bar>
+          }
+
+          <!-- Loading -->
+          @if (loading) {
+            <div class="loading-spinner">
+              <mat-spinner diameter="36"></mat-spinner>
+            </div>
+          }
+
+          <!-- Document list -->
+          @if (!loading && !previewUrl) {
+            <div class="doc-list">
+              @if (documents.length === 0) {
+                <div class="empty-state">
+                  <mat-icon class="empty-icon">folder_open</mat-icon>
+                  <p>No documents attached to this claim yet.</p>
+                  <p class="empty-hint">Upload EOBs, appeal letters, or other correspondence above.</p>
+                </div>
+              }
+              @for (doc of documents; track doc) {
+                <div class="doc-row">
+                  <mat-icon class="doc-icon">{{ iconForType(doc.content_type) }}</mat-icon>
+                  <div class="doc-info">
+                    <span class="doc-name" (click)="preview(doc)">{{ doc.file_name }}</span>
+                    <span class="doc-meta">
+                      {{ docTypeLabel(doc.doc_type) }} &middot;
+                      {{ formatSize(doc.file_size) }} &middot;
+                      {{ doc.created_at | date:'MMM d, y h:mm a' }}
+                    </span>
+                  </div>
+                  <div class="doc-actions">
+                    <button mat-icon-button (click)="preview(doc)" title="Preview">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="download(doc)" title="Download">
+                      <mat-icon>download</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="deleteDoc(doc)" title="Delete" class="delete-btn">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Inline preview -->
+          @if (previewUrl) {
+            <div class="preview-container">
+              <div class="preview-toolbar">
+                <button mat-icon-button (click)="closePreview()" title="Back to list">
+                  <mat-icon>arrow_back</mat-icon>
+                </button>
+                <span class="preview-filename">{{ previewDoc?.file_name }}</span>
+                <button mat-icon-button (click)="download(previewDoc!)" title="Download">
+                  <mat-icon>download</mat-icon>
+                </button>
+              </div>
+              <iframe [src]="previewUrl" class="preview-frame"></iframe>
+            </div>
+          }
+        </mat-tab>
+
+        <!-- Tab 1: Clinical Notes / Narrative -->
+        <mat-tab label="Clinical Notes">
+          @if (data.narrative) {
+            <div class="narrative-container">
+              <p class="narrative-text">{{ data.narrative }}</p>
+            </div>
+          } @else {
+            <div class="narrative-container empty-state">
+              <mat-icon class="empty-icon">notes</mat-icon>
+              <p>No clinical narrative on file for this claim.</p>
+            </div>
+          }
+        </mat-tab>
+
+        <!-- Tab 2: CMS-1500 Claim Form -->
+        <mat-tab label="Claim Form (CMS-1500)">
+          @if (cms1500Html) {
+            <div class="cms1500-container" [innerHTML]="cms1500Html"></div>
+          }
+          @if (!cms1500Html) {
+            <div class="cms1500-container" style="padding:20px;text-align:center;color:#999">
+              Loading CMS-1500...
+            </div>
+          }
+        </mat-tab>
+
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="onClose()">Close</button>
+    </mat-dialog-actions>
+  </div>

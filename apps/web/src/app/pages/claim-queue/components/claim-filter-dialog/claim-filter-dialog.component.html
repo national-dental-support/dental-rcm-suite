@@ -1,0 +1,109 @@
+<!-- claim-queue-filter.component.html -->
+<form [formGroup]="form" class="cq-filter-form">
+  <!-- Row 1: assignee / payer -->
+  <div class="row">
+    <mat-form-field appearance="outline">
+      <mat-label>Assigned to</mat-label>
+      <mat-select formControlName="assignedTo">
+        <mat-option [value]="null">-- Any --</mat-option>
+        @for (opt of options.assignedTo; track opt) {
+          <mat-option [value]="opt">{{ opt }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Insurance/Payer</mat-label>
+      <mat-select formControlName="payer">
+        <mat-option [value]="null">-- Any --</mat-option>
+        @for (opt of options.payer; track opt) {
+          <mat-option [value]="opt">{{ opt }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Row 2: billing provider + submitted date range + denial group -->
+  <div class="row">
+    <mat-form-field appearance="outline">
+      <mat-label>Billing Provider/Doctor</mat-label>
+      <mat-select formControlName="billingProvider">
+        <mat-option [value]="null">-- Any --</mat-option>
+        @for (opt of options.billingProvider; track opt) {
+          <mat-option [value]="opt">{{ opt }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Submitted from</mat-label>
+      <input
+        matInput
+        [matDatepicker]="fromPicker"
+        formControlName="submittedFrom"
+        />
+        <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #fromPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Submitted to</mat-label>
+        <input
+          matInput
+          [matDatepicker]="toPicker"
+          formControlName="submittedTo"
+          />
+          <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Denial / Reason Group</mat-label>
+          <mat-select formControlName="denialReason">
+            <mat-option [value]="null">-- Any --</mat-option>
+            @for (opt of options.denialReason; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Row 3: place of service / claim status / escalation reason -->
+      <div class="row">
+        <mat-form-field appearance="outline">
+          <mat-label>Place of Service/Location</mat-label>
+          <mat-select formControlName="placeOfService">
+            <mat-option [value]="null">-- Any --</mat-option>
+            @for (opt of options.placeOfService; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Claim Status</mat-label>
+          <mat-select formControlName="claimStatus">
+            <mat-option [value]="null">-- Any --</mat-option>
+            @for (opt of options.claimStatus; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Escalation Reason</mat-label>
+          <mat-select formControlName="escalationReason">
+            <mat-option [value]="null">-- Any --</mat-option>
+            @for (opt of options.escalationReason; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Actions -->
+      <div class="row actions">
+        <span class="spacer"></span>
+        <button mat-button type="button" (click)="onReset()">Reset</button>
+      </div>
+    </form>

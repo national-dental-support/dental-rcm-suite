@@ -1,0 +1,61 @@
+// src/app/pages/claim-vision/rules/claim-vision-rules-page.component.scss
+
+// Overall page container (inside the main content area)
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px 32px 40px; // more generous spacing like Figma
+  background-color: var(--rcm-bg, var(--color-bg-subtle)); // light app background
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+/* Top header: "Rules" and + New Rule button */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.page-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--color-text); // near-black
+}
+
+/* + New Rule button: pill, purple, aligned to the right */
+.new-rule-btn {
+  border-radius: var(--radius-sm);
+  padding: 10px 24px;
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  line-height: 1;
+  text-transform: none;
+
+  /* Figma-style purple; tweak to existing theme if needed */
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+
+  &:hover {
+    background-color: #18a69b;
+  }
+}
+
+/* Space between header and first card */
+.rules-card {
+  margin-top: 0;
+}
+
+rp-rules-list-card + rp-rules-list-card {
+  margin-top: 24px;
+}

@@ -1,0 +1,43 @@
+:host { display: block; }
+
+.na-loading {
+  padding: 16px;
+  text-align: center;
+
+  p {
+    margin-top: 8px;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.na-error {
+  padding: 16px;
+  color: #e57373;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-md);
+
+  a {
+    cursor: pointer;
+    text-decoration: underline;
+    color: inherit;
+  }
+}
+
+.na-content {
+  padding: 16px;
+  white-space: pre-line;
+  font-size: var(--font-size-md);
+  line-height: 1.7;
+}
+
+.na-empty {
+  padding: 16px;
+  color: var(--color-text-subtle);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-md);
+}

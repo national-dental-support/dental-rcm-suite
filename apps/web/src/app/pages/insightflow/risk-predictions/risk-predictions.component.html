@@ -1,0 +1,365 @@
+<div class="risk-predictions">
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Analyzing denial risk patterns...</p>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error && !loading) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>Unable to load prediction data. <a (click)="loadData()">Retry</a></p>
+    </div>
+  }
+
+  @if (!loading && !error && summary) {
+    <!-- KPI Cards -->
+    <div class="kpi-row">
+      <mat-card class="kpi-card risk-high-bg">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>warning</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ summary.highRisk }}</div>
+            <div class="kpi-label">High-Risk Claims</div>
+            <div class="kpi-sub">{{ highRiskPct }}% of total</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card risk-medium-bg">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>info</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ summary.mediumRisk }}</div>
+            <div class="kpi-label">Medium-Risk Claims</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>attach_money</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ formatCurrency(summary.highRiskCharges) }}</div>
+            <div class="kpi-label">Revenue at Risk</div>
+            <div class="kpi-sub">{{ revenueAtRiskPct }}% of charges</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>speed</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ summary.avgRiskScore }}</div>
+            <div class="kpi-label">Avg Risk Score</div>
+            <div class="kpi-sub">out of 100</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>verified</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ summary.highRiskPrecision }}%</div>
+            <div class="kpi-label">
+              Model Precision
+              <button mat-icon-button class="algo-info-btn" (click)="showAlgorithm = !showAlgorithm"
+                [matTooltip]="showAlgorithm ? 'Hide algorithm details' : 'How is this calculated?'">
+                <mat-icon>{{ showAlgorithm ? 'info' : 'info_outline' }}</mat-icon>
+              </button>
+            </div>
+            <div class="kpi-sub">% of High-Risk flags confirmed denied</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <!-- Algorithm Transparency Panel -->
+    @if (showAlgorithm) {
+      <div class="algo-panel">
+        <div class="algo-header">
+          <mat-icon>auto_awesome</mat-icon>
+          <strong>Scoring Algorithm &#x2014; How Risk Is Calculated</strong>
+          <button mat-icon-button (click)="showAlgorithm = false"><mat-icon>close</mat-icon></button>
+        </div>
+        <p class="algo-intro">
+          Each claim receives a composite risk score (0&#x2013;105) from 7 weighted factors. Claims scoring
+          <strong>&#x2265; 60</strong> are High Risk, <strong>35&#x2013;59</strong> Medium, <strong>&lt; 35</strong> Low.
+          Thresholds are calibrated to ADA/MGMA industry benchmarks (industry average denial rate: 5%).
+        </p>
+        <table class="algo-table">
+          <thead>
+            <tr><th>Factor</th><th>Max Pts</th><th>Thresholds</th><th>Why It Matters</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Payer Denial Rate</strong></td>
+              <td>25</td>
+              <td>&#x2265;20% &#x2192; 25 &#x00B7; &#x2265;15% &#x2192; 20 &#x00B7; &#x2265;10% &#x2192; 13 &#x00B7; &#x2265;5% &#x2192; 6</td>
+              <td>Payers with >15% denial rate are running 3&#x00D7; the industry average</td>
+            </tr>
+            <tr>
+              <td><strong>Payer &#x00D7; Procedure</strong></td>
+              <td>20</td>
+              <td>&#x2265;50% &#x2192; 20 &#x00B7; &#x2265;35% &#x2192; 15 &#x00B7; &#x2265;25% &#x2192; 10 &#x00B7; &#x2265;15% &#x2192; 5</td>
+              <td>Most specific signal &#x2014; this payer denies this CPT code at elevated rates</td>
+            </tr>
+            <tr>
+              <td><strong>Procedure (CPT) Rate</strong></td>
+              <td>15</td>
+              <td>&#x2265;20% &#x2192; 15 &#x00B7; &#x2265;15% &#x2192; 10 &#x00B7; &#x2265;10% &#x2192; 5</td>
+              <td>Some CDT codes (e.g. D7240, D4910) have structurally higher denial rates</td>
+            </tr>
+            <tr>
+              <td><strong>Provider Denial Rate</strong></td>
+              <td>10</td>
+              <td>&#x2265;20% &#x2192; 10 &#x00B7; &#x2265;15% &#x2192; 7 &#x00B7; &#x2265;10% &#x2192; 4</td>
+              <td>Billing patterns vary by provider &#x2014; some trigger denials more often</td>
+            </tr>
+            <tr>
+              <td><strong>Charge Amount</strong></td>
+              <td>10</td>
+              <td>&#x2265;$5,000 &#x2192; 10 &#x00B7; &#x2265;$2,000 &#x2192; 6 &#x00B7; &#x2265;$500 &#x2192; 3</td>
+              <td>Higher-value claims receive more payer scrutiny</td>
+            </tr>
+            <tr>
+              <td><strong>Coverage Type</strong></td>
+              <td>8</td>
+              <td>Secondary/Tertiary &#x2192; 8</td>
+              <td>COB claims have more coordination failures and denial risk</td>
+            </tr>
+            <tr>
+              <td><strong>Claim Aging</strong></td>
+              <td>7</td>
+              <td>>90d &#x2192; 7 &#x00B7; >60d &#x2192; 5 &#x00B7; >30d &#x2192; 2</td>
+              <td>Older unresolved claims are more likely to be written off</td>
+            </tr>
+            <tr class="algo-bonus">
+              <td><strong>Confirmed Denial</strong></td>
+              <td>15</td>
+              <td>CARC code present + IsClaimDenied &#x2192; 15</td>
+              <td>Already-denied claims are included so specialists can prioritize appeals</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="algo-note">
+          <mat-icon>trending_up</mat-icon>
+          <strong>Precision improves with data volume.</strong> The Payer &#x00D7; Procedure factor becomes most
+          accurate with &#x2265; 50 claims per combination. As this practice's data accumulates, precision
+          typically reaches 80&#x2013;90%+ for specific high-denial payer/procedure pairs.
+          Minimum sample size for Payer &#x00D7; Procedure: 5 claims per combination.
+        </p>
+      </div>
+    }
+    <!-- Section toggle -->
+    <div class="section-toggle">
+      <button mat-stroked-button [class.active]="activeSection === 'overview'" (click)="activeSection = 'overview'">
+        <mat-icon>dashboard</mat-icon> Overview
+      </button>
+      <button mat-stroked-button [class.active]="activeSection === 'claims'" (click)="activeSection = 'claims'">
+        <mat-icon>assignment_late</mat-icon> High-Risk Claims ({{ summary.highRisk }})
+      </button>
+      <button mat-stroked-button [class.active]="activeSection === 'payers'" (click)="activeSection = 'payers'">
+        <mat-icon>business</mat-icon> Payer Risk
+      </button>
+      <button mat-stroked-button [class.active]="activeSection === 'reasons'" (click)="activeSection = 'reasons'">
+        <mat-icon>receipt_long</mat-icon> Reason Code Risk
+      </button>
+    </div>
+    <!-- Overview Section -->
+    @if (activeSection === 'overview') {
+      <div class="section">
+        <div class="two-col">
+          <!-- Risk Distribution -->
+          <mat-card class="panel-card">
+            <mat-card-header><mat-card-title>Risk Distribution</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <div class="risk-bars">
+                <div class="risk-bar-row">
+                  <span class="bar-label risk-high">High</span>
+                  <div class="bar-track">
+                    <div class="bar-fill risk-high-fill" [style.width.%]="summary.totalScored ? (summary.highRisk / summary.totalScored) * 100 : 0"></div>
+                  </div>
+                  <span class="bar-value">{{ summary.highRisk }}</span>
+                </div>
+                <div class="risk-bar-row">
+                  <span class="bar-label risk-medium">Medium</span>
+                  <div class="bar-track">
+                    <div class="bar-fill risk-medium-fill" [style.width.%]="summary.totalScored ? (summary.mediumRisk / summary.totalScored) * 100 : 0"></div>
+                  </div>
+                  <span class="bar-value">{{ summary.mediumRisk }}</span>
+                </div>
+                <div class="risk-bar-row">
+                  <span class="bar-label risk-low">Low</span>
+                  <div class="bar-track">
+                    <div class="bar-fill risk-low-fill" [style.width.%]="summary.totalScored ? (summary.lowRisk / summary.totalScored) * 100 : 0"></div>
+                  </div>
+                  <span class="bar-value">{{ summary.lowRisk }}</span>
+                </div>
+              </div>
+              <div class="total-scored">{{ summary.totalScored }} claims scored</div>
+            </mat-card-content>
+          </mat-card>
+          <!-- Risk Trend -->
+          <mat-card class="panel-card">
+            <mat-card-header><mat-card-title>Risk Trend (12 Months)</mat-card-title></mat-card-header>
+            <mat-card-content>
+              @if (riskTrend.length) {
+                <div class="trend-table-wrap">
+                  <table class="mini-table">
+                    <thead><tr><th>Period</th><th>Claims</th><th>High Risk</th><th>Avg Score</th></tr></thead>
+                    <tbody>
+                      @for (t of riskTrend; track t) {
+                        <tr>
+                          <td>{{ t.period }}</td>
+                          <td>{{ t.totalClaims }}</td>
+                          <td>
+                            <span class="risk-badge" [class]="t.highRiskClaims > 0 ? 'risk-high' : 'risk-low'">
+                              {{ t.highRiskClaims }}
+                            </span>
+                          </td>
+                          <td>{{ t.avgRiskScore }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+              @if (!riskTrend.length) {
+                <p class="empty">No trend data available.</p>
+              }
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    }
+    <!-- High-Risk Claims Table -->
+    @if (activeSection === 'claims') {
+      <div class="section">
+        @if (highRiskClaims.length) {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Score</th>
+                <th>Claim ID</th>
+                <th>Charge</th>
+                <th>Payer</th>
+                <th>CPT</th>
+                <th>CARC</th>
+                <th>Payer %</th>
+                <th>CPT %</th>
+                <th>Payer&#x00D7;CPT %</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of highRiskClaims; track c) {
+                <tr>
+                  <td>
+                    <span class="risk-score-badge" [class]="riskScoreClass(c.riskScore)"
+                      [matTooltip]="'Score: ' + c.riskScore + '/105 &#x2014; ' + c.riskTier + ' Risk'">
+                      {{ c.riskScore }}
+                    </span>
+                  </td>
+                  <td class="claim-id">{{ c.claimId }}</td>
+                  <td>{{ formatCurrency(c.chargeAmt) }}</td>
+                  <td>{{ c.insuranceName }}</td>
+                  <td class="carc-code">{{ c.cptCode || '&#x2014;' }}</td>
+                  <td>{{ c.carcCode || '&#x2014;' }}</td>
+                  <td [class.rate-high]="c.payerDenialPct >= 15">{{ c.payerDenialPct }}%</td>
+                  <td [class.rate-high]="c.procedureDenialPct >= 15">{{ c.procedureDenialPct > 0 ? c.procedureDenialPct + '%' : '&#x2014;' }}</td>
+                  <td [class.rate-high]="c.payerProcDenialPct >= 25">{{ c.payerProcDenialPct > 0 ? c.payerProcDenialPct + '%' : '&#x2014;' }}</td>
+                  <td>
+                    <span class="status-chip" [class.denied]="c.isDenied">
+                      {{ c.isDenied ? 'Denied' : 'Pending' }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        @if (!highRiskClaims.length) {
+          <p class="empty">No high-risk claims found.</p>
+        }
+      </div>
+    }
+    <!-- Payer Risk -->
+    @if (activeSection === 'payers') {
+      <div class="section">
+        @if (payerRisks.length) {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Risk</th>
+                <th>Payer</th>
+                <th>Total Claims</th>
+                <th>Denied</th>
+                <th>Denial Rate</th>
+                <th>Denied Charges</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of payerRisks; track p) {
+                <tr>
+                  <td>
+                    <span class="risk-tier-badge" [class]="riskTierClass(p.riskTier)">
+                      {{ p.riskTier }}
+                    </span>
+                  </td>
+                  <td>{{ p.payerName }}</td>
+                  <td>{{ p.totalClaims }}</td>
+                  <td>{{ p.deniedClaims }}</td>
+                  <td class="rate-col">{{ p.denialRate }}%</td>
+                  <td>{{ formatCurrency(p.deniedCharges) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        @if (!payerRisks.length) {
+          <p class="empty">No payer risk data available.</p>
+        }
+      </div>
+    }
+    <!-- Reason Code Risk -->
+    @if (activeSection === 'reasons') {
+      <div class="section">
+        @if (reasonRisks.length) {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>CARC</th>
+                <th>Description</th>
+                <th>Denied Claims</th>
+                <th>Denied Charges</th>
+                <th>Avg Resolution</th>
+                <th>Recovery Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of reasonRisks; track r) {
+                <tr>
+                  <td class="carc-code">{{ r.carcCode }}</td>
+                  <td>{{ r.reasonDescription }}</td>
+                  <td>{{ r.deniedClaims }}</td>
+                  <td>{{ formatCurrency(r.deniedCharges) }}</td>
+                  <td>{{ r.avgResolutionDays }} days</td>
+                  <td>
+                    <span class="recovery-badge" [class.good]="r.recoveryRate >= 50" [class.poor]="r.recoveryRate < 30">
+                      {{ r.recoveryRate }}%
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        @if (!reasonRisks.length) {
+          <p class="empty">No reason code risk data available.</p>
+        }
+      </div>
+    }
+  }
+</div>

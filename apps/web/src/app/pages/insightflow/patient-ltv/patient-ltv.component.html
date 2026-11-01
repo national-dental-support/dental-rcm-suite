@@ -1,0 +1,148 @@
+<div class="ltv-page">
+
+  <!-- KPI Summary Cards -->
+  @if (data && !loading) {
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Patients</div>
+        <div class="kpi-value">{{ data.summary.totalPatients | number }}</div>
+      </div>
+      <div class="kpi-card primary">
+        <div class="kpi-label">Avg Patient LTV</div>
+        <div class="kpi-value">{{ data.summary.avgLtv | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="kpi-sub">24-month estimated lifetime value</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Lifetime Value</div>
+        <div class="kpi-value">{{ data.summary.totalLifetimeValue | currency:'USD':'symbol':'1.0-0' }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Active Months</div>
+        <div class="kpi-value">{{ data.summary.avgActiveMonths | number:'1.0-1' }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Claims / Patient</div>
+        <div class="kpi-value">{{ data.summary.avgClaimsPerPatient | number:'1.0-1' }}</div>
+      </div>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="xen-loading">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="xen-empty err">
+      <mat-icon>error</mat-icon>
+      <span>Failed to load patient LTV data.</span>
+    </div>
+  }
+
+  <!-- Breakdowns -->
+  @if (data && !loading) {
+    <mat-tab-group [(selectedIndex)]="activeTab">
+      <mat-tab label="By Cohort Year">
+        <table mat-table [dataSource]="data.byCohort" class="xen-table">
+          <ng-container matColumnDef="cohortYear">
+            <th mat-header-cell *matHeaderCellDef>Cohort Year</th>
+            <td mat-cell *matCellDef="let r"><strong>{{ r.cohortYear }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="patientCount">
+            <th mat-header-cell *matHeaderCellDef>Patients</th>
+            <td mat-cell *matCellDef="let r">{{ r.patientCount | number }}</td>
+          </ng-container>
+          <ng-container matColumnDef="avgLtv">
+            <th mat-header-cell *matHeaderCellDef>Avg LTV</th>
+            <td mat-cell *matCellDef="let r">{{ r.avgLtv | currency:'USD':'symbol':'1.0-0' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="totalCollected">
+            <th mat-header-cell *matHeaderCellDef>Total Collected</th>
+            <td mat-cell *matCellDef="let r">{{ r.totalCollected | currency:'USD':'symbol':'1.0-0' }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="cohortColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: cohortColumns;" class="xen-row"></tr>
+        </table>
+      </mat-tab>
+      <mat-tab label="By Payer">
+        <table mat-table [dataSource]="data.byPayer" class="xen-table">
+          <ng-container matColumnDef="payer">
+            <th mat-header-cell *matHeaderCellDef>Payer</th>
+            <td mat-cell *matCellDef="let r"><strong>{{ r.payer }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="patientCount">
+            <th mat-header-cell *matHeaderCellDef>Patients</th>
+            <td mat-cell *matCellDef="let r">{{ r.patientCount | number }}</td>
+          </ng-container>
+          <ng-container matColumnDef="avgCollected">
+            <th mat-header-cell *matHeaderCellDef>Avg Collected</th>
+            <td mat-cell *matCellDef="let r">{{ r.avgCollected | currency:'USD':'symbol':'1.0-0' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="totalCollected">
+            <th mat-header-cell *matHeaderCellDef>Total Collected</th>
+            <td mat-cell *matCellDef="let r">{{ r.totalCollected | currency:'USD':'symbol':'1.0-0' }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="payerColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: payerColumns;" class="xen-row"></tr>
+        </table>
+      </mat-tab>
+    </mat-tab-group>
+  }
+
+  <!-- Top Patients Table -->
+  @if (!patientsLoading || patients.length > 0) {
+    <app-section-card title="Top Patients by Estimated LTV" [tooltip]="'Patients ranked by estimated lifetime value &#x2014; projected total revenue based on treatment history, insurance coverage, and visit frequency. Useful for identifying high-value patient retention opportunities.'">
+      @if (patientsLoading) {
+        <div class="xen-loading">
+          <mat-spinner diameter="24"></mat-spinner>
+        </div>
+      }
+      @if (!patientsLoading) {
+        <table mat-table [dataSource]="patients" class="xen-table">
+          <ng-container matColumnDef="patient_name">
+            <th mat-header-cell *matHeaderCellDef>Patient</th>
+            <td mat-cell *matCellDef="let r"><strong>{{ r.patient_name }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="primary_payer">
+            <th mat-header-cell *matHeaderCellDef>Payer</th>
+            <td mat-cell *matCellDef="let r">{{ r.primary_payer }}</td>
+          </ng-container>
+          <ng-container matColumnDef="cohort_year">
+            <th mat-header-cell *matHeaderCellDef>Since</th>
+            <td mat-cell *matCellDef="let r">{{ r.cohort_year }}</td>
+          </ng-container>
+          <ng-container matColumnDef="first_visit">
+            <th mat-header-cell *matHeaderCellDef>First Visit</th>
+            <td mat-cell *matCellDef="let r">{{ r.first_visit | date:'mediumDate' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="total_claims">
+            <th mat-header-cell *matHeaderCellDef>Claims</th>
+            <td mat-cell *matCellDef="let r">{{ r.total_claims | number }}</td>
+          </ng-container>
+          <ng-container matColumnDef="total_collected">
+            <th mat-header-cell *matHeaderCellDef>Collected</th>
+            <td mat-cell *matCellDef="let r">{{ r.total_collected | currency:'USD':'symbol':'1.0-0' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="estimated_ltv">
+            <th mat-header-cell *matHeaderCellDef>Est. LTV</th>
+            <td mat-cell *matCellDef="let r" class="ltv-col">
+              <strong>{{ r.estimated_ltv | currency:'USD':'symbol':'1.0-0' }}</strong>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="patientColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: patientColumns;" class="xen-row"></tr>
+        </table>
+      }
+      @if (totalPatients > pageSize) {
+        <mat-paginator
+          [length]="totalPatients"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[10, 20, 50]"
+          (page)="onPage($event)">
+        </mat-paginator>
+      }
+    </app-section-card>
+  }
+
+</div>

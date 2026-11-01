@@ -1,0 +1,85 @@
+.alert-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-bg-muted); }
+  th { font-weight: 600; background: var(--color-bg-subtle); }
+  tr:hover td { background: var(--color-bg-subtle); }
+
+  tr.row--editing td { background: #eff6ff; }
+
+  .actions-cell { white-space: nowrap; }
+  .emails-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; color: var(--color-text-muted); }
+}
+
+.mono { font-family: monospace; font-size: 0.8rem; }
+.loading-row { display: flex; justify-content: center; padding: 32px; }
+.empty-row { text-align: center; color: var(--color-text-subtle); padding: 24px; margin: 0; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--info     { background: var(--color-info-light); color: var(--color-info); }
+  &--warning  { background: var(--color-warning-light); color: #92400e; }
+  &--critical { background: var(--color-danger-light); color: var(--color-danger); }
+}
+
+.toggle-btn {
+  padding: 2px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &--on {
+    background: var(--color-success-light);
+    color: var(--color-success);
+    border-color: #86efac;
+  }
+
+  &:hover { opacity: 0.8; }
+}
+
+.btn-delete { color: var(--color-danger) !important; }
+
+.config-form {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding: 8px 0;
+
+  mat-form-field { width: 200px; }
+  mat-form-field:last-of-type { width: 280px; }
+}
+
+.form-enabled-row {
+  display: flex;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.enabled-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+
+  input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}

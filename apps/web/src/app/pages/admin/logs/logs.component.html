@@ -1,0 +1,162 @@
+<mat-tab-group animationDuration="0ms">
+
+  <!-- =============================== EVENTS TAB =============================== -->
+  <mat-tab label="Events">
+    <app-section-card [title]="'Events'">
+      <div class="tab-toolbar">
+        <button mat-stroked-button (click)="refresh()" class="refresh-btn">
+          <mat-icon>refresh</mat-icon> Refresh
+        </button>
+
+        <span class="row-count">{{ events.length | number }} rows</span>
+      </div>
+
+      <rp-advanced-table
+        [data]="events"
+        [columns]="eventsColumns"
+        [loading]="eventsLoading"
+        [enableGlobalSearch]="true"
+        globalSearchPlaceholder="Search events"
+        [enablePagination]="true"
+        [pageSize]="25"
+        [pageSizeOptions]="[25, 50, 100, 250]"
+        [stickyHeader]="true"
+        [enableExport]="true"
+        exportFileName="events.xlsx"
+        exportSheetName="Events"
+        [autoGenerateValueLists]="true"
+        >
+        <!-- Event chip -->
+        <ng-template rpCell="event_name" let-row="row">
+          <span class="event-chip">{{ row.event_name }}</span>
+        </ng-template>
+
+        <!-- Timestamp uses displayFormatter already; no custom needed -->
+        <ng-template rpCell="properties" let-row="row">
+          <span class="props-cell">{{ formatProps(row.properties) }}</span>
+        </ng-template>
+      </rp-advanced-table>
+    </app-section-card>
+  </mat-tab>
+
+  <!-- =============================== ERRORS TAB =============================== -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon-err">error_outline</mat-icon> Errors
+      @if (errors.length) {
+        <span class="err-badge">{{ errors.length }}</span>
+      }
+    </ng-template>
+    <app-section-card [title]="'Errors'">
+      <div class="tab-toolbar">
+        <button mat-stroked-button (click)="refresh()" class="refresh-btn">
+          <mat-icon>refresh</mat-icon> Refresh
+        </button>
+
+        <span class="row-count">{{ errors.length | number }} rows</span>
+      </div>
+
+      <rp-advanced-table
+        [data]="errors"
+        [columns]="errorsColumns"
+        [loading]="errorsLoading"
+        [enableGlobalSearch]="true"
+        globalSearchPlaceholder="Search errors"
+        [enablePagination]="true"
+        [pageSize]="25"
+        [pageSizeOptions]="[25, 50, 100, 250]"
+        [stickyHeader]="true"
+        [enableExport]="true"
+        exportFileName="errors.xlsx"
+        exportSheetName="Errors"
+        [autoGenerateValueLists]="true"
+        >
+        <!-- Error type chip -->
+        <ng-template rpCell="error_type" let-row="row">
+          <span class="type-chip" [ngClass]="'type-' + safeTypeClass(row.error_type)">
+            {{ row.error_type }}
+          </span>
+        </ng-template>
+
+        <!-- Status badge -->
+        <ng-template rpCell="http_status" let-row="row">
+          @if (row.http_status) {
+            <span class="status-badge" [ngClass]="row.http_status >= 500 ? 'status-5xx' : 'status-4xx'">
+              {{ row.http_status }}
+            </span>
+          }
+          @if (!row.http_status) {
+            <span>&#x2014;</span>
+          }
+        </ng-template>
+
+        <!-- Method / URL formatting -->
+        <ng-template rpCell="http_method" let-row="row">
+          @if (row.http_method) {
+            <span class="method-badge">{{ row.http_method }}</span>
+          }
+          {{ row.http_url ?? '' }}
+        </ng-template>
+      </rp-advanced-table>
+    </app-section-card>
+  </mat-tab>
+
+  <!-- ========================== ADMIN ACTIONS TAB ========================== -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon-audit">admin_panel_settings</mat-icon> Admin Actions
+    </ng-template>
+    <app-section-card [title]="'Admin Actions'">
+      <div class="tab-toolbar">
+        <button mat-stroked-button (click)="refresh()" class="refresh-btn">
+          <mat-icon>refresh</mat-icon> Refresh
+        </button>
+
+        <span class="row-count">{{ audit.length | number }} rows</span>
+      </div>
+
+      <rp-advanced-table
+        [data]="audit"
+        [columns]="auditColumns"
+        [loading]="auditLoading"
+        [enableGlobalSearch]="true"
+        globalSearchPlaceholder="Search audit log"
+        [enablePagination]="true"
+        [pageSize]="25"
+        [pageSizeOptions]="[25, 50, 100, 250]"
+        [stickyHeader]="true"
+        [enableExport]="true"
+        exportFileName="admin-actions.xlsx"
+        exportSheetName="Admin Actions"
+        [autoGenerateValueLists]="true"
+        >
+        <!-- Actor with role badge -->
+        <ng-template rpCell="actor_id" let-row="row">
+          <div class="actor-cell">
+            <span class="actor-email" [matTooltip]="row.actor_id">{{ row.actor_id }}</span>
+            <span class="role-badge">{{ row.actor_role }}</span>
+          </div>
+        </ng-template>
+
+
+        <!-- Action chip -->
+        <ng-template rpCell="action" let-row="row">
+          <span class="action-chip" [ngClass]="'action-' + safeActionClass(row.action)">
+            {{ row.action }}
+          </span>
+        </ng-template>
+
+        <!-- Diff -->
+        <ng-template rpCell="diff" let-row="row">
+          <span class="diff-cell">{{ formatDiff(row.before_state, row.after_state) }}</span>
+        </ng-template>
+
+        <!-- IP -->
+        <ng-template rpCell="ip_address" let-row="row">
+          <span class="ip-cell">{{ row.ip_address ?? '&#x2014;' }}</span>
+        </ng-template>
+      </rp-advanced-table>
+    </app-section-card>
+  </mat-tab>
+
+</mat-tab-group>

@@ -1,0 +1,70 @@
+<mat-expansion-panel class="enrichment-panel recon-iq-panel">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon class="panel-icon">account_balance</mat-icon>
+      ReconIQ &#x2014; Reconciliation
+    </mat-panel-title>
+    @if (data && !loading) {
+      <mat-panel-description>
+        {{ data.matched ? data.reconciliationStatus : 'No EOB found' }}
+      </mat-panel-description>
+    }
+  </mat-expansion-panel-header>
+
+  @if (loading) {
+    <div class="panel-loading">
+      <mat-spinner diameter="28"></mat-spinner>
+    </div>
+  }
+
+  @if (notSubscribed) {
+    <div class="panel-upgrade">
+      <mat-icon>lock</mat-icon>
+      <span>Subscribe to Recon IQ to unlock reconciliation insights.</span>
+    </div>
+  }
+
+  @if (error && !notSubscribed) {
+    <div class="panel-error">Failed to load reconciliation data.</div>
+  }
+
+  @if (!loading && !error && data) {
+    <div>
+      @if (!data.matched) {
+        <div class="panel-empty">No EOB/ERA data found for this claim.</div>
+      }
+      @if (data.matched) {
+        <div class="panel-grid">
+          <div class="panel-field">
+            <span class="field-label">Status</span>
+            <span class="field-value status-chip">{{ data.reconciliationStatus }}</span>
+          </div>
+          @if (data.payerName) {
+            <div class="panel-field">
+              <span class="field-label">Payer</span>
+              <span class="field-value">{{ data.payerName }}</span>
+            </div>
+          }
+          @if (data.matchedPaymentAmount != null) {
+            <div class="panel-field">
+              <span class="field-label">Payment Amount</span>
+              <span class="field-value">{{ data.matchedPaymentAmount | currency }}</span>
+            </div>
+          }
+          @if (data.matchedPaymentDate) {
+            <div class="panel-field">
+              <span class="field-label">Payment Date</span>
+              <span class="field-value">{{ data.matchedPaymentDate | date:'mediumDate' }}</span>
+            </div>
+          }
+          @if (data.eobId) {
+            <div class="panel-field">
+              <span class="field-label">EOB/ERA ID</span>
+              <span class="field-value">{{ data.eobId }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</mat-expansion-panel>

@@ -1,0 +1,66 @@
+<h2 mat-dialog-title>ALL PRACTICES</h2>
+
+<form class="content" [formGroup]="form" (ngSubmit)="apply()">
+  <mat-dialog-content>
+    <div class="grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Practice</mat-label>
+        <mat-select formControlName="practice">
+          <mat-option value="All">All</mat-option>
+          <mat-option value="North">North</mat-option>
+          <mat-option value="South">South</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Location</mat-label>
+        <mat-select formControlName="location">
+          <mat-option value="All">All</mat-option>
+          <mat-option value="Nashville">Nashville</mat-option>
+          <mat-option value="Franklin">Franklin</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Provider</mat-label>
+        <input matInput placeholder="Start typing&#x2026;" formControlName="provider" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Timeframe</mat-label>
+        <mat-select formControlName="timeframe">
+          <mat-option value="Past month">Past month</mat-option>
+          <mat-option value="Past quarter">Past quarter</mat-option>
+          <mat-option value="YTD">YTD</mat-option>
+          <mat-option value="Custom">Custom</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      @if ((timeframe$ | async) === 'Custom') {
+        <mat-form-field appearance="outline">
+          <mat-label>From</mat-label>
+          <input matInput type="date" formControlName="from" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>To</mat-label>
+          <input matInput type="date" formControlName="to" />
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>RAG Status</mat-label>
+        <mat-select formControlName="rag">
+          <mat-option value="All">All</mat-option>
+          <mat-option value="red">Red</mat-option>
+          <mat-option value="amber">Amber</mat-option>
+          <mat-option value="green">Green</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="clear()">CLEAR</button>
+    <button mat-flat-button color="primary" type="submit">APPLY</button>
+  </mat-dialog-actions>
+</form>

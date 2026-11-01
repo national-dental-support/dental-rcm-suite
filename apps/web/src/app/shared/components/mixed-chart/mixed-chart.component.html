@@ -1,0 +1,43 @@
+<section class="rp-mixed-chart">
+  @if (title || headerActions) {
+    <header class="rp-mixed-chart__header">
+      @if (title) {
+        <div class="rp-mixed-chart__title-wrap">
+          <h3 class="rp-mixed-chart__title">{{ title }}</h3>
+        </div>
+      }
+      @if (headerActions) {
+        <div class="rp-mixed-chart__actions">
+          <ng-container [ngTemplateOutlet]="headerActions"></ng-container>
+        </div>
+      }
+    </header>
+  }
+
+  @if (hasAnyData) {
+    <div class="rp-mixed-chart__body">
+      <apx-chart
+        [series]="series"
+        [chart]="chart"
+        [colors]="colors"
+        [xaxis]="xaxis"
+        [yaxis]="yaxis"
+        [stroke]="stroke"
+        [markers]="markers"
+        [plotOptions]="plotOptions"
+        [dataLabels]="dataLabels"
+        [fill]="fill"
+        [grid]="grid"
+        [legend]="legend"
+        [tooltip]="tooltip"
+        [states]="states"
+        [theme]="theme"
+      ></apx-chart>
+    </div>
+  } @else {
+    <div class="rp-mixed-chart__empty" role="status" aria-live="polite">
+      No data available at this time
+    </div>
+  }
+
+</section>

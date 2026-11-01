@@ -1,0 +1,463 @@
+<section class="admin-page">
+
+  <!-- --- Header + section nav ----------------------------------------------- -->
+  <div class="admin-header">
+    <div class="admin-header__title">ReconIQ Administration</div>
+    <div class="admin-nav">
+      <button class="anav-btn" [class.anav-btn--active]="activeSection === 'settings'"
+        type="button" (click)="setSection('settings')">
+        <mat-icon>tune</mat-icon> Settings
+      </button>
+      <button class="anav-btn" [class.anav-btn--active]="activeSection === 'alerts'"
+        type="button" (click)="setSection('alerts')">
+        <mat-icon>notifications</mat-icon> Alerts
+        @if (alerts.length) {
+          <span class="anav-badge">{{ alerts.length }}</span>
+        }
+      </button>
+      <button class="anav-btn" [class.anav-btn--active]="activeSection === 'escalations'"
+        type="button" (click)="setSection('escalations')">
+        <mat-icon>report_problem</mat-icon> Bank Issues
+        @if (escalStats.open) {
+          <span class="anav-badge anav-badge--warn">{{ escalStats.open }}</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- =================================================== SETTINGS =========== -->
+  @if (activeSection === 'settings') {
+    @if (loading) {
+      <div class="loading-center"><mat-spinner diameter="28"></mat-spinner></div>
+    }
+    @if (!loading) {
+      <div class="settings-grid">
+        <!-- Auto-Matching -->
+        <div class="setting-group">
+          <div class="setting-group__label">Auto-Matching</div>
+          <div class="setting-row">
+            <mat-slide-toggle [(ngModel)]="config.autoMatchEnabled" (change)="onConfigChange()">
+              Enable Auto-Matching
+            </mat-slide-toggle>
+            <span class="setting-hint">Automatically run match suggestions on new ERA/deposit data</span>
+          </div>
+          @if (config.autoMatchEnabled) {
+            <div class="setting-row indent">
+              <mat-form-field appearance="outline" class="num-field">
+                <mat-label>Confidence Threshold (%)</mat-label>
+                <input matInput type="number" [(ngModel)]="config.autoMatchThreshold" min="50" max="100" step="5" title="Confidence Threshold" />
+                <mat-hint>Suggestions above this score are auto-accepted (50&#x2013;100)</mat-hint>
+              </mat-form-field>
+            </div>
+          }
+        </div>
+        <!-- Auto-Posting + Escalation & Aging (combined) -->
+        <div class="setting-group">
+          <div class="setting-group__label">Auto-Posting</div>
+          <div class="setting-row">
+            <mat-slide-toggle [(ngModel)]="config.autoPostEnabled" (change)="onConfigChange()">
+              Enable Auto-Posting
+            </mat-slide-toggle>
+            <span class="setting-hint">Automatically post matched remittances to PM system</span>
+          </div>
+          <div class="setting-group__divider"></div>
+          <div class="setting-group__label">Escalation &amp; Aging</div>
+          <div class="setting-row">
+            <mat-slide-toggle [(ngModel)]="config.autoEscalateEnabled" (change)="onConfigChange()">
+              Auto-Escalate Unmatched Deposits
+            </mat-slide-toggle>
+            <span class="setting-hint">Automatically create a Bank Issue after hold period</span>
+          </div>
+          @if (config.autoEscalateEnabled) {
+            <div class="setting-row indent">
+              <mat-form-field appearance="outline" class="num-field">
+                <mat-label>Hold Period (days)</mat-label>
+                <input matInput type="number" [(ngModel)]="config.unmatchedEscalationDays" min="1" title="Hold Period" />
+                <mat-hint>Days before unmatched deposit auto-escalates</mat-hint>
+              </mat-form-field>
+            </div>
+          }
+        </div>
+        <!-- ERA / Remittance Processing -->
+        <div class="setting-group">
+          <div class="setting-group__label">ERA Processing</div>
+          <div class="setting-row">
+            <mat-slide-toggle [(ngModel)]="config.eraAutoImportEnabled" (change)="onConfigChange()">
+              Auto-Import Incoming ERAs
+            </mat-slide-toggle>
+            <span class="setting-hint">Automatically ingest 835 files dropped via SFTP</span>
+          </div>
+          <div class="setting-row">
+            <mat-form-field appearance="outline" class="num-field">
+              <mat-label>Amount Match Tolerance ($)</mat-label>
+              <input matInput type="number" [(ngModel)]="config.eraMatchTolerance" min="0" step="0.01" title="Amount Match Tolerance" />
+              <mat-hint>Dollar difference allowed when matching ERA to deposit</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+        <!-- Patient Statements -->
+        <div class="setting-group">
+          <div class="setting-group__label">Patient Statements</div>
+          <div class="setting-row">
+            <mat-form-field appearance="outline" class="num-field">
+              <mat-label>Minimum Balance ($)</mat-label>
+              <input matInput type="number" [(ngModel)]="config.statementMinBalance" min="0" title="Minimum Balance" />
+              <mat-hint>Skip statements below this balance</mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="setting-row">
+            <mat-form-field appearance="outline" class="num-field">
+              <mat-label>Default Aging Days</mat-label>
+              <input matInput type="number" [(ngModel)]="config.statementDefaultAgingDays" min="1" title="Default Aging Days" />
+              <mat-hint>Default aging bucket for generation</mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="setting-row">
+            <mat-form-field appearance="outline" class="num-field">
+              <mat-label>Statement Frequency</mat-label>
+              <mat-select [(ngModel)]="config.statementFrequency">
+                <mat-option value="monthly">Monthly</mat-option>
+                <mat-option value="bimonthly">Bi-Monthly</mat-option>
+                <mat-option value="quarterly">Quarterly</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+        <!-- Notifications -->
+        <div class="setting-group">
+          <div class="setting-group__label">Notifications</div>
+          <div class="setting-row">
+            <mat-form-field appearance="outline" class="wide-setting-field">
+              <mat-label>Default Alert Email(s)</mat-label>
+              <input matInput [(ngModel)]="config.defaultNotifyEmail" placeholder="a@clinic.com, b@clinic.com" title="Default Alert Emails" />
+              <mat-hint>Fallback recipient for all alert types without specific emails</mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="setting-row">
+            <span class="setting-hint setting-hint--sm">Configure per-alert-type recipients in the <strong>Alerts &#x2192; Alert Thresholds</strong> tab.</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-hint setting-hint--sm">Alert types: unmatched EOB, unmatched deposit, unposted reconciled, ERA parse failure.</span>
+          </div>
+        </div>
+        <!-- File Storage -->
+        <div class="setting-group">
+          <div class="setting-group__label">File Storage</div>
+          <div class="setting-row">
+            <mat-form-field appearance="outline" class="num-field num-field--full">
+              <mat-label>Storage Backend</mat-label>
+              <mat-select [(ngModel)]="config.storageType" (ngModelChange)="onConfigChange()">
+                <mat-option value="local">Local Filesystem</mat-option>
+                <mat-option value="sftp">SFTP Server</mat-option>
+                <mat-option value="azure-blob">Azure Blob Storage</mat-option>
+                <mat-option value="s3">AWS S3</mat-option>
+              </mat-select>
+              <mat-hint>Where ERA/EOB files are persisted after upload</mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="setting-row">
+            <mat-form-field appearance="outline" class="wide-setting-field">
+              <mat-label>{{ config.storageType === 'local' ? 'Storage Directory Path' : config.storageType === 'sftp' ? 'SFTP Host:Port/Path' : config.storageType === 'azure-blob' ? 'Container Name' : 'S3 Bucket / Region' }}</mat-label>
+              <input matInput [(ngModel)]="config.storagePath" placeholder="/data/era-files" title="Storage Path" />
+              <mat-hint>{{ config.storageType === 'local' ? 'Absolute path on server filesystem' : 'Remote target path or resource name' }}</mat-hint>
+            </mat-form-field>
+          </div>
+          @if (config.storageType !== 'local') {
+            <div class="setting-row">
+              <mat-form-field appearance="outline" class="wide-setting-field">
+                <mat-label>Connection String / Credentials</mat-label>
+                <input matInput [(ngModel)]="config.storageConnectionString" type="password" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" title="Connection String" />
+                <mat-hint>SAS token, access key, or user:pass&#64;host &#x2014; stored encrypted</mat-hint>
+              </mat-form-field>
+            </div>
+          }
+          <div class="setting-row">
+            <mat-form-field appearance="outline" class="num-field">
+              <mat-label>Retention (days)</mat-label>
+              <input matInput type="number" [(ngModel)]="config.storageRetentionDays" min="30" title="Retention Days" />
+              <mat-hint>Auto-delete files older than this many days</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+    }
+    @if (!loading) {
+      <div class="save-bar">
+        <button mat-flat-button color="primary" type="button" [disabled]="saving" (click)="save()">
+          {{ saving ? 'Saving&#x2026;' : 'Save Settings' }}
+        </button>
+        @if (saved) {
+          <span class="save-ok">Saved!</span>
+        }
+      </div>
+    }
+  }
+
+  <!-- =================================================== ALERTS ============= -->
+  @if (activeSection === 'alerts') {
+    <div class="sub-nav">
+      <button class="subnav-btn" [class.subnav-btn--active]="alertSubTab === 'active'"
+        type="button" (click)="setAlertSubTab('active')">
+        Active Alerts ({{ alerts.length }})
+      </button>
+      <button class="subnav-btn" [class.subnav-btn--active]="alertSubTab === 'config'"
+        type="button" (click)="setAlertSubTab('config')">
+        Alert Thresholds ({{ configs.length }})
+      </button>
+    </div>
+    <!-- Active alerts -->
+    @if (alertSubTab === 'active') {
+      @if (alertsLoading) {
+        <div class="loading-center"><mat-spinner diameter="28"></mat-spinner></div>
+      }
+      @if (!alertsLoading) {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Type</th><th>Item ID</th><th>Date</th>
+              <th>Days Aged</th><th>Threshold</th><th>Severity</th><th aria-label="Actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of alerts; track a) {
+              <tr>
+                <td>{{ a.alertType | titlecase }}</td>
+                <td class="mono">{{ a.itemId }}</td>
+                <td>{{ a.itemDate | date:'shortDate' }}</td>
+                <td>{{ a.daysAged }}</td>
+                <td>{{ a.thresholdDays }}d</td>
+                <td><span [class]="severityClass(a.severity)">{{ a.severity | titlecase }}</span></td>
+                <td><button mat-stroked-button type="button" (click)="acknowledge(a)">Ack</button></td>
+              </tr>
+            }
+            @if (!alerts.length) {
+              <tr>
+                <td colspan="7" class="empty-cell">No open alerts.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    }
+    <!-- Alert threshold configs -->
+    @if (alertSubTab === 'config') {
+      @if (configsLoading) {
+        <div class="loading-center"><mat-spinner diameter="28"></mat-spinner></div>
+      }
+      @if (!configsLoading) {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Type</th><th>Threshold</th><th>Severity</th>
+              <th>Enabled</th><th>Notify Emails</th><th aria-label="Actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of configs; track c) {
+              <tr [class.row--editing]="editingConfig?.id === c.id">
+                <td>{{ c.alertType }}</td>
+                <td>{{ c.thresholdDays }}d</td>
+                <td><span [class]="severityClass(c.severity)">{{ c.severity | titlecase }}</span></td>
+                <td>
+                  <button class="toggle-btn" [class.toggle-btn--on]="c.isEnabled" type="button"
+                  (click)="toggleAlertEnabled(c)">{{ c.isEnabled ? 'On' : 'Off' }}</button>
+                </td>
+                <td class="small-text">{{ c.notifyEmails || '&#x2014;' }}</td>
+                <td class="actions-cell">
+                  <button mat-icon-button type="button" [matTooltip]="'Edit'" (click)="startEdit(c)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" [matTooltip]="'Delete'" class="btn-delete" (click)="deleteAlertConfig(c)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            }
+            @if (!configs.length) {
+              <tr>
+                <td colspan="6" class="empty-cell">No thresholds configured. Add one below.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      <!-- Add / Edit form -->
+      <div class="inline-form">
+        <div class="inline-form__title">{{ alertFormTitle }}</div>
+        <div class="inline-form__row">
+          <mat-form-field appearance="outline">
+            <mat-label>Alert Type</mat-label>
+            <mat-select [(ngModel)]="newConfigType" [disabled]="!!editingConfig">
+              @for (t of alertTypes; track t) {
+                <mat-option [value]="t">{{ t }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="num-field">
+            <mat-label>Threshold Days</mat-label>
+            <input matInput type="number" [(ngModel)]="newConfigDays" min="1" title="Threshold Days" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Severity</mat-label>
+            <mat-select [(ngModel)]="newConfigSeverity">
+              <mat-option value="info">Info</mat-option>
+              <mat-option value="warning">Warning</mat-option>
+              <mat-option value="critical">Critical</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="wide-field">
+            <mat-label>Notify Emails</mat-label>
+            <input matInput [(ngModel)]="newConfigEmails" placeholder="a@b.com, c@d.com" />
+          </mat-form-field>
+          <label class="check-label">
+            <input type="checkbox" [(ngModel)]="newConfigEnabled" /> Enabled
+          </label>
+        </div>
+        <div class="inline-form__actions">
+          <button mat-flat-button color="primary" type="button"
+            [disabled]="!newConfigType || savingConfig" (click)="saveAlertConfig()">
+            {{ editingConfig ? 'Update' : 'Add Config' }}
+          </button>
+          @if (editingConfig) {
+            <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ============================================== BANK ESCALATIONS ======== -->
+  @if (activeSection === 'escalations') {
+    <!-- Stats strip -->
+    <div class="esc-stats">
+      <div class="esc-stat">
+        <span class="esc-stat__v">{{ escalStats.total }}</span>
+        <span class="esc-stat__l">Total</span>
+      </div>
+      <div class="esc-stat esc-stat--open">
+        <span class="esc-stat__v">{{ escalStats.open }}</span>
+        <span class="esc-stat__l">Open</span>
+      </div>
+      <div class="esc-stat esc-stat--inv">
+        <span class="esc-stat__v">{{ escalStats.investigating }}</span>
+        <span class="esc-stat__l">Investigating</span>
+      </div>
+      <div class="esc-stat esc-stat--res">
+        <span class="esc-stat__v">{{ escalStats.resolved }}</span>
+        <span class="esc-stat__l">Resolved</span>
+      </div>
+    </div>
+    <!-- Toolbar -->
+    <div class="esc-toolbar">
+      <mat-select [(ngModel)]="filterStatus" placeholder="Status" class="filter-sel"
+        (ngModelChange)="applyEscFilters()">
+        <mat-option value="">All Statuses</mat-option>
+        <mat-option value="open">Open</mat-option>
+        <mat-option value="investigating">Investigating</mat-option>
+        <mat-option value="resolved">Resolved</mat-option>
+        <mat-option value="dismissed">Dismissed</mat-option>
+      </mat-select>
+      <mat-select [(ngModel)]="filterPriority" placeholder="Priority" class="filter-sel"
+        (ngModelChange)="applyEscFilters()">
+        <mat-option value="">All Priorities</mat-option>
+        @for (p of priorities; track p) {
+          <mat-option [value]="p">{{ p | titlecase }}</mat-option>
+        }
+      </mat-select>
+      <button mat-stroked-button type="button" (click)="clearEscFilters()">Clear</button>
+      <button mat-flat-button color="primary" type="button" (click)="openNewEscForm()">
+        <mat-icon>add</mat-icon> New
+      </button>
+    </div>
+    <!-- New escalation inline form -->
+    @if (showNewForm) {
+      <div class="inline-form">
+        <div class="inline-form__title">New Escalation</div>
+        <div class="inline-form__row">
+          <mat-form-field appearance="outline">
+            <mat-label>Issue Type</mat-label>
+            <mat-select [(ngModel)]="newIssueType" required>
+              @for (t of issueTypes; track t) {
+                <mat-option [value]="t">{{ t | titlecase }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select [(ngModel)]="newPriority">
+              @for (p of priorities; track p) {
+                <mat-option [value]="p">{{ p | titlecase }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Deposit ID (optional)</mat-label>
+            <input matInput [(ngModel)]="newDepositId" title="Deposit ID" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="wide-field">
+            <mat-label>Description</mat-label>
+            <input matInput [(ngModel)]="newDescription" title="Description" />
+          </mat-form-field>
+        </div>
+        <div class="inline-form__actions">
+          <button mat-stroked-button type="button" (click)="cancelNewEsc()">Cancel</button>
+          <button mat-flat-button color="primary" type="button"
+          [disabled]="!newIssueType || submitting" (click)="submitNewEsc()">Submit</button>
+        </div>
+      </div>
+    }
+    <!-- Escalations table -->
+    @if (escLoading) {
+      <div class="loading-center"><mat-spinner diameter="28"></mat-spinner></div>
+    }
+    @if (!escLoading) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Issue Type</th><th>Deposit ID</th><th>Priority</th>
+            <th>Status</th><th>Assigned</th><th>Days Open</th><th aria-label="Actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track row) {
+            <tr>
+              <td>{{ row.issueType | titlecase }}</td>
+              <td class="mono">{{ row.bankDepositId || '&#x2014;' }}</td>
+              <td><span [class]="priorityClass(row.priority)">{{ row.priority | titlecase }}</span></td>
+              <td><span [class]="statusClass(row.status)">{{ row.status | titlecase }}</span></td>
+              <td>{{ row.assignedTo || '&#x2014;' }}</td>
+              <td>{{ row.daysOpen }}</td>
+              <td class="actions-cell">
+                @if (row.status === 'open') {
+                  <button mat-stroked-button type="button"
+                  (click)="setEscStatus(row, 'investigating')">Investigate</button>
+                }
+                @if (row.status !== 'resolved' && row.status !== 'dismissed') {
+                  <button mat-stroked-button type="button" color="warn"
+                  (click)="resolveEsc(row)">Resolve</button>
+                }
+                @if (row.status !== 'dismissed' && row.status !== 'resolved') {
+                  <button mat-stroked-button type="button"
+                  (click)="setEscStatus(row, 'dismissed')">Dismiss</button>
+                }
+              </td>
+            </tr>
+          }
+          @if (!rows.length) {
+            <tr>
+              <td colspan="7" class="empty-cell">No escalations found.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    @if (escTotalPages > 1) {
+      <div class="pagination">
+        <button mat-stroked-button type="button" [disabled]="escPage <= 1" (click)="loadEscRows(escPage - 1)">Prev</button>
+        <span>Page {{ escPage }} of {{ escTotalPages }}</span>
+        <button mat-stroked-button type="button" [disabled]="escPage >= escTotalPages" (click)="loadEscRows(escPage + 1)">Next</button>
+      </div>
+    }
+  }
+
+</section>

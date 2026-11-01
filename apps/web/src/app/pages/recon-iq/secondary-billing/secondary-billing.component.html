@@ -1,0 +1,190 @@
+<div class="xen-page secondary-billing-page">
+
+  <!-- Toolbar -->
+  <div class="sec-toolbar">
+    <div class="sec-toolbar__filters">
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+          @for (opt of statusOptions; track opt) {
+            <mat-option [value]="opt.value">
+              {{ opt.label }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (secondaryPayers.length) {
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Secondary Payer</mat-label>
+          <mat-select [(ngModel)]="secondaryPayerFilter" (ngModelChange)="applyFilters()">
+            <mat-option value="">All</mat-option>
+            @for (p of secondaryPayers; track p) {
+              <mat-option [value]="p">{{ p }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      @if (statusFilter !== 'all' || secondaryPayerFilter) {
+        <button type="button" mat-stroked-button (click)="clearFilters()">
+          Clear
+        </button>
+      }
+    </div>
+
+    <div class="sec-toolbar__actions">
+      @if (selected.size) {
+        <span class="selected-count">
+          {{ selected.size }} selected
+        </span>
+      }
+      <button
+        type="button"
+        mat-flat-button
+        color="primary"
+        [disabled]="!selected.size || submitting"
+        (click)="markSubmitted()"
+        >
+        @if (submitting) {
+          <mat-icon>hourglass_empty</mat-icon>
+        }
+        Mark as Submitted
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="xen-loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (!loading && error) {
+    <div class="xen-empty">
+      Failed to load secondary billing queue.
+      <button type="button" mat-stroked-button (click)="load()">Retry</button>
+    </div>
+  }
+
+  <!-- Empty -->
+  @if (!loading && !error && !rows.length) {
+    <div class="xen-empty">
+      No secondary billing items match the selected filters.
+    </div>
+  }
+
+  <!-- Table -->
+  @if (!loading && !error && rows.length) {
+    <div class="table-wrap">
+      <table mat-table [dataSource]="rows" [trackBy]="trackById" class="xen-table mat-elevation-z1">
+        <!-- Checkbox column -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef aria-label="Row selection">
+            <mat-checkbox
+              [checked]="allPendingSelected"
+              [indeterminate]="selected.size > 0 && !allPendingSelected"
+              (change)="toggleAll()"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row">
+            <mat-checkbox
+              [checked]="selected.has(row.id)"
+              [disabled]="row.status !== 'pending'"
+              (change)="toggleRow(row.id)"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+        <!-- Claim ID -->
+        <ng-container matColumnDef="claimId">
+          <th mat-header-cell *matHeaderCellDef>Claim ID</th>
+          <td mat-cell *matCellDef="let row">{{ row.claimId }}</td>
+        </ng-container>
+        <!-- Patient -->
+        <ng-container matColumnDef="patientName">
+          <th mat-header-cell *matHeaderCellDef>Patient</th>
+          <td mat-cell *matCellDef="let row">{{ row.patientName ?? '&#x2014;' }}</td>
+        </ng-container>
+        <!-- Date of Service -->
+        <ng-container matColumnDef="dateOfService">
+          <th mat-header-cell *matHeaderCellDef>Date of Service</th>
+          <td mat-cell *matCellDef="let row">{{ row.dateOfService ?? '&#x2014;' }}</td>
+        </ng-container>
+        <!-- Charge -->
+        <ng-container matColumnDef="chargeAmt">
+          <th mat-header-cell *matHeaderCellDef class="col-num">Charge</th>
+          <td mat-cell *matCellDef="let row" class="col-num">
+            {{ row.chargeAmt | currency }}
+          </td>
+        </ng-container>
+        <!-- Primary Payer -->
+        <ng-container matColumnDef="primaryPayerName">
+          <th mat-header-cell *matHeaderCellDef>Primary Payer</th>
+          <td mat-cell *matCellDef="let row">{{ row.primaryPayerName ?? '&#x2014;' }}</td>
+        </ng-container>
+        <!-- Primary Paid -->
+        <ng-container matColumnDef="primaryPaidAmt">
+          <th mat-header-cell *matHeaderCellDef class="col-num">Primary Paid</th>
+          <td mat-cell *matCellDef="let row" class="col-num">
+            {{ row.primaryPaidAmt | currency }}
+          </td>
+        </ng-container>
+        <!-- Adjustment -->
+        <ng-container matColumnDef="primaryAdjustmentAmt">
+          <th mat-header-cell *matHeaderCellDef class="col-num">Adjustment</th>
+          <td mat-cell *matCellDef="let row" class="col-num">
+            {{ row.primaryAdjustmentAmt | currency }}
+          </td>
+        </ng-container>
+        <!-- Patient Resp -->
+        <ng-container matColumnDef="patientRespAmt">
+          <th mat-header-cell *matHeaderCellDef class="col-num">Patient Resp.</th>
+          <td mat-cell *matCellDef="let row" class="col-num">
+            {{ row.patientRespAmt | currency }}
+          </td>
+        </ng-container>
+        <!-- Secondary Payer -->
+        <ng-container matColumnDef="secondaryPayerName">
+          <th mat-header-cell *matHeaderCellDef>Secondary Payer</th>
+          <td mat-cell *matCellDef="let row">{{ row.secondaryPayerName ?? '&#x2014;' }}</td>
+        </ng-container>
+        <!-- Secondary Bill Amount -->
+        <ng-container matColumnDef="secondaryBillAmt">
+          <th mat-header-cell *matHeaderCellDef class="col-num">Secondary Bill</th>
+          <td mat-cell *matCellDef="let row" class="col-num secondary-bill-amt">
+            {{ row.secondaryBillAmt | currency }}
+          </td>
+        </ng-container>
+        <!-- Status -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="status-chip" [ngClass]="statusClass(row.status)">
+              {{ statusLabel(row.status) }}
+            </span>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+        [class.row-selected]="selected.has(row.id)"></tr>
+      </table>
+    </div>
+  }
+
+  <!-- Summary strip -->
+  @if (!loading && !error && rows.length) {
+    <div class="summary-strip">
+      <span>{{ rows.length }} items</span>
+      <span>Pending: {{ countByStatus('pending') }}</span>
+      <span>Submitted: {{ countByStatus('submitted') }}</span>
+      <span>Posted: {{ countByStatus('posted') }}</span>
+      <span class="total-amt">
+        Total Secondary: {{ totalSecondaryBillAmt() | currency }}
+      </span>
+    </div>
+  }
+
+</div>

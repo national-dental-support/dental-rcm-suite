@@ -1,0 +1,127 @@
+<div class="xen-page">
+  <div class="xen-toolbar">
+    <h1 class="xen-toolbar__title">Approval Queue</h1>
+    <button mat-stroked-button type="button" (click)="loadPending()">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="xen-loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="xen-empty">{{ error }}</div>
+  }
+
+  @if (!loading && !error) {
+    <div>
+      @if (records.length === 0) {
+        <div class="xen-empty">
+          <mat-icon>check_circle_outline</mat-icon>
+          <p>No adjustment requests found.</p>
+        </div>
+      }
+      @if (records.length > 0) {
+        <table mat-table [dataSource]="records" class="xen-table">
+          <!-- Claim ID -->
+          <ng-container matColumnDef="claimId">
+            <th mat-header-cell *matHeaderCellDef>Claim</th>
+            <td mat-cell *matCellDef="let row">
+              <a class="claim-link" (click)="openClaim(row.claim_id)">{{ row.claim_id }}</a>
+            </td>
+          </ng-container>
+          <!-- Submitted By -->
+          <ng-container matColumnDef="submittedBy">
+            <th mat-header-cell *matHeaderCellDef>Submitted By</th>
+            <td mat-cell *matCellDef="let row">{{ row.submitted_by }}</td>
+          </ng-container>
+          <!-- Submitted At -->
+          <ng-container matColumnDef="submittedAt">
+            <th mat-header-cell *matHeaderCellDef>Submitted</th>
+            <td mat-cell *matCellDef="let row">{{ row.submitted_at | date:'MMM d, y, h:mm a' }}</td>
+          </ng-container>
+          <!-- Adjustment Code -->
+          <ng-container matColumnDef="adjustmentCode">
+            <th mat-header-cell *matHeaderCellDef>Adj. Code</th>
+            <td mat-cell *matCellDef="let row">
+              @if (isAdjustmentRequest(row)) {
+                <span class="xen-badge">{{ parseSnapshot(row).adjustment_code }}</span>
+              } @else {
+                <span class="muted">&#x2014;</span>
+              }
+            </td>
+          </ng-container>
+          <!-- Adjustment Amount -->
+          <ng-container matColumnDef="adjustmentAmount">
+            <th mat-header-cell *matHeaderCellDef>Adj. Amount</th>
+            <td mat-cell *matCellDef="let row">
+              @if (isAdjustmentRequest(row)) {
+                {{ parseSnapshot(row).adjustment_amount | currency }}
+              } @else {
+                <span class="muted">&#x2014;</span>
+              }
+            </td>
+          </ng-container>
+          <!-- Status -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="xen-badge" [ngClass]="statusClass(row.status)">{{ row.status }}</span>
+            </td>
+          </ng-container>
+          <!-- Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row">
+              <!-- Inline review panel for the selected row -->
+              @if (reviewingId === row.id) {
+                <div class="review-inline">
+                  @if (showRejectForm) {
+                    <textarea
+                      [(ngModel)]="reviewerNotes"
+                      rows="2"
+                      placeholder="Explain what needs to be corrected before resubmission"
+                      class="review-notes">
+                    </textarea>
+                  }
+                  <div class="review-actions">
+                    <button mat-flat-button color="primary" type="button" (click)="approve(row)">
+                      Approve
+                    </button>
+                    <button mat-stroked-button color="warn" type="button"
+                      (click)="showRejectForm = true; reject(row)">
+                      Reject
+                    </button>
+                    <button mat-button type="button" (click)="cancelReview()">Cancel</button>
+                  </div>
+                </div>
+              } @else {
+                @if (row.status === 'pending_review') {
+                  <button mat-stroked-button type="button" (click)="startReview(row)">
+                    Review
+                  </button>
+                }
+                @if (row.status === 'approved' || row.status === 'rejected') {
+                  <button mat-stroked-button type="button" (click)="reopen(row)"
+                    matTooltip="Return to pending for re-review">
+                    Reopen
+                  </button>
+                }
+                <button mat-icon-button type="button" (click)="openClaim(row.claim_id)"
+                  matTooltip="Open claim">
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns;"
+          [class.row--pending]="row.status === 'pending_review'"></tr>
+        </table>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,23 @@
+
+<section class="network-leases">
+  <app-section-card [title]="'Network & Leases'">
+    @if (loading) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+    @if (error) {
+      <p class="xen-empty">Failed to load network lease data. Please try again.</p>
+    }
+    @if (!loading && !error) {
+      <rp-advanced-table
+        [columns]="leaseNetworkColumns"
+        [data]="leaseNetworkRows"
+        [enableNestedRows]="true"
+        [childrenAccessor]="leaseNetworkChildren"
+        [enableGlobalSearch]="true"
+        [rowClassFn]="leaseNetworkRowClass"
+        [autoGenerateValueLists]="true">
+      </rp-advanced-table>
+    }
+  </app-section-card>
+</section>
+  

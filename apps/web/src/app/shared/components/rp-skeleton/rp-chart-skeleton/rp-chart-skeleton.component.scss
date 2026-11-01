@@ -1,0 +1,72 @@
+.rp-chart-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+
+  .header .title {
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    color: var(--rp-text, var(--color-text));
+  }
+
+  .body {
+    display: grid;
+    gap: 14px;
+  }
+
+  .donut {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 8px auto 0;
+
+    .donut-hole {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 86px;
+      height: 86px;
+      border-radius: 999px;
+      background: var(--rp-surface, var(--color-surface));
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.04) inset;
+    }
+  }
+
+  .bar .bars {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    height: 140px;
+  }
+
+  .line-frame {
+    position: relative;
+
+    .line-stroke {
+      position: absolute;
+      inset: 16px;
+      border-radius: 10px;
+      background: linear-gradient(transparent, transparent);
+      /* optional: could add a subtle diagonal stroke via pseudo-element later */
+      pointer-events: none;
+    }
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .footer .msg {
+    font-size: var(--font-size-xs);
+    color: var(--rp-text-muted, rgba(15, 23, 42, 0.6));
+  }
+}

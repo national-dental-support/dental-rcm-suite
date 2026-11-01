@@ -1,0 +1,85 @@
+<div class="kpi-page">
+
+  <div class="kpi-header">
+    <div class="left">
+      <div class="meta">
+        Last update: {{lastupdated}}
+      </div>
+    </div>
+    <div class="right links">
+      <button mat-button class="link-btn">View All</button>
+      <button mat-button class="link-btn">Performance Dashboard</button>
+      <button mat-stroked-button class="btn-export" (click)="exportKpis()">Export</button>
+    </div>
+  </div>
+
+  <!-- Header card with tabs + filter -->
+  <div class="kpi-tabs-card">
+    <mat-tab-group
+      class="kpi-tabs"
+      [(selectedIndex)]="tabIndex"
+      (selectedIndexChange)="onTabChange($event)"
+      >
+      <mat-tab label="ALL PRACTICES - PAST 12 MONTHS"></mat-tab>
+      <mat-tab label="ALL PRACTICES - YTD"></mat-tab>
+    </mat-tab-group>
+
+    <button mat-stroked-button class="filter-btn" (click)="openFilters()">
+      FILTER
+      <mat-icon>expand_more</mat-icon>
+    </button>
+  </div>
+
+  <div class="chip-row">
+    <mat-chip-listbox>
+      <mat-chip-option>Practice: {{ (filters$ | async)?.practice || 'All' }}</mat-chip-option>
+      <mat-chip-option>Timeframe: {{ (filters$ | async)?.timeframe }}</mat-chip-option>
+    </mat-chip-listbox>
+
+    <button mat-button class="clear" (click)="clearAll()">Clear all</button>
+  </div>
+
+  @if (loading) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+
+  @if (kpis$ | async; as kpis) {
+    <div class="kpi-list">
+      @for (item of kpis; track trackByItem($index, item)) {
+        <mat-card class="kpi-card">
+          <div class="row">
+            <div class="title">{{ item.title }}
+              @if (item.calcHint) {
+                <mat-icon class="info-tip" [matTooltip]="item.calcHint" matTooltipPosition="right">info_outline</mat-icon>
+              }
+            </div>
+            <div class="right">
+              <div class="value">
+                {{ item.value | number:'1.0-1' }}{{ item.unit || '' }}
+              </div>
+              <span class="rag-chip" [ngClass]="item.rag">
+                {{ item.rag | uppercase }}
+              </span>
+            </div>
+          </div>
+          <app-kpi-progress-bar
+            [value]="item.value"
+            [thresholds]="item.thresholds"
+            [unit]="item.unit || '%'"
+            [rag]="item.rag">
+          </app-kpi-progress-bar>
+          <div class="footer">
+            <div class="benchmark">
+              <span class="muted">Benchmark:</span>
+              {{ item.benchmark || '&#x2014;' }}
+            </div>
+            <span class="spacer"></span>
+            <button mat-stroked-button color="primary" (click)="viewDetails(item)">
+              DETAILS
+            </button>
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

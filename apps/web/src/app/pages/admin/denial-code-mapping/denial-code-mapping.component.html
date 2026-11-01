@@ -1,0 +1,190 @@
+<div class="denial-code-mapping-admin xen-page">
+  <div class="toolbar">
+    <h3>Denial Code Mapping</h3>
+    <span class="spacer"></span>
+    <button mat-flat-button color="primary" type="button" (click)="newRow()">
+      <mat-icon>add</mat-icon> New Mapping
+    </button>
+  </div>
+
+  <p class="help-text">
+    Maps payer-specific, X12-standard CARCs, and RARCs to business groupings
+    (e.g., "Denial - Eligibility", "Reason Code - Contractual Adjustment").
+    Used to categorize denials on InsightFlow's Top Preventable Denials chart.
+  </p>
+
+  <!-- Filters -->
+  <div class="filters">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search</mat-label>
+      <input
+        matInput
+        placeholder="CARC, RARC, definition, grouping..."
+        [ngModel]="searchText"
+        (ngModelChange)="onSearchChange($event)"
+        />
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="grouping-filter">
+        <mat-label>Grouping</mat-label>
+        <mat-select
+          [ngModel]="groupingFilter"
+          (ngModelChange)="onGroupingFilter($event)"
+          >
+          <mat-option [value]="''">All groupings</mat-option>
+          @for (g of groupings; track g) {
+            <mat-option [value]="g">{{ g }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (searchText || groupingFilter) {
+        <button mat-stroked-button type="button" (click)="clearFilters()"
+          >
+          <mat-icon>clear</mat-icon> Clear
+        </button>
+      }
+    </div>
+
+    <!-- Table -->
+    @if (loading) {
+      <div class="loading-bar">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </div>
+    }
+
+    @if (!loading) {
+      <div class="table-wrap">
+        <table class="xen-table">
+          <thead>
+            <tr>
+              <th>Payer CARC</th>
+              <th>X12 CARC</th>
+              <th>RARC</th>
+              <th>Grouping</th>
+              <th>Definition</th>
+              <th class="col-actionable">Ins. Actionable</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows; track trackById($index, row)) {
+              <tr>
+                <td>{{ row.carc_payer || '&#x2014;' }}</td>
+                <td>{{ row.carc_x12 || '&#x2014;' }}</td>
+                <td>{{ row.rarc || '&#x2014;' }}</td>
+                <td>
+                  <span class="grouping-chip"
+                    [class.chip-denial]="row.grouping?.startsWith('Denial -')"
+                    [class.chip-reason]="row.grouping?.startsWith('Reason Code -')">
+                    {{ row.grouping }}
+                  </span>
+                </td>
+                <td class="definition-cell" [title]="row.definition || ''">
+                  {{ row.definition || '&#x2014;' }}
+                </td>
+                <td class="col-actionable">
+                  @if (row.insurance_actionable) {
+                    <mat-icon class="check-icon">check</mat-icon>
+                  }
+                </td>
+                <td class="col-actions">
+                  <button mat-icon-button type="button" (click)="editRow(row)" title="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" color="warn" (click)="delete(row)" title="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            }
+            @if (rows.length === 0) {
+              <tr>
+                <td colspan="7" class="empty">No mappings found.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Pagination -->
+    @if (!loading && total > 0) {
+      <div class="pagination">
+        <span class="page-label">{{ pageLabel }}</span>
+        <button mat-icon-button type="button" (click)="prevPage()" [disabled]="pageIndex === 0" title="Previous page">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <button mat-icon-button type="button" (click)="nextPage()" [disabled]="!hasNext" title="Next page">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    }
+
+    <!-- Editor dialog (inline) -->
+    @if (showEditor) {
+      <div class="editor-backdrop" (click)="cancelEdit()"></div>
+    }
+    @if (showEditor) {
+      <div class="editor-panel">
+        <div class="editor-header">
+          <h4>{{ editing.id ? 'Edit' : 'New' }} Mapping</h4>
+          <button mat-icon-button type="button" (click)="cancelEdit()" title="Close">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="editor-body">
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Payer-specific CARC</mat-label>
+              <input matInput [(ngModel)]="editing.carc_payer" placeholder="e.g. ZP1" />
+              <mat-hint>Optional &#x2014; payer-proprietary code</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>X12 Standard CARC</mat-label>
+              <input matInput [(ngModel)]="editing.carc_x12" placeholder="e.g. OA96, PR1, 45" />
+              <mat-hint>Most common lookup key</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>RARC</mat-label>
+              <input matInput [(ngModel)]="editing.rarc" placeholder="e.g. MA67, N30" />
+              <mat-hint>Required for OA96 disambiguation</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Grouping *</mat-label>
+              <mat-select [(ngModel)]="editing.grouping">
+                @for (g of groupings; track g) {
+                  <mat-option [value]="g">{{ g }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Definition</mat-label>
+            <textarea matInput rows="2" [(ngModel)]="editing.definition"
+            placeholder="Human-readable description of this code"></textarea>
+          </mat-form-field>
+          <div class="checkbox-row">
+            <mat-checkbox [(ngModel)]="editing.insurance_actionable">
+              Insurance actionable
+            </mat-checkbox>
+            <mat-checkbox [(ngModel)]="editing.patient_responsible">
+              Patient responsible
+            </mat-checkbox>
+            <mat-checkbox [(ngModel)]="editing.no_action_needed">
+              No action needed
+            </mat-checkbox>
+          </div>
+        </div>
+        <div class="editor-footer">
+          <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+          <button mat-flat-button color="primary" type="button"
+            [disabled]="saving" (click)="save()">
+            <mat-icon>save</mat-icon>
+            {{ saving ? 'Saving...' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>

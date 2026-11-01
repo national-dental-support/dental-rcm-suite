@@ -1,0 +1,281 @@
+<!-- src/app/pages/admin/users-list/add-user/add-user.component.html -->
+<span class="page-title">{{ pageTitle }}</span>
+
+<div class="add-user-page" [formGroup]="form">
+  <mat-card class="panel">
+    <section class="section">
+      <header class="section__header">
+        <h2 class="section__title">User Information</h2>
+      </header>
+
+      <div class="grid grid-4 dense">
+        <mat-form-field appearance="outline" class="field">
+          <mat-label>First name</mat-label>
+          <input matInput formControlName="firstName" />
+          @if (form.get('firstName')?.hasError('required')) {
+            <mat-error>First name is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field">
+          <mat-label>Last name</mat-label>
+          <input matInput formControlName="lastName" />
+          @if (form.get('lastName')?.hasError('required')) {
+            <mat-error>Last name is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field">
+          <mat-label>Email address</mat-label>
+          <input matInput formControlName="email" type="email" />
+          @if (form.get('email')?.hasError('required')) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (form.get('email')?.hasError('email') && !form.get('email')?.hasError('required')) {
+            <mat-error>Enter a valid email address</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field role-field">
+          <mat-label>Role</mat-label>
+          <mat-select formControlName="role">
+            @for (r of roles; track r) {
+              <mat-option [value]="r">{{ r }}</mat-option>
+            }
+          </mat-select>
+          @if (form.get('role')?.hasError('required')) {
+            <mat-error>Role is required</mat-error>
+          }
+        </mat-form-field>
+
+        @if (form.get('role')?.value === 'AR Specialist' || form.get('role')?.value === 'User') {
+          <mat-form-field
+            appearance="outline" class="field">
+            <mat-label>Reports To</mat-label>
+            <mat-select [(ngModel)]="selectedManagerId" [ngModelOptions]="{standalone: true}">
+              <mat-option [value]="null">None</mat-option>
+              @for (mgr of managers; track mgr) {
+                <mat-option [value]="mgr.id">{{ mgr.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+      </div>
+    </section>
+
+    <mat-divider class="divider"></mat-divider>
+
+    <!-- PERMISSIONS -->
+    <section class="section">
+      <header class="section__header">
+        <h2 class="section__title">Permissions</h2>
+        <p class="section__hint">
+          Using the checkboxes below, indicate permissions granted to this user.
+        </p>
+      </header>
+
+      <div class="perm-grid" formGroupName="permissions">
+        <div class="perm-col">
+          <div class="perm-col__title">Claim Assignment</div>
+          <mat-checkbox formControlName="reassignToAnotherUser">May reassign a claim to another user.</mat-checkbox>
+          <mat-checkbox formControlName="escalateClaim">May escalate a claim</mat-checkbox>
+        </div>
+
+        <div class="perm-col">
+          <div class="perm-col__title">Claim Visibility</div>
+          <mat-checkbox formControlName="viewUnassigned">May view Unassigned claims</mat-checkbox>
+        </div>
+
+        <div class="perm-col">
+          <div class="perm-col__title">Special Permissions</div>
+          <mat-checkbox formControlName="trainingAdmin">Training Admin</mat-checkbox>
+          <mat-checkbox formControlName="teamAdmin">Team Admin</mat-checkbox>
+          <mat-checkbox formControlName="orgAdmin">Org Admin</mat-checkbox>
+          <mat-checkbox formControlName="techMonitoringAccess">Tech &amp; Monitoring Access</mat-checkbox>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider class="divider"></mat-divider>
+
+    <!-- PRODUCT ACCESS -->
+    <section class="section">
+      <header class="section__header">
+        <h2 class="section__title">Product Access</h2>
+        <p class="section__hint">
+          Select which products this user can access. Super Admins always have access to all products.
+        </p>
+      </header>
+
+      @if (listsLoading) {
+        <div class="lists-loading">
+          <mat-spinner diameter="24"></mat-spinner>
+          <span>Loading products&#x2026;</span>
+        </div>
+      }
+
+      @if (!listsLoading) {
+        <div class="perm-grid">
+          <div class="perm-col">
+            <div class="perm-col__title">Available Products</div>
+            <mat-checkbox class="select-all-row"
+              [checked]="isAllSelected(productsArray)"
+              [indeterminate]="isSomeSelected(productsArray)"
+              (change)="toggleSelectAll(productsArray)">
+              Select all
+            </mat-checkbox>
+            <div formArrayName="products" class="checkbox-stack">
+              @for (_ of productsArray.controls; track _; let i = $index) {
+                <mat-checkbox
+                  [formControlName]="i">
+                  {{ products[i]?.name }}
+                </mat-checkbox>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </section>
+
+    <mat-divider class="divider"></mat-divider>
+
+    <!-- QUEUE CONFIG -->
+    <section class="section" formGroupName="queue">
+      <header class="section__header">
+        <h2 class="section__title">User Queue Configuration</h2>
+        <p class="section__hint">
+          Using the checkboxes below, indicate which types of claims should be prioritized in this user&#x2019;s Claim Queue.
+        </p>
+      </header>
+
+      @if (listsLoading) {
+        <div class="lists-loading">
+          <mat-spinner diameter="24"></mat-spinner>
+          <span>Loading providers, locations &amp; payers&#x2026;</span>
+        </div>
+      }
+
+      @if (!listsLoading) {
+        <div class="queue-grid">
+          <!-- PROVIDERS -->
+          <div class="queue-col">
+            <div class="queue-col__title">Provider</div>
+            <mat-form-field appearance="outline" class="queue-search-field">
+              <mat-icon matPrefix>search</mat-icon>
+              <input matInput placeholder="Search providers&#x2026;"
+                [value]="providerSearchTerm"
+                (input)="providerSearchTerm = $any($event.target).value" />
+                @if (providerSearchTerm) {
+                  <button matSuffix mat-icon-button type="button"
+                    (click)="providerSearchTerm = ''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </mat-form-field>
+              <mat-checkbox class="select-all-row"
+                [checked]="isAllSelected(providersArray)"
+                [indeterminate]="isSomeSelected(providersArray)"
+                (change)="toggleSelectAll(providersArray)">
+                Select all
+              </mat-checkbox>
+              <div formArrayName="providers" class="checkbox-stack">
+                @for (_ of providersArray.controls; track _; let i = $index) {
+                  @if (!providerSearchTerm || providers[i].toLowerCase().includes(providerSearchTerm.toLowerCase())) {
+                    <mat-checkbox
+                      [formControlName]="i"
+                    >{{ providers[i] }}</mat-checkbox>
+                  }
+                }
+                @if (providers.length === 0) {
+                  <span class="empty-list">No providers available.</span>
+                }
+                @if (providers.length > 0 && providerSearchTerm && filteredCount(providers, providerSearchTerm) === 0) {
+                  <span class="empty-list">No matches.</span>
+                }
+              </div>
+            </div>
+            <!-- LOCATIONS -->
+            <div class="queue-col">
+              <div class="queue-col__title">Location</div>
+              <mat-form-field appearance="outline" class="queue-search-field">
+                <mat-icon matPrefix>search</mat-icon>
+                <input matInput placeholder="Search locations&#x2026;"
+                  [value]="locationSearchTerm"
+                  (input)="locationSearchTerm = $any($event.target).value" />
+                  @if (locationSearchTerm) {
+                    <button matSuffix mat-icon-button type="button"
+                      (click)="locationSearchTerm = ''">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </mat-form-field>
+                <mat-checkbox class="select-all-row"
+                  [checked]="isAllSelected(locationsArray)"
+                  [indeterminate]="isSomeSelected(locationsArray)"
+                  (change)="toggleSelectAll(locationsArray)">
+                  Select all
+                </mat-checkbox>
+                <div formArrayName="locations" class="checkbox-stack">
+                  @for (_ of locationsArray.controls; track _; let i = $index) {
+                    @if (!locationSearchTerm || locations[i].toLowerCase().includes(locationSearchTerm.toLowerCase())) {
+                      <mat-checkbox
+                        [formControlName]="i"
+                      >{{ locations[i] }}</mat-checkbox>
+                    }
+                  }
+                  @if (locations.length === 0) {
+                    <span class="empty-list">No locations configured. Add locations in Admin &#x2192; Locations.</span>
+                  }
+                  @if (locations.length > 0 && locationSearchTerm && filteredCount(locations, locationSearchTerm) === 0) {
+                    <span class="empty-list">No matches.</span>
+                  }
+                </div>
+              </div>
+              <!-- PAYERS -->
+              <div class="queue-col">
+                <div class="queue-col__title">Payer</div>
+                <mat-form-field appearance="outline" class="queue-search-field">
+                  <mat-icon matPrefix>search</mat-icon>
+                  <input matInput placeholder="Search payers&#x2026;"
+                    [value]="payerSearchTerm"
+                    (input)="payerSearchTerm = $any($event.target).value" />
+                    @if (payerSearchTerm) {
+                      <button matSuffix mat-icon-button type="button"
+                        (click)="payerSearchTerm = ''">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    }
+                  </mat-form-field>
+                  <mat-checkbox class="select-all-row"
+                    [checked]="isAllSelected(payersArray)"
+                    [indeterminate]="isSomeSelected(payersArray)"
+                    (change)="toggleSelectAll(payersArray)">
+                    Select all
+                  </mat-checkbox>
+                  <div formArrayName="payers" class="checkbox-stack">
+                    @for (_ of payersArray.controls; track _; let i = $index) {
+                      @if (!payerSearchTerm || payers[i].toLowerCase().includes(payerSearchTerm.toLowerCase())) {
+                        <mat-checkbox
+                          [formControlName]="i"
+                        >{{ payers[i] }}</mat-checkbox>
+                      }
+                    }
+                    @if (payers.length === 0) {
+                      <span class="empty-list">No payers available.</span>
+                    }
+                    @if (payers.length > 0 && payerSearchTerm && filteredCount(payers, payerSearchTerm) === 0) {
+                      <span class="empty-list">No matches.</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </section>
+
+          <!-- ACTIONS -->
+          <div class="actions">
+            <button mat-stroked-button color="primary" (click)="cancel()">Cancel</button>
+            <button mat-raised-button color="primary" (click)="save()">{{ submitLabel }}</button>
+          </div>
+        </mat-card>
+      </div>

@@ -1,0 +1,10 @@
+.tab-strip-container {
+  width: 50%;
+}
+
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+}

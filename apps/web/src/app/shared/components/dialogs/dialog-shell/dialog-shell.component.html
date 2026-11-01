@@ -1,0 +1,88 @@
+<section class="rp-dialog" [attr.data-tone]="tone()" cdkTrapFocus [cdkTrapFocusAutoCapture]="true"
+  role="dialog" [attr.aria-label]="cfg.title">
+  <header class="rp-dialog__header">
+    <div class="rp-dialog__title-row">
+      <div class="rp-dialog__title-wrap">
+        @if (cfg.icon) {
+          <mat-icon class="rp-dialog__icon">{{ cfg.icon }}</mat-icon>
+        }
+
+        <div>
+          <h2 class="rp-dialog__title" mat-dialog-title>{{ cfg.title }}</h2>
+          @if (cfg.subtitle) {
+            <p class="rp-dialog__subtitle">{{ cfg.subtitle }}</p>
+          }
+        </div>
+      </div>
+
+      @if (cfg.showCloseX !== false) {
+        <button
+          mat-icon-button
+          type="button"
+          class="rp-dialog__close"
+          aria-label="Close"
+          (click)="closeX()"
+          [disabled]="saving"
+          >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+
+    </div>
+  </header>
+
+  <mat-dialog-content class="rp-dialog__content">
+    @if (cfg.message) {
+      <p class="rp-dialog__message">{{ cfg.message }}</p>
+    }
+
+    @if (cfg.contentTemplate) {
+      <ng-container
+        [ngTemplateOutlet]="cfg.contentTemplate"
+        [ngTemplateOutletContext]="{ $implicit: cfg.payload, dialog: this }"
+      ></ng-container>
+    }
+
+    @if (errorMessage) {
+      <mat-error class="rp-dialog__error">{{ errorMessage }}</mat-error>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="rp-dialog__actions">
+    <button mat-button type="button" (click)="click('cancel')" [disabled]="saving">
+      {{ cfg.actions?.cancelText ?? 'Cancel' }}
+    </button>
+
+    @if (cfg.actions?.secondary) {
+      <button
+        [ngClass]="cfg.actions?.secondary?.variant ?? 'stroked'"
+        mat-stroked-button
+        type="button"
+        (click)="click('secondary')"
+        [disabled]="saving || cfg.actions?.secondary?.disabled"
+        >
+        @if (cfg.actions?.secondary?.icon) {
+          <mat-icon>{{ cfg.actions?.secondary?.icon }}</mat-icon>
+        }
+        {{ cfg.actions?.secondary?.label }}
+      </button>
+    }
+
+    <button
+      mat-flat-button
+      type="button"
+      [color]="cfg.actions?.primaryColor ?? 'primary'"
+      (click)="click('primary')"
+      [disabled]="saving || (cfg.primaryDisabled?.() ?? false)"
+      >
+      @if (saving) {
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="16"
+          class="rp-dialog__spinner"
+        ></mat-progress-spinner>
+      }
+      {{ cfg.actions?.primaryText ?? 'Confirm' }}
+    </button>
+  </mat-dialog-actions>
+</section>

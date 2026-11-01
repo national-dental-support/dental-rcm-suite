@@ -1,0 +1,131 @@
+<div class="compliance-admin">
+  <div class="toolbar">
+    <mat-button-toggle-group [value]="view" (change)="switchView($event.value)">
+      <mat-button-toggle value="dashboard">Dashboard</mat-button-toggle>
+      <mat-button-toggle value="access-review">Access Review</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  <!-- Dashboard View -->
+  @if (view === 'dashboard' && dashboard) {
+    <div class="dashboard-grid">
+      <!-- Training Compliance -->
+      <div class="metric-card">
+        <div class="card-header">
+          <mat-icon>school</mat-icon>
+          <h4>Training Compliance</h4>
+        </div>
+        <div class="big-number" [style.color]="getComplianceColor(dashboard.training.complianceRate)">
+          {{ dashboard.training.complianceRate }}%
+        </div>
+        <div class="metric-details">
+          <span>{{ dashboard.training.completed }}/{{ dashboard.training.total }} completed</span>
+          @if (dashboard.training.overdue > 0) {
+            <span class="overdue">{{ dashboard.training.overdue }} overdue</span>
+          }
+        </div>
+      </div>
+      <!-- Security -->
+      <div class="metric-card">
+        <div class="card-header">
+          <mat-icon>security</mat-icon>
+          <h4>Security (30d)</h4>
+        </div>
+        <div class="security-stats">
+          <div class="stat-row">
+            <span>Failed Logins</span>
+            <strong>{{ dashboard.security.failedLogins30d }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Unique Failed Users</span>
+            <strong>{{ dashboard.security.uniqueFailedUsers }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Locked Accounts</span>
+            <strong [class.warn]="dashboard.security.lockedAccounts > 0">{{ dashboard.security.lockedAccounts }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Dormant Accounts</span>
+            <strong [class.warn]="dashboard.security.dormantAccounts > 0">{{ dashboard.security.dormantAccounts }}</strong>
+          </div>
+        </div>
+      </div>
+      <!-- User Accounts -->
+      <div class="metric-card">
+        <div class="card-header">
+          <mat-icon>people</mat-icon>
+          <h4>User Accounts</h4>
+        </div>
+        <div class="big-number">{{ dashboard.users.total }}</div>
+        <div class="metric-details">
+          <span>{{ dashboard.users.disabled }} disabled</span>
+          <span>{{ dashboard.users.locked }} locked</span>
+          <span>{{ dashboard.users.dormant }} dormant</span>
+        </div>
+      </div>
+      <!-- Audit Activity -->
+      <div class="metric-card wide">
+        <div class="card-header">
+          <mat-icon>timeline</mat-icon>
+          <h4>Audit Activity (30d)</h4>
+        </div>
+        <div class="audit-list">
+          @for (a of dashboard.auditActivity; track a) {
+            <div class="audit-row">
+              <span class="action-name">{{ a.action }}</span>
+              <span class="action-count">{{ a.cnt }}</span>
+            </div>
+          }
+          @if (dashboard.auditActivity.length === 0) {
+            <p class="empty-inline">No audit activity.</p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Access Review View -->
+  @if (view === 'access-review') {
+    <div>
+      @if (accessReview.length > 0) {
+        <table mat-table [dataSource]="accessReview" class="mat-elevation-z0">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let u">{{ u.name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>Email</th>
+            <td mat-cell *matCellDef="let u">{{ u.Email }}</td>
+          </ng-container>
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef>Role</th>
+            <td mat-cell *matCellDef="let u">{{ getRoleName(u.Role) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="lastLogin">
+            <th mat-header-cell *matHeaderCellDef>Last Login</th>
+            <td mat-cell *matCellDef="let u" [class.stale]="!u.lastLogin">
+              {{ u.lastLogin ? (u.lastLogin | date:'short') : 'Never' }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="activity">
+            <th mat-header-cell *matHeaderCellDef>Activity (30d)</th>
+            <td mat-cell *matCellDef="let u">{{ u.activityCount30d }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let u">
+              <span class="user-status" [class.disabled]="u.disabled">
+                {{ u.disabled ? 'Disabled' : 'Active' }}
+              </span>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="['name','email','role','lastLogin','activity','status']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['name','email','role','lastLogin','activity','status']"></tr>
+        </table>
+      }
+      @if (accessReview.length === 0 && !loading) {
+        <p class="empty">No users to review.</p>
+      }
+    </div>
+  }
+</div>

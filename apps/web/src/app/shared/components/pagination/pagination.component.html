@@ -1,0 +1,78 @@
+@if (loading) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
+@if (!loading && error) {
+  <div class="error">{{ error }}</div>
+}
+
+<!-- Always keep the table in the DOM. Drive emptiness via data. -->
+<div class="table-wrap" [class.dim]="loading || !!error">
+  <table
+    mat-table
+    [dataSource]="dataSource"
+    [trackBy]="trackByFile"
+    matSort
+    matSortActive="lastModified"
+    matSortDirection="desc"
+    matSortDisableClear
+    >
+    <!-- Name -->
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+      <td mat-cell *matCellDef="let f">
+        <span class="name">{{ f.name }}</span>
+      </td>
+    </ng-container>
+
+    <!-- Size -->
+    <ng-container matColumnDef="size">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Size</th>
+      <td mat-cell *matCellDef="let f">
+        @if (f.size !== null && f.size !== undefined) {
+          <span>{{ f.size | number }} bytes</span>
+        }
+        @if (f.size === null || f.size === undefined) {
+          <span class="muted">&#x2014;</span>
+        }
+      </td>
+    </ng-container>
+
+    <!-- Last Modified -->
+    <ng-container matColumnDef="lastModified">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+      <td mat-cell *matCellDef="let f">
+        @if (f.lastModified) {
+          <span>{{ f.lastModified | date:'short' }}</span>
+        } @else {
+          <span class="muted">&#x2014;</span>
+        }
+      </td>
+    </ng-container>
+
+    <!-- Actions -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef class="actions-col">Actions</th>
+      <td mat-cell *matCellDef="let f" class="actions-col">
+        <button mat-stroked-button color="primary" (click)="onDownload(f.name)">Download</button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</div>
+
+<!-- Keep paginator always mounted -->
+<mat-paginator
+  [length]="dataSource?.filteredData?.length || 0"
+  [pageSize]="pageSize"
+  [pageSizeOptions]="pageSizeOptions"
+  [hidePageSize]="hidePageSize"
+  [showFirstLastButtons]="true"
+  aria-label="Files pagination">
+</mat-paginator>
+
+<!-- Empty state overlay -->
+@if (!loading && !error && !(dataSource?.data?.length)) {
+  <div class="empty">No files to display.</div>
+}

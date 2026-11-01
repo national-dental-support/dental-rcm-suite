@@ -1,0 +1,94 @@
+<button mat-icon-button [matMenuTriggerFor]="alertsMenu" matTooltip="AI Alerts" class="alerts-btn">
+  <mat-icon [matBadge]="activeCount > 0 ? activeCount : null" matBadgeColor="warn" matBadgeSize="small">
+    notifications
+  </mat-icon>
+</button>
+
+<mat-menu #alertsMenu="matMenu" class="alerts-dropdown" xPosition="before">
+  <div class="alerts-header" (click)="$event.stopPropagation()">
+    <strong>AI Alerts</strong>
+    <div class="alerts-header__actions">
+      <button type="button" mat-icon-button matTooltip="Create Alert Rule" (click)="toggleCreateForm(); $event.stopPropagation()">
+        <mat-icon>add_alert</mat-icon>
+      </button>
+      <button type="button" mat-icon-button matTooltip="Refresh" (click)="load(); $event.stopPropagation()" [disabled]="loading">
+        <mat-icon [class.spinning]="loading">refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Create alert rule inline form -->
+  @if (showCreateForm) {
+    <div class="create-rule-form" (click)="$event.stopPropagation()">
+      <div class="create-rule-form__title">New Alert Rule</div>
+
+      <mat-form-field appearance="outline" class="create-rule-field">
+        <mat-label>Alert Type</mat-label>
+        <mat-select [(ngModel)]="newRule.alertType" disableOptionCentering>
+          @for (type of alertTypes; track type) {
+            <mat-option [value]="type">{{ type }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="create-rule-field">
+        <mat-label>Threshold (%)</mat-label>
+        <input matInput type="number" [(ngModel)]="newRule.threshold" min="1" max="100" aria-label="Threshold percentage" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="create-rule-field">
+        <mat-label>Notify Email (optional)</mat-label>
+        <input matInput type="email" [(ngModel)]="newRule.notifyEmail" placeholder="you@org.com" />
+      </mat-form-field>
+
+      @if (createError) {
+        <div class="create-rule-error">{{ createError }}</div>
+      }
+
+      <div class="create-rule-actions">
+        <button mat-stroked-button type="button" (click)="toggleCreateForm()">Cancel</button>
+        <button mat-flat-button color="primary" type="button"
+          [disabled]="creating || !newRule.alertType || newRule.threshold <= 0"
+          (click)="saveAlertRule()">
+          {{ creating ? 'Saving&#x2026;' : 'Save Rule' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (loading && !alerts.length) {
+    <div style="padding: 16px; text-align: center;">
+      <mat-spinner diameter="20" style="margin: 0 auto;"></mat-spinner>
+    </div>
+  }
+
+  @if (!loading && !alerts.length && !showCreateForm) {
+    <div style="padding: 24px; text-align: center; color: #888;">
+      <mat-icon style="font-size: 32px;">check_circle</mat-icon>
+      <p style="margin-top: 8px;">No active alerts</p>
+    </div>
+  }
+
+  @for (alert of alerts; track alert) {
+    <div class="alert-item" (click)="$event.stopPropagation()">
+      <div class="alert-row">
+        <mat-icon [style.color]="severityColor(alert.severity)">{{ severityIcon(alert.severity) }}</mat-icon>
+        <div class="alert-content">
+          <div class="alert-title">{{ alert.title }}</div>
+          <div class="alert-detail">{{ alert.detail }}</div>
+          @if (alert.ai_explanation) {
+            <div class="alert-ai">{{ alert.ai_explanation }}</div>
+          }
+          <div class="alert-actions">
+            @for (action of parseActions(alert.recommended_actions); track action) {
+              <span class="action-chip">{{ action }}</span>
+            }
+          </div>
+        </div>
+        <button mat-icon-button matTooltip="Dismiss" (click)="dismiss(alert.id)" class="dismiss-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+  }
+</mat-menu>

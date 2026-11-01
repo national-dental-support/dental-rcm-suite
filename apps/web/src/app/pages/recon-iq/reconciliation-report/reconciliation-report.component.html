@@ -1,0 +1,493 @@
+<div class="recon-report">
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="state-box">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading reconciliation report...</p>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error && !loading) {
+    <div class="state-box error-box">
+      <mat-icon>error_outline</mat-icon>
+      <p>Unable to load report data. <a (click)="loadData()">Retry</a></p>
+    </div>
+  }
+
+  @if (!loading && !error && summary) {
+    <!-- (1) Balance Boxes - VERY TOP -->
+    <div class="kpi-row">
+      <mat-card class="kpi-card accent-blue">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>account_balance</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ formatCurrency(summary.bankTxTotal) }}</div>
+            <div class="kpi-label">Total Bank Transactions</div>
+            <div class="kpi-sub">{{ summary.bankTxCount }} deposits</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card accent-green">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>post_add</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ formatCurrency(summary.pmsTxTotal) }}</div>
+            <div class="kpi-label">Total PMS Postings</div>
+            <div class="kpi-sub">{{ summary.pmsTxCount }} posted</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card" [ngClass]="diffClass(summary.bankPmsDiff)">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>compare_arrows</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ summary.bankPmsDiff >= 0 ? '+' : '' }}{{ formatCurrency(summary.bankPmsDiff) }}</div>
+            <div class="kpi-label">Bank vs PMS Difference</div>
+            <div class="kpi-sub">{{ summary.bankPmsDiff === 0 ? 'Fully balanced' : summary.bankPmsDiff > 0 ? 'Bank exceeds PMS' : 'PMS exceeds bank' }}</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card accent-amber in-transit-card" (click)="toggleInTransit()">
+        <mat-card-content>
+          <div class="kpi-icon"><mat-icon>sync_alt</mat-icon></div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ summary.inTransitCount }}</div>
+            <div class="kpi-label">In Transit</div>
+            <div class="kpi-sub">{{ formatCurrency(summary.inTransitTotal) }} &#x00B7; click to expand</div>
+          </div>
+          <mat-icon class="expand-icon">{{ showInTransit ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <!-- (2) In-Transit Drill-Down (Material table, searchable + sortable) -->
+    @if (showInTransit) {
+      <div class="in-transit-panel">
+        <div class="panel-header">
+          <mat-icon>sync_alt</mat-icon>
+          <span>In-Transit Transactions &#x2014; matched remittances not yet posted to PMS</span>
+          <a mat-stroked-button routerLink="../../payment-reconciliation" class="panel-action-btn">
+            <mat-icon>open_in_new</mat-icon> Go to Payment Reconciliation
+          </a>
+        </div>
+        @if (inTransitLoading) {
+          <div class="transit-loading">
+            <mat-spinner diameter="28"></mat-spinner>
+            <span>Loading...</span>
+          </div>
+        }
+        @if (!inTransitLoading) {
+          <mat-form-field appearance="outline" class="transit-search">
+            <mat-label>Search</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput [(ngModel)]="inTransitSearch"
+              (ngModelChange)="applyInTransitSearch($event)"
+              placeholder="Remittance ID, payer, location&#x2026;">
+              @if (inTransitSearch) {
+                <button matSuffix mat-icon-button (click)="inTransitSearch=''; applyInTransitSearch('')">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </mat-form-field>
+            <div class="transit-table-wrap">
+              <table mat-table [dataSource]="inTransitDs" matSort #inTransitSort="matSort" class="transit-mat-table">
+                <ng-container matColumnDef="remittanceFileId">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Remittance ID</th>
+                  <td mat-cell *matCellDef="let r" class="mono">{{ r.remittanceFileId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="fileDate">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Aging Date</th>
+                  <td mat-cell *matCellDef="let r" class="mono">{{ r.fileDate }}</td>
+                </ng-container>
+                <ng-container matColumnDef="location">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Location</th>
+                  <td mat-cell *matCellDef="let r">{{ r.location }}</td>
+                </ng-container>
+                <ng-container matColumnDef="payerName">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Payer</th>
+                  <td mat-cell *matCellDef="let r">{{ r.payerName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="claimCount">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Claims</th>
+                  <td mat-cell *matCellDef="let r">{{ r.claimCount }}</td>
+                </ng-container>
+                <ng-container matColumnDef="amount">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+                  <td mat-cell *matCellDef="let r">{{ formatCurrency(r.amount) }}</td>
+                </ng-container>
+                <ng-container matColumnDef="daysAged">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Days Aged</th>
+                  <td mat-cell *matCellDef="let r" [class]="agedClass(r.daysAged)">{{ r.daysAged }}d</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="inTransitCols; sticky: true"></tr>
+                <tr mat-row *matRowDef="let r; columns: inTransitCols;"></tr>
+                <tr class="mat-row" *matNoDataRow>
+                  <td class="mat-cell no-data-cell" [attr.colspan]="inTransitCols.length">
+                    {{ inTransitSearch ? 'No results for "' + inTransitSearch + '"' : 'No in-transit transactions found.' }}
+                  </td>
+                </tr>
+              </table>
+            </div>
+          }
+        </div>
+      }
+      <!-- (3) Section Toggle + Filters + Download (single toolbar row) -->
+      <div class="section-toolbar">
+        <div class="section-toggle">
+          <button mat-stroked-button [class.active]="activeSection === 'overview'" (click)="activeSection = 'overview'">
+            <mat-icon>dashboard</mat-icon> Overview
+          </button>
+          <button mat-stroked-button [class.active]="activeSection === 'payers'" (click)="activeSection = 'payers'">
+            <mat-icon>business</mat-icon> By Payer
+          </button>
+          <button mat-stroked-button [class.active]="activeSection === 'provider'" (click)="loadByProvider()">
+            <mat-icon>person</mat-icon> By Provider
+          </button>
+          <button mat-stroked-button [class.active]="activeSection === 'trend'" (click)="activeSection = 'trend'">
+            <mat-icon>trending_up</mat-icon> Monthly Trend
+          </button>
+          <button mat-stroked-button [class.active]="activeSection === 'audit'" (click)="loadPostingAudit()">
+            <mat-icon>history</mat-icon> Posting Audit
+          </button>
+        </div>
+        <div class="toolbar-right">
+          <!-- Active filter chips (shown when panel is closed) -->
+          @if (activeFilterCount > 0 && !filtersOpen) {
+            @if (filters.months !== 6) {
+              <span class="filter-chip">{{ filters.months }}mo</span>
+            }
+            @if (filters.location) {
+              <span class="filter-chip">{{ filters.location }}</span>
+            }
+            @if (filters.payer) {
+              <span class="filter-chip">{{ filters.payer }}</span>
+            }
+            @if (filters.postStatus !== 'all') {
+              <span class="filter-chip">{{ filters.postStatus }}</span>
+            }
+            <button mat-icon-button class="reset-btn" (click)="resetFilters()" matTooltip="Clear filters">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+          <button mat-stroked-button class="filter-toggle-btn" (click)="filtersOpen = !filtersOpen">
+            <mat-icon>tune</mat-icon>
+            Filters
+            @if (activeFilterCount > 0) {
+              <span class="filter-badge">{{ activeFilterCount }}</span>
+            }
+            <mat-icon class="toggle-arrow">{{ filtersOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+          <button mat-stroked-button class="download-btn" (click)="downloadCsv()">
+            <mat-icon>download</mat-icon> Download CSV
+          </button>
+          <button type="button" mat-stroked-button class="download-btn" (click)="exportDetailCsv()" [disabled]="exportingDetail">
+            <mat-icon>table_view</mat-icon> {{ exportingDetail ? 'Exporting&#x2026;' : 'Export Detail CSV' }}
+          </button>
+        </div>
+      </div>
+      <!-- Filter Panel (drops below toolbar) -->
+      @if (filtersOpen) {
+        <div class="filter-panel">
+          <div class="filter-fields">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Time Period</mat-label>
+              <mat-select [(ngModel)]="filters.months">
+                @for (opt of monthOptions; track opt) {
+                  <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Location</mat-label>
+              <mat-select [(ngModel)]="filters.location">
+                <mat-option value="">All Locations</mat-option>
+                @for (loc of filterOptions.locations; track loc) {
+                  <mat-option [value]="loc">{{ loc }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Payer</mat-label>
+              <mat-select [(ngModel)]="filters.payer">
+                <mat-option value="">All Payers</mat-option>
+                @for (p of filterOptions.payers; track p) {
+                  <mat-option [value]="p">{{ p }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Post Status</mat-label>
+              <mat-select [(ngModel)]="filters.postStatus">
+                <mat-option value="all">All</mat-option>
+                <mat-option value="posted">Posted</mat-option>
+                <mat-option value="unposted">Unposted</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="filter-actions">
+            <button mat-flat-button color="primary" (click)="applyFilters()">Apply</button>
+            <button mat-stroked-button (click)="resetFilters()">Reset</button>
+          </div>
+        </div>
+      }
+      <!-- (5) Secondary KPI Cards -->
+      <div class="kpi-row secondary-kpi-row">
+        <mat-card class="kpi-card accent-blue">
+          <mat-card-content>
+            <div class="kpi-icon"><mat-icon>check_circle</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-value">{{ summary.matchedCount }}</div>
+              <div class="kpi-label">Reconciled</div>
+              <div class="kpi-sub">{{ matchRatio }}% match rate</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="kpi-card accent-green">
+          <mat-card-content>
+            <div class="kpi-icon"><mat-icon>attach_money</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-value">{{ formatCurrency(summary.matchedAmount) }}</div>
+              <div class="kpi-label">Reconciled Amount</div>
+              <div class="kpi-sub">{{ filters.months }} month period</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="kpi-card accent-amber">
+          <mat-card-content>
+            <div class="kpi-icon"><mat-icon>pending_actions</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-value">{{ summary.unpostedCount }}</div>
+              <div class="kpi-label">Unposted</div>
+              <div class="kpi-sub">{{ postingRate }}% posted</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="kpi-card accent-red">
+          <mat-card-content>
+            <div class="kpi-icon"><mat-icon>link_off</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-value">{{ summary.unmatchedPayments }}</div>
+              <div class="kpi-label">Unmatched Payments</div>
+              <div class="kpi-sub">No EOB on file</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="kpi-card accent-red">
+          <mat-card-content>
+            <div class="kpi-icon"><mat-icon>receipt_long</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-value">{{ summary.unmatchedEOBs }}</div>
+              <div class="kpi-label">Unmatched EOBs</div>
+              <div class="kpi-sub">No payment on file</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="kpi-card" [class.accent-red]="summary.denialRate >= 15" [class.accent-amber]="summary.denialRate >= 5 && summary.denialRate < 15">
+          <mat-card-content>
+            <div class="kpi-icon"><mat-icon>block</mat-icon></div>
+            <div class="kpi-body">
+              <div class="kpi-value">{{ summary.denialRate }}%</div>
+              <div class="kpi-label">Denial Rate</div>
+              <div class="kpi-sub">{{ summary.deniedClaims }} of {{ summary.totalClaims }} claims</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <!-- (6) Section Content -->
+      @if (activeSection === 'overview') {
+        <div class="section">
+          <div class="two-col">
+            <mat-card class="panel-card">
+              <mat-card-header><mat-card-title>Posting Status</mat-card-title></mat-card-header>
+              <mat-card-content>
+                <div class="status-bars">
+                  <div class="status-row">
+                    <span class="status-label">Posted</span>
+                    <div class="bar-track">
+                      <div class="bar-fill posted-fill"
+                      [style.width.%]="summary.matchedCount ? (summary.postedCount / summary.matchedCount) * 100 : 0"></div>
+                    </div>
+                    <span class="bar-val">{{ summary.postedCount }}</span>
+                  </div>
+                  <div class="status-row">
+                    <span class="status-label">Unposted</span>
+                    <div class="bar-track">
+                      <div class="bar-fill unposted-fill"
+                      [style.width.%]="summary.matchedCount ? (summary.unpostedCount / summary.matchedCount) * 100 : 0"></div>
+                    </div>
+                    <span class="bar-val">{{ summary.unpostedCount }}</span>
+                  </div>
+                </div>
+                <div class="bar-note">{{ summary.matchedCount }} matched remittances total</div>
+              </mat-card-content>
+            </mat-card>
+            <mat-card class="panel-card">
+              <mat-card-header><mat-card-title>Reconciliation Status</mat-card-title></mat-card-header>
+              <mat-card-content>
+                <div class="status-bars">
+                  <div class="status-row">
+                    <span class="status-label">Matched</span>
+                    <div class="bar-track">
+                      <div class="bar-fill matched-fill" [style.width.%]="matchRatio"></div>
+                    </div>
+                    <span class="bar-val">{{ summary.matchedCount }}</span>
+                  </div>
+                  <div class="status-row">
+                    <span class="status-label">No EOB</span>
+                    <div class="bar-track">
+                      <div class="bar-fill unmatched-fill"
+                      [style.width.%]="(summary.matchedCount + summary.unmatchedPayments) ? (summary.unmatchedPayments / (summary.matchedCount + summary.unmatchedPayments)) * 100 : 0"></div>
+                    </div>
+                    <span class="bar-val">{{ summary.unmatchedPayments }}</span>
+                  </div>
+                  <div class="status-row">
+                    <span class="status-label">No Payment</span>
+                    <div class="bar-track">
+                      <div class="bar-fill eob-fill"
+                      [style.width.%]="(summary.matchedCount + summary.unmatchedEOBs) ? (summary.unmatchedEOBs / (summary.matchedCount + summary.unmatchedEOBs)) * 100 : 0"></div>
+                    </div>
+                    <span class="bar-val">{{ summary.unmatchedEOBs }}</span>
+                  </div>
+                </div>
+                <div class="bar-note">{{ summary.period }}</div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      }
+      @if (activeSection === 'payers') {
+        <div class="section">
+          @if (payerRows.length) {
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Payer</th><th>Remittances</th><th>Total Amount</th>
+                  <th>Avg Amount</th><th>Linked Claims</th><th>Denied</th><th>Denial Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of payerRows; track r) {
+                  <tr>
+                    <td>{{ r.payerName }}</td>
+                    <td>{{ r.remittanceCount }}</td>
+                    <td>{{ formatCurrency(r.totalAmount) }}</td>
+                    <td>{{ formatCurrency(r.avgAmount) }}</td>
+                    <td>{{ r.linkedClaims }}</td>
+                    <td>{{ r.deniedClaims }}</td>
+                    <td [class]="denialClass(r.denialRate)">{{ r.denialRate }}%</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @if (!payerRows.length) {
+            <p class="empty">No payer data available.</p>
+          }
+        </div>
+      }
+      @if (activeSection === 'trend') {
+        <div class="section">
+          @if (trendRows.length) {
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Period</th><th>Reconciled</th><th>Amount</th>
+                  <th>Claims</th><th>Denied</th><th>Denial Rate</th><th>Posted</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of trendRows; track r) {
+                  <tr>
+                    <td class="mono">{{ r.period }}</td>
+                    <td>{{ r.reconcileCount }}</td>
+                    <td>{{ formatCurrency(r.reconcileAmount) }}</td>
+                    <td>{{ r.claimCount }}</td>
+                    <td>{{ r.deniedCount }}</td>
+                    <td [class]="denialClass(r.denialRate)">{{ r.denialRate }}%</td>
+                    <td>{{ r.postedCount }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @if (!trendRows.length) {
+            <p class="empty">No trend data available.</p>
+          }
+        </div>
+      }
+      @if (activeSection === 'provider') {
+        <div class="section">
+          @if (providerLoading) {
+            <div class="state-box"><mat-spinner diameter="32"></mat-spinner></div>
+          }
+          @if (!providerLoading && providerRows.length) {
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Provider</th><th>Remittances</th><th>Total Amount</th>
+                  <th>Avg Amount</th><th>Linked Claims</th><th>Denied</th><th>Denial Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of providerRows; track r) {
+                  <tr>
+                    <td>{{ r.providerName }}</td>
+                    <td>{{ r.remittanceCount }}</td>
+                    <td>{{ formatCurrency(r.totalAmount) }}</td>
+                    <td>{{ formatCurrency(r.avgAmount) }}</td>
+                    <td>{{ r.linkedClaims }}</td>
+                    <td>{{ r.deniedClaims }}</td>
+                    <td [class]="denialClass(r.denialRate)">{{ r.denialRate }}%</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @if (!providerLoading && !providerRows.length) {
+            <p class="empty">No provider data available.</p>
+          }
+        </div>
+      }
+      @if (activeSection === 'audit') {
+        <div class="section">
+          @if (auditLoading) {
+            <div class="state-box"><mat-spinner diameter="32"></mat-spinner></div>
+          }
+          @if (!auditLoading && auditRows.length) {
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Remittance ID</th><th>EOB Date</th><th>Payer</th>
+                  <th>Location</th><th>Claims</th><th>Posted By</th><th>Posted Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of auditRows; track r) {
+                  <tr>
+                    <td class="mono">{{ r.remittanceFileId }}</td>
+                    <td>{{ r.eobDate }}</td>
+                    <td>{{ r.payerName }}</td>
+                    <td>{{ r.location }}</td>
+                    <td>{{ r.claimCount }}</td>
+                    <td>{{ r.postedBy }}</td>
+                    <td>{{ r.postedDate }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @if (!auditLoading && auditRows.length) {
+            <div class="pagination-row">
+              <button type="button" mat-stroked-button [disabled]="auditPage <= 1" (click)="loadPostingAudit(auditPage - 1)">Prev</button>
+              <span>Page {{ auditPage }} of {{ auditTotalPages }} ({{ auditTotal }} total)</span>
+              <button type="button" mat-stroked-button [disabled]="auditPage >= auditTotalPages" (click)="loadPostingAudit(auditPage + 1)">Next</button>
+            </div>
+          }
+          @if (!auditLoading && !auditRows.length) {
+            <p class="empty">No posting audit records found.</p>
+          }
+        </div>
+      }
+    }
+  </div>

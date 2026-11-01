@@ -1,0 +1,108 @@
+<nav class="top-nav" aria-label="Page tools">
+  <div class="nav-content">
+    <div class="left-side">
+      <!-- Hamburger menu (mobile only) -->
+      <button type="button" class="hamburger-btn" (click)="menuToggle.emit()" aria-label="Toggle navigation">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <!-- Home is always visible -->
+      <mat-icon
+        class="home-icon"
+        aria-label="Home"
+        [class.active]="isOnDashboard"
+        (click)="goHome()"
+        >home</mat-icon>
+
+
+        <!-- Restore sidebar - shown when the sidebar is hidden -->
+        @if (navCollapsed) {
+          <button
+            type="button"
+            mat-icon-button
+            class="toolbar-icon-btn"
+            (click)="expandNav.emit()"
+            matTooltip="Show sidebar"
+            aria-label="Show navigation sidebar"
+            >
+            <mat-icon>menu_open</mat-icon>
+          </button>
+        }
+
+        <!-- Enterprise switcher (Super Admin only) -->
+        @if (isSuperAdmin && (enterpriseSvc.enterprises$ | async)?.length) {
+          <div class="enterprise-switcher">
+            <mat-icon class="enterprise-switcher__icon">corporate_fare</mat-icon>
+            <select class="enterprise-switcher__select"
+              [ngModel]="(enterpriseSvc.active$ | async)?.id"
+              (ngModelChange)="onEnterpriseChange($event)">
+              @for (ent of enterpriseSvc.enterprises$ | async; track ent) {
+                <option [ngValue]="ent.id">{{ ent.name }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (isInClaimVision) {
+          <button
+            type="button"
+            class="rules-link"
+            [class.active]="isOnRules"
+            (click)="goToRules()"
+            >
+            Rules
+          </button>
+        }
+
+        <!-- Payer-IQ Contracts link -->
+        @if (isInPayerIq) {
+          <button
+            type="button"
+            class="contracts-link"
+            [class.active]="isOnPayerIqContracts"
+            (click)="goToPayerIqRootOrContracts()"
+            >
+            {{ isOnPayerIqContracts ? 'Back to Payer IQ' : 'Contracts' }}
+          </button>
+        }
+
+        <!-- Current claim pill -->
+        @if (activeClaimLabel) {
+          <div class="current-claim-pill">
+            <span class="pill-text">{{ activeClaimLabel }}</span>
+            <button
+              type="button"
+              class="pill-close"
+              aria-label="Back to Claim Queue"
+              (click)="goToClaimQueue()"
+              >
+              &#x00D7;
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="right-side">
+        <app-ai-alerts-panel></app-ai-alerts-panel>
+        <!-- <button
+        type="button"
+        class="dark-mode-toggle"
+        mat-icon-button
+        (click)="themeService.toggleDarkMode()"
+        [attr.aria-label]="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        [matTooltip]="isDark ? 'Light mode' : 'Dark mode'"
+        >
+        <mat-icon>{{ isDark ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+      <rp-notification-bell></rp-notification-bell> -->
+      <!-- Only show filters in Payer IQ (optional but recommended) -->
+      <app-global-filters
+        [options]="globalFilterOptions"
+        [initialValue]="appliedFilters"
+        [isSuperAdmin]="isSuperAdmin"
+        (apply)="onGlobalFiltersApply($event)"
+        (changed)="onGlobalFiltersApply($event)">
+      </app-global-filters>
+    </div>
+  </div>
+</nav>

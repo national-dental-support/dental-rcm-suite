@@ -1,0 +1,252 @@
+<div class="security-admin">
+  <div class="sub-nav">
+    <button mat-button [class.active]="activeView === 'overview'" (click)="switchView('overview')">
+      Overview
+    </button>
+    <button mat-button [class.active]="activeView === 'masking'" (click)="switchView('masking')">
+      Data Masking
+    </button>
+    <button mat-button [class.active]="activeView === 'encryption'" (click)="switchView('encryption')">
+      Encryption
+    </button>
+    <span class="nav-divider"></span>
+    <button mat-button [class.active]="activeView === 'logs'" (click)="switchView('logs')">
+      Logs
+    </button>
+    <button mat-button [class.active]="activeView === 'access-review'" (click)="switchView('access-review')">
+      Access Review
+    </button>
+    <button mat-button [class.active]="activeView === 'compliance'" (click)="switchView('compliance')">
+      Compliance
+    </button>
+  </div>
+
+  <!-- -- Overview ---------------------------------------------------- -->
+  @if (activeView === 'overview') {
+    <div class="overview-view">
+      @if (loading) {
+        <div class="loading-state">Loading security status...</div>
+      }
+      @if (status) {
+        <div class="status-cards">
+          <div class="status-card">
+            <div class="card-icon">
+              <mat-icon [class.enabled]="status.encryption.tdeEnabled"
+                [class.disabled]="!status.encryption.tdeEnabled">
+                {{ status.encryption.tdeEnabled ? 'lock' : 'lock_open' }}
+              </mat-icon>
+            </div>
+            <div class="card-info">
+              <h4>Transparent Data Encryption (TDE)</h4>
+              <span class="status-text" [class.on]="status.encryption.tdeEnabled"
+                [class.off]="!status.encryption.tdeEnabled">
+                {{ status.encryption.tdeEnabled ? 'Enabled' : 'Not Enabled' }}
+              </span>
+              <p>SQL Server database-level encryption at rest.</p>
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="card-icon">
+              <mat-icon [class.enabled]="status.encryption.fieldEncryptionEnabled"
+                [class.disabled]="!status.encryption.fieldEncryptionEnabled">
+                {{ status.encryption.fieldEncryptionEnabled ? 'enhanced_encryption' : 'no_encryption' }}
+              </mat-icon>
+            </div>
+            <div class="card-info">
+              <h4>Field-Level Encryption</h4>
+              <span class="status-text" [class.on]="status.encryption.fieldEncryptionEnabled"
+                [class.off]="!status.encryption.fieldEncryptionEnabled">
+                {{ status.encryption.fieldEncryptionEnabled ? 'Enabled' : 'Not Enabled' }}
+              </span>
+              <p>AES-256-GCM encryption for sensitive PHI fields (SSN, DOB, Subscriber ID).</p>
+              @if (status.encryption.encryptedFields.length) {
+                <div class="field-badges">
+                  @for (f of status.encryption.encryptedFields; track f) {
+                    <span class="field-badge">{{ f }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="card-icon">
+              <mat-icon class="enabled">visibility_off</mat-icon>
+            </div>
+            <div class="card-info">
+              <h4>Role-Based Data Masking</h4>
+              <span class="status-text on">{{ status.masking.activeMaskingRules }} active rules</span>
+              <p>Sensitive fields masked based on user role. Configure in the Data Masking tab.</p>
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="card-icon">
+              <mat-icon [class.enabled]="status.fieldEncryptionKeyConfigured"
+                [class.disabled]="!status.fieldEncryptionKeyConfigured">
+                vpn_key
+              </mat-icon>
+            </div>
+            <div class="card-info">
+              <h4>Encryption Key</h4>
+              <span class="status-text" [class.on]="status.fieldEncryptionKeyConfigured"
+                [class.off]="!status.fieldEncryptionKeyConfigured">
+                {{ status.fieldEncryptionKeyConfigured ? 'Configured' : 'Not Configured' }}
+              </span>
+              <p>FIELD_ENCRYPTION_KEY environment variable for AES-256-GCM operations.</p>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- -- Data Masking ------------------------------------------------ -->
+  @if (activeView === 'masking') {
+    <div class="masking-view">
+      <div class="view-header">
+        <h3>Data Masking Rules</h3>
+        <button mat-raised-button color="primary" (click)="openCreateRule()">+ Add Rule</button>
+      </div>
+      <p class="description">
+        Define which fields are masked and at what role level they become visible.
+        Lower role numbers see masked data; higher roles see full values.
+      </p>
+      <!-- Rule form -->
+      @if (showRuleForm) {
+        <div class="form-card">
+          <h4>{{ editingRuleId ? 'Edit Rule' : 'New Masking Rule' }}</h4>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Field Name (DB column)</mat-label>
+              <input matInput [(ngModel)]="ruleForm.fieldName" placeholder="e.g. SSN" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Display Label</mat-label>
+              <input matInput [(ngModel)]="ruleForm.displayLabel" placeholder="e.g. Social Security Number" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Category</mat-label>
+              <mat-select [(ngModel)]="ruleForm.category">
+                @for (c of categories; track c) {
+                  <mat-option [value]="c">{{ c | uppercase }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Mask Type</mat-label>
+              <mat-select [(ngModel)]="ruleForm.maskType">
+                @for (t of maskTypes; track t) {
+                  <mat-option [value]="t">{{ t }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Visible at Role Level</mat-label>
+              <mat-select [(ngModel)]="ruleForm.visibleAboveRole">
+                @for (entry of [0,1,2,3,4,5]; track entry) {
+                  <mat-option [value]="entry">
+                    {{ entry }} &#x2014; {{ roleNames[entry] }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            @if (editingRuleId) {
+              <div class="toggle-row">
+                <mat-slide-toggle [(ngModel)]="ruleForm.isActive">Active</mat-slide-toggle>
+              </div>
+            }
+          </div>
+          <div class="form-actions">
+            <button mat-button (click)="cancelRuleForm()">Cancel</button>
+            <button mat-raised-button color="primary" (click)="saveRule()"
+              [disabled]="!ruleForm.fieldName || !ruleForm.displayLabel">
+              {{ editingRuleId ? 'Update' : 'Create' }}
+            </button>
+          </div>
+        </div>
+      }
+      <!-- Rules list -->
+      @if (!showRuleForm) {
+        <div class="rules-list">
+          @if (!maskingRules.length) {
+            <div class="empty-state">No masking rules configured.</div>
+          }
+          @for (r of maskingRules; track r) {
+            <div class="rule-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <strong>{{ r.displayLabel }}</strong>
+                  <code class="field-code">{{ r.fieldName }}</code>
+                  <span class="category-badge">{{ r.category | uppercase }}</span>
+                  <span class="mask-badge">{{ r.maskType }}</span>
+                  <span class="status-badge" [class.active]="r.isActive" [class.inactive]="!r.isActive">
+                    {{ r.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+                <div class="card-actions">
+                  <button mat-icon-button matTooltip="Edit" (click)="openEditRule(r)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button matTooltip="Delete" (click)="deleteRule(r)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+              <div class="card-details">
+                <span>Visible to: {{ roleNames[r.visibleAboveRole] }} and above (level {{ r.visibleAboveRole }}+)</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- -- Encryption -------------------------------------------------- -->
+  @if (activeView === 'encryption') {
+    <div class="encryption-view">
+      <div class="view-header">
+        <h3>Encryption Settings</h3>
+      </div>
+      <p class="description">
+        Configure database-level and field-level encryption for PHI data.
+        TDE (Transparent Data Encryption) protects data files at rest.
+        Field-level encryption uses AES-256-GCM for individual sensitive columns.
+      </p>
+      <div class="form-card">
+        <div class="toggles-col">
+          <mat-slide-toggle [(ngModel)]="encTdeEnabled">
+            Transparent Data Encryption (TDE)
+          </mat-slide-toggle>
+          <span class="toggle-hint">Requires SQL Server Enterprise or Standard edition configuration.</span>
+          <mat-slide-toggle [(ngModel)]="encFieldEnabled">
+            Field-Level Encryption (AES-256-GCM)
+          </mat-slide-toggle>
+          <span class="toggle-hint">Requires FIELD_ENCRYPTION_KEY environment variable (64 hex chars).</span>
+        </div>
+        <div class="form-actions">
+          <button mat-raised-button color="primary" (click)="saveEncryptionConfig()">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- -- Logs ---------------------------------------------------------- -->
+  @if (activeView === 'logs') {
+    <div>
+      <app-admin-logs></app-admin-logs>
+    </div>
+  }
+
+  <!-- -- Access Review ------------------------------------------------- -->
+  @if (activeView === 'access-review') {
+    <div>
+    </div>
+  }
+
+  <!-- -- Compliance ---------------------------------------------------- -->
+  @if (activeView === 'compliance') {
+    <div>
+      <rp-compliance-admin></rp-compliance-admin>
+    </div>
+  }
+</div>

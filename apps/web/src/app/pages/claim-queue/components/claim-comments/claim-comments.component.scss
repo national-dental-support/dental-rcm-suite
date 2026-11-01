@@ -1,0 +1,229 @@
+$text: var(--color-text);
+$text-muted: var(--color-text-muted);
+$accent: var(--color-info);
+$border: #e5ebf3;
+$card-bg: var(--color-surface);
+$reply-bg: var(--color-bg-subtle);
+
+.comments-section {
+  .comments-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 16px;
+
+    .section-icon { font-size: 20px; width: 20px; height: 20px; color: $accent; }
+    .comment-count { font-weight: 400; color: $text-muted; font-size: var(--font-size-md); }
+  }
+
+  .comments-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 0;
+    color: $text-muted;
+    font-size: var(--font-size-md);
+  }
+}
+
+/* -- Thread list ------------------------------------------------------- */
+.thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comment-thread {
+  border-bottom: 1px solid $border;
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+
+  &:last-child { border-bottom: none; margin-bottom: 0; }
+}
+
+/* -- Comment card ------------------------------------------------------ */
+.comment-card {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.comment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: $accent;
+  color: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--font-size-md);
+  flex-shrink: 0;
+}
+
+.reply-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: var(--font-size-xs);
+  background: var(--color-text-muted);
+}
+
+.comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+
+  .author-name {
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    color: $text;
+  }
+
+  .author-role {
+    font-size: 11px;
+    color: $accent;
+    background: rgba($accent, 0.08);
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .comment-date {
+    font-size: var(--font-size-xs);
+    color: $text-muted;
+  }
+
+  .edited-badge {
+    font-size: 11px;
+    color: $text-muted;
+    font-style: italic;
+  }
+}
+
+.comment-body {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: $text;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+
+  .action-btn {
+    font-size: var(--font-size-xs);
+    line-height: 1;
+    padding: 2px 8px;
+    min-height: 28px;
+    color: $text-muted;
+
+    mat-icon {
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+      margin-right: 2px;
+    }
+
+    &:hover { color: $accent; }
+  }
+
+  .delete-btn:hover { color: var(--color-danger); }
+}
+
+/* -- Replies ------------------------------------------------------------ */
+.replies {
+  margin-left: 48px;
+  padding-left: 16px;
+  border-left: 2px solid $border;
+}
+
+.reply-card {
+  padding: 8px 0;
+}
+
+/* -- Inline forms (reply / edit) --------------------------------------- */
+.reply-form {
+  margin-left: 48px;
+  padding: 8px 0 0 16px;
+}
+
+.reply-field,
+.edit-field {
+  width: 100%;
+  font-size: var(--font-size-sm);
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+}
+
+.inline-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+
+  button { font-size: var(--font-size-sm); }
+}
+
+/* -- New comment form -------------------------------------------------- */
+.new-comment-form {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid $border;
+
+  .comment-input {
+    flex: 1;
+
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+  }
+
+  button {
+    margin-top: 4px;
+    white-space: nowrap;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      margin-right: 4px;
+    }
+  }
+}
+
+/* -- Empty state ------------------------------------------------------- */
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: $text-muted;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    opacity: 0.4;
+    margin-bottom: 8px;
+  }
+
+  p { margin: 0; font-size: var(--font-size-md); }
+}
+
+/* -- Own comment highlight --------------------------------------------- */
+.own-comment {
+  .comment-avatar { background: var(--color-success); }
+}

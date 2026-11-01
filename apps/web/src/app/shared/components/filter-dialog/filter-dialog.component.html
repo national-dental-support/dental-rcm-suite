@@ -1,0 +1,124 @@
+<h2 mat-dialog-title class="dialog-title">
+  {{ title }}
+</h2>
+
+<mat-dialog-content class="filter-dialog">
+  <form [formGroup]="form" (ngSubmit)="apply()">
+    <div class="filter-grid" [style.--cols]="gridCols">
+      @for (f of fields; track trackByKey($index, f)) {
+        <!-- TEXT -->
+        @if (f.type === 'text') {
+          <mat-form-field
+            appearance="outline"
+            class="field"
+            [ngClass]="spanClass(f)">
+            <mat-label>{{ f.label }}</mat-label>
+            <input
+              matInput
+              [placeholder]="f.placeholder || ''"
+              [formControlName]="f.key" />
+              @if (f.hint) {
+                <mat-hint>{{ f.hint }}</mat-hint>
+              }
+            </mat-form-field>
+          }
+          <!-- BOOLEAN -->
+          @if (f.type === 'boolean' || f.type === 'checkbox') {
+            <mat-checkbox
+              class="field checkbox-field"
+              [ngClass]="spanClass(f)"
+              [formControlName]="f.key">
+              {{ f.label }}
+            </mat-checkbox>
+          }
+          <!-- MULTISELECT -->
+          @if (f.type === 'multiselect') {
+            <mat-form-field
+              appearance="outline"
+              class="field"
+              [ngClass]="spanClass(f)">
+              <mat-label>{{ f.label }}</mat-label>
+              <mat-select
+                [formControlName]="f.key"
+                [multiple]="true"
+                (selectionChange)="onMultiChange(f.key, $event)">
+                <mat-option
+                  [value]="ALL"
+                  [disabled]="((getOptions(f) | async) ?? []).length === 0">
+                  All
+                </mat-option>
+                @for (opt of (getOptions(f) | async); track trackByOpt($index, opt)) {
+                  <mat-option
+                    [value]="opt.value ?? opt">
+                    {{ opt.label ?? opt }}
+                  </mat-option>
+                }
+              </mat-select>
+              @if (f.hint) {
+                <mat-hint>{{ f.hint }}</mat-hint>
+              }
+            </mat-form-field>
+          }
+          <!-- DATE RANGE -->
+          @if (f.type === 'date-range') {
+            <div
+              class="field date-range"
+              [ngClass]="spanClass(f)"
+              [formGroupName]="f.key">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ f.label }} &#x2014; Start</mat-label>
+                <input
+                  matInput
+                  [matDatepicker]="pickerStart"
+                  formControlName="start"
+                  placeholder="Start" />
+                  <mat-datepicker-toggle matSuffix [for]="pickerStart"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerStart></mat-datepicker>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ f.label }} &#x2014; End</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="pickerEnd"
+                    formControlName="end"
+                    placeholder="End" />
+                    <mat-datepicker-toggle matSuffix [for]="pickerEnd"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerEnd></mat-datepicker>
+                  </mat-form-field>
+                </div>
+              }
+              <!-- NUMBER RANGE -->
+              @if (f.type === 'number-range') {
+                <div
+                  class="field number-range"
+                  [ngClass]="spanClass(f)"
+                  [formGroupName]="f.key">
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ f.label }} &#x2014; Min</mat-label>
+                    <input matInput type="number" formControlName="min" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ f.label }} &#x2014; Max</mat-label>
+                    <input matInput type="number" formControlName="max" />
+                  </mat-form-field>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="actions">
+            <button mat-stroked-button type="button" (click)="reset()">
+              {{ labels.reset }}
+            </button>
+
+            <span class="spacer"></span>
+
+            <button mat-button type="button" (click)="cancel()">
+              {{ labels.cancel }}
+            </button>
+            <button mat-flat-button color="primary" type="submit">
+              {{ labels.apply }}
+            </button>
+          </div>
+        </form>
+      </mat-dialog-content>

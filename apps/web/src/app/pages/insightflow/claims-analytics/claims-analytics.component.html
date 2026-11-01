@@ -1,0 +1,118 @@
+<div class="analytics-page">
+
+  <div *ngIf="loading" class="xen-loading">
+    <mat-spinner diameter="36"></mat-spinner>
+  </div>
+
+  <div *ngIf="error && !loading" class="xen-empty err">
+    <mat-icon>error_outline</mat-icon>
+    <span>Failed to load claims analytics.</span>
+    <button mat-stroked-button (click)="load()">Retry</button>
+  </div>
+
+  <ng-container *ngIf="data && !loading">
+
+    <!-- Date Filter -->
+    <div class="filter-row">
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>Start Date</mat-label>
+        <input matInput type="date" [(ngModel)]="startDate">
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>End Date</mat-label>
+        <input matInput type="date" [(ngModel)]="endDate">
+      </mat-form-field>
+      <button mat-flat-button color="primary" (click)="applyFilter()">Apply</button>
+      <button mat-stroked-button type="button" (click)="exportProcedures()">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="kpi-row">
+      <div class="kpi-card primary">
+        <div class="kpi-label">Total Claims</div>
+        <div class="kpi-value">{{ data.summary.totalClaims | number }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Billed</div>
+        <div class="kpi-value">{{ data.summary.totalBilled | currency:'USD':'symbol':'1.0-0' }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Paid</div>
+        <div class="kpi-value">{{ data.summary.totalPaid | currency:'USD':'symbol':'1.0-0' }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Per Claim</div>
+        <div class="kpi-value">{{ data.summary.avgPerClaim | currency:'USD':'symbol':'1.0-0' }}</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+
+      <div class="chart-card">
+        <div class="chart-title">Payer Mix (by Total Paid)</div>
+        <apx-chart
+          [series]="payerPieOptions.series"
+          [chart]="payerPieOptions.chart"
+          [labels]="payerPieOptions.labels"
+          [legend]="payerPieOptions.legend"
+          [dataLabels]="payerPieOptions.dataLabels"
+          [tooltip]="payerPieOptions.tooltip">
+        </apx-chart>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Monthly Billed vs Paid Trend</div>
+        <apx-chart
+          [series]="trendChartOptions.series"
+          [chart]="trendChartOptions.chart"
+          [xaxis]="trendChartOptions.xaxis"
+          [stroke]="trendChartOptions.stroke"
+          [dataLabels]="trendChartOptions.dataLabels"
+          [tooltip]="trendChartOptions.tooltip"
+          [legend]="trendChartOptions.legend">
+        </apx-chart>
+      </div>
+
+    </div>
+
+    <!-- Top Procedures Table -->
+    <div class="table-card">
+      <div class="table-title">Top Procedures by Revenue</div>
+      <table mat-table [dataSource]="data.topProcedures" class="xen-table">
+
+        <ng-container matColumnDef="procedureCode">
+          <th mat-header-cell *matHeaderCellDef>Code</th>
+          <td mat-cell *matCellDef="let r"><strong>{{ r.procedureCode }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="procedureDescription">
+          <th mat-header-cell *matHeaderCellDef>Description</th>
+          <td mat-cell *matCellDef="let r">{{ r.procedureDescription }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="claimCount">
+          <th mat-header-cell *matHeaderCellDef class="num">Claims</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.claimCount | number }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="avgFee">
+          <th mat-header-cell *matHeaderCellDef class="num">Avg Fee</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.avgFee | currency:'USD':'symbol':'1.0-0' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="totalRevenue">
+          <th mat-header-cell *matHeaderCellDef class="num">Total Revenue</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.totalRevenue | currency:'USD':'symbol':'1.0-0' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="procedureColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: procedureColumns;" class="xen-row"></tr>
+      </table>
+    </div>
+
+  </ng-container>
+
+</div>

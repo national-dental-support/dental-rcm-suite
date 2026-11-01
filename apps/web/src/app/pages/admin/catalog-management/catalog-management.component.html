@@ -1,0 +1,314 @@
+<div class="catalog-mgmt">
+
+  <!-- Toolbar -->
+  <div class="catalog-toolbar">
+    <div class="catalog-toolbar__info">
+      <span class="badge badge--active">{{ activeCount }} Active</span>
+      @if (pendingCount > 0) {
+        <span class="badge badge--pending">{{ pendingCount }} Pending</span>
+      }
+      @if (archivedCount > 0) {
+        <span class="badge badge--archived">{{ archivedCount }} Archived</span>
+      }
+    </div>
+    <button mat-stroked-button (click)="sync()" [disabled]="syncing || loading">
+      <mat-icon>sync</mat-icon>
+      {{ syncing ? 'Syncing&#x2026;' : 'Sync from Source' }}
+    </button>
+  </div>
+
+  <p class="catalog-hint">
+    Sync discovers {{ label | lowercase }} from live data. New items arrive as <strong>Pending</strong> &#x2014; approve
+    them to make them available in the global filter and user provisioning form.
+    Archive to hide without deleting.
+  </p>
+
+  <!-- Manual add -->
+  <div class="manual-add">
+    <mat-form-field appearance="outline" class="manual-add__field">
+      <mat-label>Manually add {{ label | lowercase | slice:0:-1 }}</mat-label>
+      <input matInput [formControl]="addNameCtrl" (keyup.enter)="addManual()" />
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="addManual()" [disabled]="addNameCtrl.invalid || adding">
+      <mat-icon>add</mat-icon> Add
+    </button>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <!-- Tabs: Pending / Active / Archived -->
+  <mat-tab-group animationDuration="0ms" class="status-tabs">
+
+    <!-- -- PENDING --------------------------------------------- -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Pending
+        @if (pendingCount > 0) {
+          <span class="tab-badge tab-badge--warn">{{ pendingCount }}</span>
+        }
+      </ng-template>
+
+      <app-section-card [title]="'Pending'">
+        @if (pendingCount > 0) {
+          <div class="tab-actions">
+            <button mat-stroked-button color="primary" (click)="approveSelected()" [disabled]="pendingSelection.isEmpty()">
+              Approve Selected ({{ pendingSelection.selected.length }})
+            </button>
+            <button mat-flat-button color="primary" (click)="approveAllPending()">
+              Approve All {{ pendingCount }}
+            </button>
+          </div>
+        }
+
+        @if (pendingCount === 0 && !loading) {
+          <div class="empty-state">
+            <mat-icon>check_circle</mat-icon>
+            <span>No pending {{ label | lowercase }}. Run "Sync from Source" to discover new items.</span>
+          </div>
+        }
+        @if (pendingCount > 0) {
+          <rp-advanced-table
+            [data]="pendingItems"
+            [columns]="pendingColumns"
+            [loading]="loading"
+            [enableGlobalSearch]="true"
+            globalSearchPlaceholder="Search pending"
+            [enablePagination]="true"
+            [pageSize]="25"
+            [pageSizeOptions]="[25, 50, 100]"
+            [enableExport]="false"
+            [autoGenerateValueLists]="true"
+            [enableRowHover]="true"
+            [stickyHeader]="false"
+            idField="id"
+            >
+            <!-- Select all (header checkbox) is NOT supported by rpCell; put it in a custom column cell only.
+            We'll keep "select all" in the tab-actions row with a checkbox. -->
+            <ng-template rpCell="select" let-row="row">
+              <mat-checkbox
+                (click)="$event.stopPropagation()"
+                (change)="pendingSelection.toggle(row)"
+                [checked]="pendingSelection.isSelected(row)"
+              ></mat-checkbox>
+            </ng-template>
+            <ng-template rpCell="source" let-row="row">
+              <span class="source-chip">{{ row.source }}</span>
+            </ng-template>
+            <ng-template rpCell="created_at" let-row="row">
+              {{ formatDate(row.created_at) }}
+            </ng-template>
+            <ng-template rpCell="actions" let-row="row">
+              <div class="actions-cell">
+                <button mat-stroked-button color="primary" (click)="approve(row); $event.stopPropagation()">Approve</button>
+                <button mat-stroked-button color="accent" (click)="openMapPanel(row); $event.stopPropagation()">Map to&#x2026;</button>
+                <button mat-stroked-button color="warn" (click)="archive(row); $event.stopPropagation()">Archive</button>
+              </div>
+            </ng-template>
+          </rp-advanced-table>
+        }
+
+        <!-- Map-to inline panel -->
+        @if (showMapPanel && mappingTarget) {
+          <div class="map-panel">
+            <div class="map-panel__header">
+              <span class="map-panel__title">
+                Map <strong>"{{ mappingTarget.name }}"</strong> to a canonical name:
+              </span>
+              <button mat-icon-button (click)="cancelMap()" matTooltip="Cancel">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <p class="map-panel__hint">
+              Select a {{ label | lowercase }} below to use as the canonical name. Pending items will be
+              auto-approved. The dirty name will be removed from Pending and future syncs will resolve to the canonical.
+            </p>
+            <div class="map-panel__list">
+              @if (mapCandidates.length === 0) {
+                <div class="empty-state">
+                  <span>No other {{ label | lowercase }} available to map to.</span>
+                </div>
+              }
+              @for (item of mapCandidates; track item) {
+                <button
+                  class="map-panel__option"
+                  [class.map-panel__option--pending]="item.status === 'pending'"
+                  mat-stroked-button
+                  (click)="confirmMap(item)"
+                  >
+                  {{ item.name }}
+                  @if (item.status === 'pending') {
+                    <span class="map-panel__option-badge">pending</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+      </app-section-card>
+    </mat-tab>
+
+    <!-- -- ACTIVE ---------------------------------------------- -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Active
+        <span class="tab-badge tab-badge--active">{{ activeCount }}</span>
+      </ng-template>
+      <app-section-card [title]="'Active'">
+        @if (activeCount > 0) {
+          <div class="tab-actions">
+            <button mat-stroked-button color="warn" (click)="archiveSelected()" [disabled]="activeSelection.isEmpty()">
+              Archive Selected ({{ activeSelection.selected.length }})
+            </button>
+          </div>
+        }
+
+        @if (activeCount === 0 && !loading) {
+          <div class="empty-state">
+            <mat-icon>info</mat-icon>
+            <span>No active {{ label | lowercase }}. Approve items from the Pending tab.</span>
+          </div>
+        }
+
+        @if (activeCount > 0) {
+          <rp-advanced-table
+            [data]="activeItems"
+            [columns]="activeColumns"
+            [loading]="loading"
+            [enableGlobalSearch]="true"
+            globalSearchPlaceholder="Search active"
+            [enablePagination]="true"
+            [pageSize]="25"
+            [pageSizeOptions]="[25, 50, 100]"
+            [enableExport]="false"
+            [autoGenerateValueLists]="true"
+            idField="id"
+            >
+            <ng-template rpCell="select" let-row="row">
+              <mat-checkbox
+                (click)="$event.stopPropagation()"
+                (change)="activeSelection.toggle(row)"
+                [checked]="activeSelection.isSelected(row)"
+              ></mat-checkbox>
+            </ng-template>
+            <ng-template rpCell="source" let-row="row">
+              <span class="source-chip" [class.source-chip--manual]="row.source === 'manual'">
+                {{ row.source }}
+              </span>
+            </ng-template>
+            <ng-template rpCell="created_at" let-row="row">
+              {{ formatDate(row.created_at) }}
+            </ng-template>
+            <ng-template rpCell="actions" let-row="row">
+              <div class="actions-cell">
+                <button mat-stroked-button color="warn" (click)="archive(row); $event.stopPropagation()">Archive</button>
+              </div>
+            </ng-template>
+          </rp-advanced-table>
+        }
+      </app-section-card>
+    </mat-tab>
+
+    <!-- -- ARCHIVED -------------------------------------------- -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Archived
+        @if (archivedCount > 0) {
+          <span class="tab-badge tab-badge--archived">{{ archivedCount }}</span>
+        }
+      </ng-template>
+      <app-section-card [title]="'Archived'">
+        @if (archivedCount === 0 && !loading) {
+          <div class="empty-state">
+            <mat-icon>archive</mat-icon>
+            <span>No archived {{ label | lowercase }}.</span>
+          </div>
+        }
+
+        @if (archivedCount > 0) {
+          <rp-advanced-table
+            [data]="archivedItems"
+            [columns]="archivedColumns"
+            [loading]="loading"
+            [enableGlobalSearch]="true"
+            globalSearchPlaceholder="Search archived"
+            [enablePagination]="true"
+            [pageSize]="25"
+            [pageSizeOptions]="[25, 50, 100]"
+            [enableExport]="false"
+            [autoGenerateValueLists]="true"
+            idField="id"
+            >
+            <ng-template rpCell="source" let-row="row">
+              <span class="source-chip">{{ row.source }}</span>
+            </ng-template>
+            <ng-template rpCell="created_at" let-row="row">
+              {{ formatDate(row.created_at) }}
+            </ng-template>
+            <ng-template rpCell="actions" let-row="row">
+              <div class="actions-cell">
+                <button mat-stroked-button color="primary" (click)="restore(row); $event.stopPropagation()">Restore</button>
+              </div>
+            </ng-template>
+          </rp-advanced-table>
+        }
+      </app-section-card>
+    </mat-tab>
+
+    <!-- -- ALIASES -------------------------------------------- -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Aliases
+        @if (aliasCount > 0) {
+          <span class="tab-badge tab-badge--alias">{{ aliasCount }}</span>
+        }
+      </ng-template>
+      <app-section-card [title]="'Alias Mappings'">
+        <p class="catalog-hint" style="margin-top:0">
+          Dirty names from the PMS that have been mapped to a canonical name.
+          Removing an alias causes the dirty name to re-appear in Pending on the next sync.
+        </p>
+
+        @if (aliasCount === 0 && !loading) {
+          <div class="empty-state">
+            <mat-icon>link_off</mat-icon>
+            <span>No aliases yet. Use "Map to&#x2026;" on a pending item to create one.</span>
+          </div>
+        }
+
+        @if (aliasCount > 0) {
+          <rp-advanced-table
+            [data]="aliasItems"
+            [columns]="aliasColumns"
+            [loading]="loading"
+            [enableGlobalSearch]="true"
+            globalSearchPlaceholder="Search aliases"
+            [enablePagination]="true"
+            [pageSize]="25"
+            [pageSizeOptions]="[25, 50, 100]"
+            [enableExport]="false"
+            [autoGenerateValueLists]="true"
+            idField="id"
+            >
+            <ng-template rpCell="created_at" let-row="row">
+              {{ formatDate(row.created_at) }}
+            </ng-template>
+            <ng-template rpCell="actions" let-row="row">
+              <button mat-icon-button color="warn" (click)="deleteAlias(row); $event.stopPropagation()"
+                matTooltip="Remove alias &#x2014; dirty name re-appears in Pending on next sync">
+                <mat-icon>link_off</mat-icon>
+              </button>
+            </ng-template>
+          </rp-advanced-table>
+        }
+      </app-section-card>
+    </mat-tab>
+
+  </mat-tab-group>
+
+  @if (loading) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  }
+</div>

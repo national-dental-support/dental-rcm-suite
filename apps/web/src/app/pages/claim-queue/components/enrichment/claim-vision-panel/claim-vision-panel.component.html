@@ -1,0 +1,55 @@
+<mat-expansion-panel class="enrichment-panel claim-vision-panel">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon class="panel-icon">visibility</mat-icon>
+      ClaimVision &#x2014; Rejection Rules
+    </mat-panel-title>
+    @if (data && !loading) {
+      <mat-panel-description>
+        {{ data.rejected ? (data.rules.length + ' rule(s) triggered') : 'Not rejected' }}
+      </mat-panel-description>
+    }
+  </mat-expansion-panel-header>
+
+  @if (loading) {
+    <div class="panel-loading">
+      <mat-spinner diameter="28"></mat-spinner>
+    </div>
+  }
+
+  @if (notSubscribed) {
+    <div class="panel-upgrade">
+      <mat-icon>lock</mat-icon>
+      <span>Subscribe to Claim Vision to unlock rejection rule insights.</span>
+    </div>
+  }
+
+  @if (error && !notSubscribed) {
+    <div class="panel-error">Failed to load ClaimVision data.</div>
+  }
+
+  @if (!loading && !error && data) {
+    <div>
+      @if (!data.rejected) {
+        <div class="panel-empty">No rejection rules triggered for this claim.</div>
+      }
+      @if (data.rejected) {
+        <div>
+          @for (rule of data.rules; track rule) {
+            <div class="rule-row">
+              <mat-icon class="rule-icon">gpp_bad</mat-icon>
+              <div class="rule-content">
+                <div class="rule-name">{{ rule.ruleName }}</div>
+                <div class="rule-desc">{{ rule.description }}</div>
+                <div class="rule-meta">
+                  <span class="category-chip">{{ rule.category }}</span>
+                  <span class="rule-date">{{ rule.rejectedDate | date:'mediumDate' }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</mat-expansion-panel>

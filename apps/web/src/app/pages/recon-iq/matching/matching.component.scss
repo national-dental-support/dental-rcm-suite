@@ -1,0 +1,486 @@
+/* Tokens (same as InsightFlow) */
+$bg:            var(--color-bg-subtle);
+$card-bg:       var(--color-surface);
+$card-border:   #e7edf5;
+$text:          var(--color-text);
+$text-muted:    var(--color-text-muted);
+
+:host { display: block; background: var(--rcm-bg, #{$bg}); min-height: 100vh; }
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  padding: 24px;
+  background: var(--rcm-bg, var(--color-bg-subtle)); /* matches Denial Resolution Dashboard */
+  min-height: 100%; }
+
+
+/* Toolbar card */
+// .toolbar-card {
+//   display: flex;
+//   flex-direction: column;
+//   justify-content: space-between;
+//   gap: 16px;
+//   background: $card-bg;
+//   border: 1px solid $card-border;
+//   border-radius: 14px;
+//   padding: 12px 14px;           /* +2px to match screenshot height */
+// }
+
+/* Tabs (left) */
+.search-bar { display: flex; flex-direction: row; justify-content: flex-end; align-items: center; gap: 22px; padding-left: 8px; }
+.tab {
+  border: 0; background: transparent; padding: 12px 6px;  /* a bit taller */
+  color: var(--color-text-muted); cursor: pointer;
+  position: relative; transition: color .12s ease;
+}
+
+
+/* Tools (right) */
+.tools { display: flex; flex-direction: row; align-items: flex-end; gap: 12px; padding-right: 8px; }
+
+/* Soft search pill */
+.soft-search {
+  display: flex; align-items: center; gap: 8px;
+  background: #f6f8fd;
+  border: 1px solid $card-border;
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-width: 460px;               /* matches screenshot */
+  height: 40px;                   /* fixed height like pill */
+}
+.search-icon { color: #11182788; font-size: 18px; height: 18px; width: 18px; }
+.search-input {
+  border: 0; outline: 0; background: transparent; width: 100%;
+  font: inherit; color: $text; font-size: var(--font-size-md);
+  &::placeholder { color: $text-muted; }
+}
+
+/* Filter button */
+.filter-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px var(--radius-md); border-radius: 10px; border: 0;
+  background: #0BA5EC; color: var(--color-surface); font-weight: 700; cursor: pointer;
+  height: 40px;                         /* equal height to search pill */
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+  transition: filter .12s ease, transform .12s ease;
+}
+.filter-btn mat-icon { font-size: 18px; height: 18px; width: 18px; }
+.filter-btn .caret { margin-left: 2px; }
+.filter-btn:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+/* Card shell for table */
+.menu-card {
+  margin: 8px 24px 24px;
+  background: $card-bg;
+  border: 1px solid $card-border;
+  border-radius: var(--radius-lg); overflow: hidden;
+}
+.menu-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px;
+  h2 { margin: 0; font-size: 18px; font-weight: 700; color: $text; }
+}
+.table-wrap { padding: 10px 16px 16px; }
+
+/* Table borders to match design */
+th[mat-header-cell] { color: $text; font-weight: 700; border-bottom-color: $card-border !important; }
+td[mat-cell], th[mat-header-cell] { border-bottom: 1px solid $card-border; }
+
+/* Status chips (kept from earlier) */
+mat-chip.overdue   { background:  var(--color-danger); color: var(--color-danger); font-weight: 600; }
+mat-chip.pending   { background:  var(--color-warning); color: var(--color-warning); font-weight: 600; }
+mat-chip.in\ progress { background:  var(--color-info); color: var(--color-info); font-weight: 600; }
+mat-chip.completed { background:  var(--color-success); color: var(--color-success); font-weight: 600; }
+
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  mat-progress-bar {
+    flex: 1;
+    height: 6px; // thinner bar
+    border-radius: 999px;
+  }
+
+  .progress-label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted); // slate-ish
+    min-width: 3rem;
+    text-align: right;
+  }
+}
+
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.match-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+
+  &__summary {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  &__pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: var(--font-size-xs);
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.7);
+
+    &--active {
+      background: rgba(25, 118, 210, 0.08);
+      border-color: rgba(25, 118, 210, 0.25);
+      color: rgba(25, 118, 210, 0.95);
+      font-weight: 600;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+/* [ok] Selected row highlight inside rp-advanced-table */
+:host ::ng-deep tr.rp-row--selected td {
+  background: rgba(25, 118, 210, 0.10) !important;
+}
+
+:host ::ng-deep tr.rp-row--selected:hover td {
+  background: rgba(25, 118, 210, 0.14) !important;
+}
+
+
+
+
+/* One unified surface */
+.toolbar-shell {
+  background: var(--color-surface);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 14px;
+  overflow: hidden; /* keeps inner divider edges clean */
+}
+
+/* Top row becomes just padding, no border */
+.toolbar-shell__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+/* Filters region: looks like part of same card */
+.toolbar-shell__filters {
+  border-top: 1px solid rgba(17, 24, 39, 0.08);
+  background: #fbfcfe; /* subtle inset so it reads as a region */
+  padding: 12px 16px 14px;
+}
+
+/* Remove "card" styling from inner pieces if you still have them */
+.cmdbar { background: transparent; border: 0; padding: 0; border-radius: 0; }
+.filtersPanel { background: transparent; border: 0; padding: 0; border-radius: 0; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .toolbar-shell__top {
+    align-items: flex-start;
+  }
+  .cmdbar__right {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .cmdbar__search { width: 100%; }
+}
+
+/* Command bar */
+.cmdbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0; /* only top corners, since bottom is shared with filters region */
+}
+
+.cmdbar__left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 240px;
+}
+
+.cmdbar__title {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.cmdbar__hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.cmdbar__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Search field: responsive + consistent */
+.cmdbar__search {
+  width: clamp(280px, 42vw, 560px);
+  min-width: 220px;
+}
+
+::ng-deep .cmdbar__search .mat-mdc-form-field-subscript-wrapper {
+  display: none; /* removes extra height */
+}
+
+::ng-deep .cmdbar__search .mdc-text-field--outlined {
+  background: var(--color-bg-subtle);
+  border-color: pink !important;
+}
+
+/* Buttons */
+.cmdbar__filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  .cmdbar__caret {
+    opacity: 0.7;
+    transition: transform 120ms ease;
+  }
+
+  &.is-open .cmdbar__caret {
+    transform: rotate(180deg);
+  }
+}
+
+.cmdbar__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--color-surface);
+
+  &.is-zero {
+    display: none;
+  }
+}
+
+.cmdbar__clearBtn {
+  white-space: nowrap;
+}
+
+/* Active filter chips row */
+.filterChips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 12px;
+  background: var(--color-surface);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: var(--radius-md);
+}
+
+.filterChips__label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-gray-600);
+}
+
+/* Filters panel */
+.filtersPanel {
+  background: var(--color-surface);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+  padding: 12px;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .cmdbar {
+    align-items: flex-start;
+  }
+  .cmdbar__right {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .cmdbar__search {
+    width: 100%;
+  }
+}
+
+/* [ok] Fix: when the label is NOT floating, center it vertically in 40px */
+.cmdbar__search {
+  width: clamp(280px, 42vw, 560px);
+  min-width: 220px;
+}
+
+/* Remove extra subscript height (you already do this) */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* Make it look like the filter inputs */
+:host ::ng-deep .cmdbar__search .mdc-text-field--outlined {
+  background: var(--color-bg-subtle);           /* same tint */
+  border-radius: var(--radius-md);           /* same roundness */
+   /* vertical centering for 40px control */
+}
+
+/* Match the outline border alpha */
+:host ::ng-deep .cmdbar__search .mdc-notched-outline__leading,
+:host ::ng-deep .cmdbar__search .mdc-notched-outline__notch,
+:host ::ng-deep .cmdbar__search .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.14) !important;
+}
+
+/* Hover border */
+:host ::ng-deep .cmdbar__search:hover .mdc-notched-outline__leading,
+:host ::ng-deep .cmdbar__search:hover .mdc-notched-outline__notch,
+:host ::ng-deep .cmdbar__search:hover .mdc-notched-outline__trailing {
+  border-color: rgba(15, 23, 42, 0.28) !important;
+}
+
+/* Focus border (same feel as filters) */
+:host ::ng-deep .cmdbar__search.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .cmdbar__search.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .cmdbar__search.mat-focused .mdc-notched-outline__trailing {
+  border-color: rp-primary-600 !important;
+}
+
+/* Input typography */
+:host ::ng-deep .cmdbar__search input.mat-mdc-input-element {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  padding-top: 6px !important;
+}
+
+/* Placeholder typography (match filters vibe) */
+:host ::ng-deep .cmdbar__search input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+/* Prefix icon sizing + color to match */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-icon-prefix mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  color: var(--color-text-muted);
+}
+
+/* Suffix clear button sizing */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-icon-suffix mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
+/* Optional: align height/density with filter fields */
+:host ::ng-deep .cmdbar__search .mat-mdc-form-field-infix {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+/* -- Matched / Suggestions panels --------------------------------------- */
+.matched-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.suggestions-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.matched-table,
+.suggestions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+  margin-top: 8px;
+
+  th, td {
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-bg-muted);
+  }
+  th { font-weight: 600; background: var(--color-bg-subtle); }
+  tr:hover td { background: var(--color-bg-subtle); }
+}
+
+.matched-loading { display: flex; justify-content: center; padding: 24px; }
+.empty-matched   { text-align: center; color: var(--color-text-subtle); padding: 24px; margin: 0; }
+.mono            { font-family: monospace; font-size: 0.8rem; }
+
+.conf-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 100px;
+}
+
+.conf-bar {
+  height: 8px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+
+  &--green  { background: var(--color-success); }
+  &--yellow { background: var(--color-warning); }
+  &--red    { background: var(--color-danger); }
+}
+
+.conf-label { font-size: 0.75rem; white-space: nowrap; }
+
+.ready-to-post-cta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--color-primary, #1976d2) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary, #1976d2) 30%, transparent);
+  border-radius: var(--radius-md, 8px);
+  margin-bottom: 1rem;
+
+  span { flex: 1; font-size: 0.9rem; }
+}

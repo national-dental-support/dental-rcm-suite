@@ -1,0 +1,57 @@
+@use '../enrichment-panel.shared';
+
+.insightflow-panel .panel-icon { color: var(--color-warning); }
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.stat-card {
+  background: #fff8e1;
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+
+  .stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-warning);
+  }
+
+  .stat-label {
+    font-size: var(--font-size-xs);
+    color: rgba(0,0,0,0.55);
+    margin-top: 4px;
+  }
+}
+
+.top-payers {
+  grid-column: 1 / -1;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  padding-top: 12px;
+}
+
+.section-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: rgba(0,0,0,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.payer-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+
+  .payer-count {
+    font-weight: 500;
+    color: var(--color-danger);
+  }
+}

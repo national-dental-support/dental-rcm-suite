@@ -1,0 +1,714 @@
+<div class="remediation-admin">
+  <mat-tab-group animationDuration="0ms">
+
+    <!-- ===========================================================
+    Tab 1: Remediation Steps Library
+    =========================================================== -->
+    <mat-tab label="Remediation Steps Library">
+      <app-section-card class="tab-content" [title]="'Remediation Steps Library'">
+
+        <!-- -- Overview: all step sets -- -->
+        @if (showAllSets) {
+          <div class="library-toolbar">
+            <div class="toolbar-row">
+              <span class="overview-title">All Step Sets</span>
+              <span class="spacer"></span>
+              <button mat-flat-button color="primary" (click)="newSetFromOverview()">
+                <mat-icon>add</mat-icon> New Step Set
+              </button>
+            </div>
+          </div>
+          @if (allSetsLoading) {
+            <div class="loading-row">
+              <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            </div>
+          }
+          @if (!allSetsLoading && allSets.length === 0) {
+            <div class="empty-state">
+              <mat-icon>library_books</mat-icon>
+              <p>No SOP step sets yet. Click <strong>New Step Set</strong> to create one.</p>
+            </div>
+          }
+          @if (!allSetsLoading && allSets.length > 0) {
+            <rp-advanced-table
+              [data]="allSets"
+              [columns]="allSetsColumns"
+              [loading]="allSetsLoading"
+              [enableGlobalSearch]="true"
+              globalSearchPlaceholder="Search step sets..."
+              [enablePagination]="true"
+              [pageSize]="25"
+              [pageSizeOptions]="[25, 50, 100]"
+              [enableExport]="false"
+              [enableRowHover]="true"
+              (rowClicked)="editSetFromOverview($event)"
+              >
+              <!-- Status chip -->
+              <ng-template rpCell="status" let-row="row">
+                <span class="status-chip" [class.active]="row.status === 'active'" [class.draft]="row.status === 'draft'" [class.archived]="row.status === 'archived'">
+                  {{ row.status | titlecase }}
+                </span>
+              </ng-template>
+              <!-- Role display -->
+              <ng-template rpCell="role" let-row="row">
+                {{ row.role === 'ar-specialist' ? 'AR Specialist' : (row.role | titlecase) }}
+              </ng-template>
+              <!-- Inline row actions -->
+              <ng-template rpCell="actions" let-row="row">
+                <div class="row-actions">
+                  <button mat-icon-button matTooltip="Edit" (click)="editSetFromOverview(row); $event.stopPropagation()">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" matTooltip="Delete" (click)="deleteSet(row); $event.stopPropagation()">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </ng-template>
+            </rp-advanced-table>
+          }
+        }
+
+        <!-- -- Editor -- -->
+        @if (!showAllSets) {
+          <!-- Toolbar -->
+          <div class="library-toolbar">
+            <div class="toolbar-row">
+              <!-- Back to overview -->
+              <button mat-icon-button (click)="showAllSets = true; loadAllSets()" matTooltip="Back to all step sets">
+                <mat-icon>arrow_back</mat-icon>
+              </button>
+              <!-- Reason code selector -->
+              <mat-form-field appearance="outline" class="code-field">
+                <mat-label>Reason Code</mat-label>
+                <mat-select
+                  [ngModel]="selectedReasonCode"
+                  (ngModelChange)="onReasonCodeChange($event)"
+                  >
+                  @for (code of reasonCodes; track code) {
+                    <mat-option [value]="code">
+                      {{ code }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <!-- Add custom code -->
+              @if (!showNewCodeInput) {
+                <button mat-stroked-button (click)="showNewCodeInput = true">
+                  <mat-icon>add</mat-icon> Add Code
+                </button>
+              }
+              @if (showNewCodeInput) {
+                <div class="new-code-row">
+                  <input
+                    matInput
+                    [(ngModel)]="newCodeInput"
+                    placeholder="e.g. CO45"
+                    class="new-code-input"
+                    (keydown.enter)="addCustomCode()"
+                    />
+                    <button mat-flat-button color="primary" (click)="addCustomCode()">Add</button>
+                    <button mat-icon-button (click)="showNewCodeInput = false; newCodeInput = ''">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                }
+                <!-- Role toggle -->
+                <mat-button-toggle-group
+                  [ngModel]="selectedRole"
+                  (ngModelChange)="onRoleChange($event)"
+                  class="role-toggle"
+                  >
+                  <mat-button-toggle value="ar-specialist">AR Specialist</mat-button-toggle>
+                  <mat-button-toggle value="manager">Manager</mat-button-toggle>
+                </mat-button-toggle-group>
+                <span class="spacer"></span>
+                <!-- Delete set -->
+                @if (activeSet && !historyOpen) {
+                  <button
+                    mat-stroked-button
+                    color="warn"
+                    (click)="deleteSet(activeSet)"
+                    matTooltip="Permanently delete this step set"
+                    >
+                    <mat-icon>delete</mat-icon> Delete
+                  </button>
+                }
+                <!-- History toggle -->
+                @if (activeSet && !historyOpen) {
+                  <button
+                    mat-stroked-button
+                    (click)="openHistory()"
+                    >
+                    <mat-icon>history</mat-icon> History
+                  </button>
+                }
+                @if (historyOpen) {
+                  <button
+                    mat-stroked-button
+                    (click)="historyOpen = false"
+                    >
+                    <mat-icon>edit</mat-icon> Editor
+                  </button>
+                }
+              </div>
+              <!-- Status bar -->
+              @if (activeSet) {
+                <div class="status-bar">
+                  <span class="status-chip" [class.active]="activeSet.status === 'active'" [class.draft]="activeSet.status === 'draft'">
+                    {{ activeSet.status | titlecase }}
+                  </span>
+                  <span class="status-meta">v{{ activeSet.version }}</span>
+                  @if (activeSet.updated_at) {
+                    <span class="status-meta">
+                      Last updated {{ activeSet.updated_at | date:'MMM d, y' }}
+                      @if (activeSet.updated_by) {
+                        <span>by {{ activeSet.updated_by }}</span>
+                      }
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+            <!-- Loading -->
+            @if (loading) {
+              <div class="loading-row">
+                <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+              </div>
+            }
+            <!-- Prompt to select a code -->
+            @if (!loading && !selectedReasonCode) {
+              <div class="empty-state">
+                <mat-icon>library_books</mat-icon>
+                <p>Select a reason code to view or edit its remediation steps.</p>
+              </div>
+            }
+            <!-- Editor (when not in history mode) -->
+            @if (selectedReasonCode && !historyOpen && !loading) {
+              <div>
+                <!-- No set yet -->
+                @if (!activeSet && editingSteps.length === 0) {
+                  <div class="empty-state">
+                    <p>No remediation steps found for <strong>{{ selectedReasonCode }}</strong> ({{ selectedRole }}).</p>
+                    <button mat-flat-button color="primary" (click)="createNewSet()">
+                      <mat-icon>add</mat-icon> Create Step Set
+                    </button>
+                  </div>
+                }
+                <!-- Step editor -->
+                @if (editingSteps.length > 0) {
+                  <div>
+                    @for (step of editingSteps; track $index; let i = $index) {
+                      <div
+                        class="step-card"
+                        >
+                        <div class="step-card-header">
+                          <span class="step-num">Step {{ i + 1 }}</span>
+                          <div class="step-actions">
+                            <button mat-icon-button [disabled]="i === 0" (click)="moveStep(i, -1)" title="Move up">
+                              <mat-icon>arrow_upward</mat-icon>
+                            </button>
+                            <button mat-icon-button [disabled]="i === editingSteps.length - 1" (click)="moveStep(i, 1)" title="Move down">
+                              <mat-icon>arrow_downward</mat-icon>
+                            </button>
+                            <button mat-icon-button color="warn" (click)="removeStep(i)" title="Delete step">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          </div>
+                        </div>
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Step Title</mat-label>
+                          <input matInput [(ngModel)]="step.title" placeholder="e.g. Verify COB" />
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Body / Instructions</mat-label>
+                          <textarea
+                            matInput
+                            [(ngModel)]="step.body"
+                            rows="3"
+                            placeholder="Detailed instructions for this step..."
+                          ></textarea>
+                        </mat-form-field>
+                        <mat-checkbox [(ngModel)]="step.required">Required step</mat-checkbox>
+                        <!-- Checklist items -->
+                        <div class="checklist-section">
+                          <p class="checklist-label">Checklist items</p>
+                          @for (item of step.checklist; track $index; let ci = $index) {
+                            <div
+                              class="checklist-row"
+                              >
+                              <mat-form-field appearance="outline" class="checklist-field">
+                                <input matInput [(ngModel)]="item.item_text" placeholder="Checklist item..." />
+                              </mat-form-field>
+                              <button mat-icon-button color="warn" (click)="removeChecklistItem(step, ci)">
+                                <mat-icon>remove_circle_outline</mat-icon>
+                              </button>
+                            </div>
+                          }
+                          <button mat-stroked-button (click)="addChecklistItem(step)" class="add-checklist-btn">
+                            <mat-icon>add</mat-icon> Add checklist item
+                          </button>
+                        </div>
+                      </div>
+                    }
+                    <!-- Add step -->
+                    <button mat-stroked-button (click)="addStep()" class="add-step-btn">
+                      <mat-icon>add</mat-icon> Add Step
+                    </button>
+                    <!-- Footer actions -->
+                    <div class="editor-footer">
+                      <button
+                        mat-raised-button
+                        color="primary"
+                        (click)="saveSet()"
+                        [disabled]="saving"
+                        >
+                        <mat-icon>save</mat-icon>
+                        {{ saving ? 'Saving...' : 'Save Draft' }}
+                      </button>
+                      <button
+                        mat-raised-button
+                        color="accent"
+                        (click)="publishSet()"
+                        [disabled]="saving || !activeSet"
+                        matTooltip="Save as draft first, then publish to make these steps visible to workers"
+                        >
+                        <mat-icon>publish</mat-icon>
+                        Publish
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+            <!-- History view -->
+            @if (historyOpen && !loading) {
+              <div class="history-panel">
+                <h3>Version History</h3>
+                <div class="history-layout">
+                  <!-- Version list -->
+                  <div class="history-list">
+                    @for (h of historyEntries; track h) {
+                      <div
+                        class="history-entry"
+                        [class.selected]="historySelectedVersion?.id === h.id"
+                        (click)="selectHistoryVersion(h)"
+                        >
+                        <span class="history-version">v{{ h.version }}</span>
+                        <span class="history-meta">
+                          {{ h.changed_at | date:'MMM d, y HH:mm' }}
+                          <br />{{ h.changed_by }}
+                        </span>
+                      </div>
+                    }
+                    @if (historyEntries.length === 0) {
+                      <div class="no-history">
+                        No history available.
+                      </div>
+                    }
+                  </div>
+                  <!-- Snapshot viewer -->
+                  @if (historySelectedVersion) {
+                    <div class="history-snapshot">
+                      <h4>Snapshot &#x2014; v{{ historySelectedVersion.version }}</h4>
+                      @for (step of getParsedSnapshot(historySelectedVersion.snapshot); track step; let i = $index) {
+                        @if (step.title) {
+                          <div class="snapshot-step">
+                            <p class="snapshot-step-title">{{ i + 1 }}. {{ step.title }}</p>
+                            @if (step.body) {
+                              <p class="snapshot-step-body">{{ step.body }}</p>
+                            }
+                          </div>
+                        }
+                      }
+                      @if (getParsedSnapshot(historySelectedVersion.snapshot).length === 0) {
+                        <div class="no-history">
+                          (Seed snapshot &#x2014; detailed diff not available for initial version)
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
+
+        </app-section-card>
+      </mat-tab>
+
+      <!-- ===========================================================
+      Tab 2: Feedback Queue
+      =========================================================== -->
+      <mat-tab label="Feedback Queue">
+        <app-section-card class="tab-content" [title]="'Feedback Queue'">
+
+          <!-- Filter -->
+          <div class="feedback-toolbar">
+            <mat-button-toggle-group
+              [ngModel]="feedbackStatusFilter"
+              (ngModelChange)="onFeedbackFilterChange($event)"
+              >
+              <mat-button-toggle value="pending">Pending</mat-button-toggle>
+              <mat-button-toggle value="approved">Approved</mat-button-toggle>
+              <mat-button-toggle value="rejected">Rejected</mat-button-toggle>
+              <mat-button-toggle value="deferred">Deferred</mat-button-toggle>
+              <mat-button-toggle value="">All</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+
+          <!-- [ok] Advanced Table -->
+          <rp-advanced-table
+            [data]="feedbackList"
+            [columns]="feedbackColumns"
+            [loading]="false"
+            [enableGlobalSearch]="true"
+            globalSearchPlaceholder="Search feedback"
+            [enablePagination]="true"
+            [pageSize]="25"
+            [pageSizeOptions]="[25, 50, 100]"
+            [enableExport]="true"
+            exportFileName="remediation-feedback.xlsx"
+            exportSheetName="Feedback"
+            [autoGenerateValueLists]="true"
+            >
+            <!-- Suggestion truncate -->
+            <ng-template rpCell="suggestion" let-row="row">
+              <span class="suggestion-cell">
+                {{ row.suggestion | slice:0:80 }}{{ row.suggestion?.length > 80 ? '...' : '' }}
+              </span>
+            </ng-template>
+
+            <!-- Status chip -->
+            <ng-template rpCell="status" let-row="row">
+              <span class="feedback-status-chip" [class]="'chip-' + row.status">
+                {{ row.status | titlecase }}
+              </span>
+            </ng-template>
+
+            <!-- Actions -->
+            <ng-template rpCell="actions" let-row="row">
+              <button mat-icon-button (click)="openFeedbackDrawer(row); $event.stopPropagation()">
+                <mat-icon>open_in_new</mat-icon>
+              </button>
+            </ng-template>
+          </rp-advanced-table>
+
+          @if (feedbackList.length === 0) {
+            <div class="empty-state">
+              <mat-icon>check_circle_outline</mat-icon>
+              <p>No feedback in this category.</p>
+            </div>
+          }
+
+        </app-section-card>
+      </mat-tab>
+
+      <!-- ===========================================================
+      Tab 3: Smart Recommendations
+      =========================================================== -->
+      <mat-tab label="Recommendations">
+        <div class="tab-content">
+
+          @if (recsLoading) {
+            <div class="loading-row">
+              <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            </div>
+          }
+
+          <!-- Recommendations list -->
+          @if (!recsLoading) {
+            <div class="recs-section">
+              <h3>AI-Generated SOP Improvements ({{ recommendations.length }})</h3>
+              @if (recommendations.length === 0) {
+                <div class="empty-state">
+                  <mat-icon>thumb_up</mat-icon>
+                  <p>No recommendations at this time. Your SOPs are performing well.</p>
+                </div>
+              }
+              @for (rec of recommendations; track rec) {
+                <div class="rec-card"
+                  [class.severity-high]="rec.severity === 'high'"
+                  [class.severity-medium]="rec.severity === 'medium'">
+                  <div class="rec-header">
+                    <mat-icon class="rec-icon">{{ recTypeIcon(rec.type) }}</mat-icon>
+                    <span class="rec-type-badge" [class]="'badge-' + rec.type">{{ recTypeLabel(rec.type) }}</span>
+                    <span class="rec-severity" [class]="'sev-' + rec.severity">{{ rec.severity | titlecase }}</span>
+                    <span class="rec-code">{{ rec.reasonCode }}</span>
+                  </div>
+                  <p class="rec-title">{{ rec.title }}</p>
+                  <p class="rec-detail">{{ rec.detail }}</p>
+                  <div class="rec-footer">
+                    <span class="rec-metric">{{ rec.metric }} {{ rec.metricLabel }}</span>
+                    @if (rec.setId) {
+                      <button mat-stroked-button (click)="jumpToSOP(rec.reasonCode)">
+                        <mat-icon>edit</mat-icon> Edit SOP
+                      </button>
+                    }
+                    @if (!rec.setId && rec.type === 'missing_sop') {
+                      <button mat-stroked-button color="primary" (click)="jumpToSOP(rec.reasonCode)">
+                        <mat-icon>add</mat-icon> Create SOP
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- SOP Effectiveness table -->
+          @if (!recsLoading && effectiveness.length > 0) {
+            <div class="recs-section">
+              <h3>SOP Effectiveness Metrics</h3>
+              <table class="simple-table">
+                <thead>
+                  <tr>
+                    <th>Reason Code</th>
+                    <th>Role</th>
+                    <th>Version</th>
+                    <th>Steps</th>
+                    <th>Claims (90d)</th>
+                    <th>Avg Steps Done</th>
+                    <th>Avg Resolution</th>
+                    <th>Escalation %</th>
+                    <th>Feedback</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (e of effectiveness; track e) {
+                    <tr>
+                      <td class="code-cell">{{ e.reasonCode }}</td>
+                      <td>{{ e.targetRole }}</td>
+                      <td>v{{ e.version }}</td>
+                      <td>{{ e.stepCount }}</td>
+                      <td>{{ e.recentClaimCount }}</td>
+                      <td>{{ e.avgStepsCompleted | number:'1.1-1' }}</td>
+                      <td>
+                        <span [class.slow-metric]="e.avgDaysToResolve > 14">{{ e.avgDaysToResolve }} days</span>
+                      </td>
+                      <td>
+                        <span [class.high-metric]="e.escalationRate > 25">{{ e.escalationRate | number:'1.0-1' }}%</span>
+                      </td>
+                      <td>{{ e.feedbackCount }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+        </div>
+      </mat-tab>
+
+      <!-- ===========================================================
+      Tab 4: Reference Library (#114)
+      =========================================================== -->
+      <mat-tab label="Reference Library">
+        <app-section-card class="tab-content" [title]="'Reference Library'">
+
+          <div class="library-toolbar">
+            <div class="toolbar-row">
+              <mat-form-field appearance="outline" class="ref-search-field">
+                <mat-label>Search</mat-label>
+                <input
+                  matInput
+                  placeholder="Term, definition, category..."
+                  [ngModel]="refSearchText"
+                  (ngModelChange)="onRefSearchChange($event)"
+                  />
+                  <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="ref-category-field">
+                  <mat-label>Category</mat-label>
+                  <mat-select
+                    [ngModel]="refCategoryFilter"
+                    (ngModelChange)="onRefCategoryFilter($event)"
+                    >
+                    <mat-option [value]="''">All categories</mat-option>
+                    @for (c of refCategories; track c) {
+                      <mat-option [value]="c">{{ c }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <span class="spacer"></span>
+
+                <button mat-flat-button color="primary" type="button" (click)="newRefEntry()">
+                  <mat-icon>add</mat-icon> New Entry
+                </button>
+              </div>
+            </div>
+
+            @if (refLoading) {
+              <div class="loading-row">
+                <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+              </div>
+            }
+
+            @if (!refLoading && refEntries.length === 0) {
+              <div class="empty-state">
+                <mat-icon>menu_book</mat-icon>
+                <p>No reference entries yet. Click <strong>New Entry</strong> to add a word and its definition.</p>
+              </div>
+            }
+
+            @if (!refLoading && refEntries.length > 0) {
+              <table class="ref-table">
+                <thead>
+                  <tr>
+                    <th>Term</th>
+                    <th>Definition</th>
+                    <th>Category</th>
+                    <th class="ref-col-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of refEntries; track trackByRefId($index, r)) {
+                    <tr>
+                      <td><strong>{{ r.term }}</strong></td>
+                      <td class="ref-def-cell">{{ r.definition }}</td>
+                      <td>{{ r.category || '&#x2014;' }}</td>
+                      <td class="ref-col-actions">
+                        <button mat-icon-button type="button" (click)="editRefEntry(r)" title="Edit">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" color="warn" (click)="deleteRefEntry(r)" title="Delete">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+
+            @if (!refLoading && refTotal > 0) {
+              <div class="ref-pagination">
+                <span class="page-label">{{ refPageLabel }}</span>
+                <button mat-icon-button type="button" (click)="prevRefPage()" [disabled]="refPageIndex === 0" title="Previous page">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                <button mat-icon-button type="button" (click)="nextRefPage()" [disabled]="!hasNextRefPage" title="Next page">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </div>
+            }
+
+            <!-- Editor overlay -->
+            @if (showRefEditor) {
+              <div class="drawer-backdrop" (click)="cancelRefEdit()"></div>
+            }
+            @if (showRefEditor) {
+              <div class="ref-editor-panel">
+                <div class="ref-editor-header">
+                  <h4>{{ editingRef.id ? 'Edit Entry' : 'New Entry' }}</h4>
+                  <button mat-icon-button type="button" (click)="cancelRefEdit()" title="Close">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                <div class="ref-editor-body">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Term *</mat-label>
+                    <input matInput [(ngModel)]="editingRef.term" placeholder="e.g. CARC" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Definition *</mat-label>
+                    <textarea matInput rows="4" [(ngModel)]="editingRef.definition"
+                    placeholder="Plain-language explanation of this term."></textarea>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Category</mat-label>
+                    <input matInput [(ngModel)]="editingRef.category"
+                      placeholder="e.g. Coding, Eligibility, Documentation" />
+                    </mat-form-field>
+                  </div>
+                  <div class="ref-editor-footer">
+                    <button mat-stroked-button type="button" (click)="cancelRefEdit()">Cancel</button>
+                    <button mat-flat-button color="primary" type="button"
+                      [disabled]="refSaving" (click)="saveRefEntry()">
+                      <mat-icon>save</mat-icon>
+                      {{ refSaving ? 'Saving&#x2026;' : 'Save' }}
+                    </button>
+                  </div>
+                </div>
+              }
+
+            </app-section-card>
+          </mat-tab>
+
+        </mat-tab-group>
+      </div>
+
+      <!-- ====================================================
+      Feedback review drawer (overlay panel)
+      ==================================================== -->
+      @if (feedbackDrawer) {
+        <div class="drawer-backdrop" (click)="closeFeedbackDrawer()"></div>
+      }
+      @if (feedbackDrawer) {
+        <div class="review-drawer">
+          <div class="drawer-header">
+            <h3>Review Feedback</h3>
+            <button mat-icon-button (click)="closeFeedbackDrawer()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <div class="drawer-body">
+            <div class="drawer-meta">
+              <span class="drawer-meta-label">Code:</span>
+              <strong>{{ feedbackDrawer.reason_code }}</strong>
+              <span class="drawer-meta-label">Role:</span>
+              <span>{{ feedbackDrawer.set_role }}</span>
+              @if (feedbackDrawer.step_title) {
+                <span class="drawer-meta-label">Step:</span>
+              }
+              @if (feedbackDrawer.step_title) {
+                <span>{{ feedbackDrawer.step_title }}</span>
+              }
+              @if (feedbackDrawer.claim_id) {
+                <span class="drawer-meta-label">Claim:</span>
+              }
+              @if (feedbackDrawer.claim_id) {
+                <span>{{ feedbackDrawer.claim_id }}</span>
+              }
+            </div>
+            <p class="drawer-label">Submitted by {{ feedbackDrawer.author_user_id }}
+            on {{ feedbackDrawer.created_at | date:'MMM d, y' }}</p>
+            <div class="suggestion-box">{{ feedbackDrawer.suggestion }}</div>
+            @if (feedbackDrawer.status === 'pending') {
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Reviewer Note (optional)</mat-label>
+                <textarea matInput [(ngModel)]="reviewNote" rows="3"></textarea>
+              </mat-form-field>
+            }
+            @if (feedbackDrawer.reviewer_note) {
+              <div class="reviewer-note-display">
+                <p class="drawer-label">Reviewer note:</p>
+                <p>{{ feedbackDrawer.reviewer_note }}</p>
+              </div>
+            }
+          </div>
+          @if (feedbackDrawer.status === 'pending') {
+            <div class="drawer-footer">
+              <button mat-raised-button color="primary" (click)="reviewFeedback('approved')">
+                <mat-icon>check</mat-icon> Approve
+              </button>
+              <button mat-stroked-button color="warn" (click)="reviewFeedback('rejected')">
+                <mat-icon>block</mat-icon> Reject
+              </button>
+              <button mat-stroked-button (click)="reviewFeedback('deferred')">
+                <mat-icon>schedule</mat-icon> Defer
+              </button>
+            </div>
+          }
+          @if (feedbackDrawer.status !== 'pending') {
+            <div class="drawer-footer">
+              <span class="feedback-status-chip" [class]="'chip-' + feedbackDrawer.status">
+                {{ feedbackDrawer.status | titlecase }}
+              </span>
+              @if (feedbackDrawer.reviewed_by) {
+                <span> &#x2014; reviewed by {{ feedbackDrawer.reviewed_by }}</span>
+              }
+            </div>
+          }
+        </div>
+      }

@@ -1,0 +1,83 @@
+.appeal-success-page {
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+
+    @media (max-width: 900px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .kpi-card {
+    padding: 20px;
+    text-align: center;
+
+    .kpi-label {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-text);
+
+      &.green { color: var(--color-success); }
+    }
+  }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+
+    @media (max-width: 1100px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .chart-card {
+    mat-card-header {
+      margin-bottom: 8px;
+    }
+  }
+
+  .table-card {
+    mat-card-header.table-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .spacer { flex: 1; }
+
+    .sub-tabs {
+      margin-left: 16px;
+    }
+  }
+
+  .won-cell  { color: var(--color-success); font-weight: 600; }
+  .lost-cell { color: var(--color-danger); font-weight: 600; }
+
+  .rate-badge {
+    font-weight: 700;
+    font-size: var(--font-size-md);
+  }
+
+  .trend-icon {
+    font-size: 18px;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+
+  .trend-label {
+    font-size: var(--font-size-xs);
+    vertical-align: middle;
+  }
+}

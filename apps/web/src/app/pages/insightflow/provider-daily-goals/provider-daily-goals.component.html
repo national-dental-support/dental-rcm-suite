@@ -1,0 +1,90 @@
+<div class="pdg-page">
+  <app-section-card
+    title="Provider Daily Production Goals"
+    tooltip="Today's production actuals vs. configured goals per provider. Refreshes every 60 seconds. Green &#x2265; 90% &#x00B7; Amber 70&#x2013;89% &#x00B7; Red &lt; 70%. Set goals in Admin &#x203A; Provider Goals."
+    >
+    <button cardHeaderActions mat-icon-button matTooltip="Refresh now" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+    </button>
+
+    @if (loading) {
+      <div class="xen-loading">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+    }
+
+    @if (error && !loading) {
+      <div class="xen-empty err">
+        <mat-icon>error</mat-icon>
+        <span>Failed to load production data.</span>
+      </div>
+    }
+
+    @if (!loading && !error && rows.length === 0) {
+      <div class="xen-empty">
+        <mat-icon>analytics</mat-icon>
+        <span>No provider production data available. Configure goals in Admin &#x203A; Provider Goals.</span>
+      </div>
+    }
+
+    @if (!loading && rows.length > 0) {
+      <table mat-table [dataSource]="rows" class="xen-table">
+        <ng-container matColumnDef="providerName">
+          <th mat-header-cell *matHeaderCellDef>Provider</th>
+          <td mat-cell *matCellDef="let r"><strong>{{ r.providerName }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="production">
+          <th mat-header-cell *matHeaderCellDef>Today's Production</th>
+          <td mat-cell *matCellDef="let r">{{ r.production | currency }}</td>
+        </ng-container>
+        <ng-container matColumnDef="dailyGoal">
+          <th mat-header-cell *matHeaderCellDef>Daily Goal</th>
+          <td mat-cell *matCellDef="let r" class="goal-col">
+            {{ r.dailyGoal != null ? (r.dailyGoal | currency) : '--' }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="pctOfDailyGoal">
+          <th mat-header-cell *matHeaderCellDef>% of Daily Goal</th>
+          <td mat-cell *matCellDef="let r" [ngClass]="ragClass(r.rag)">
+            {{ r.pctOfDailyGoal != null ? (r.pctOfDailyGoal | number:'1.0-0') + '%' : '--' }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="weekProduction">
+          <th mat-header-cell *matHeaderCellDef>Week-to-Date</th>
+          <td mat-cell *matCellDef="let r">{{ r.weekProduction | currency }}</td>
+        </ng-container>
+        <ng-container matColumnDef="weeklyGoal">
+          <th mat-header-cell *matHeaderCellDef>Weekly Goal</th>
+          <td mat-cell *matCellDef="let r" class="goal-col">
+            {{ r.weeklyGoal != null ? (r.weeklyGoal | currency) : '--' }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="pctOfWeeklyGoal">
+          <th mat-header-cell *matHeaderCellDef>% of Weekly Goal</th>
+          <td mat-cell *matCellDef="let r">
+            {{ r.pctOfWeeklyGoal != null ? (r.pctOfWeeklyGoal | number:'1.0-0') + '%' : '--' }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="rag">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let r">
+            <mat-icon
+              class="rag-icon"
+              [ngClass]="ragClass(r.rag)"
+              [matTooltip]="ragTooltip(r.rag, r.pctOfDailyGoal)"
+            >{{ ragIcon(r.rag) }}</mat-icon>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+        class="xen-row" [ngClass]="ragClass(row.rag) + '-row'"></tr>
+      </table>
+    }
+
+    @if (asOf && !loading) {
+      <div class="last-updated">
+        Data as of {{ asOf | date:'shortTime' }}
+      </div>
+    }
+  </app-section-card>
+</div>

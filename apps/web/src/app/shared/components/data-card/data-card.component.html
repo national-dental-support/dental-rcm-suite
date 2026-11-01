@@ -1,0 +1,52 @@
+<mat-card class="kpi-card" [class.loading]="loading">
+  <div class="kpi-row">
+    <div class="kpi-main">
+      <mat-card-subtitle class="kpi-title" title="">
+        {{ title }}
+        @if (tooltip) {
+          <mat-icon
+            class="kpi-title-info"
+            [matTooltip]="tooltip"
+            matTooltipPosition="right"
+          matTooltipClass="card-title-tooltip">info_outline</mat-icon>
+        }
+      </mat-card-subtitle>
+
+      <mat-card-title>
+        {{ value }}
+      </mat-card-title>
+
+      <div class="muted">{{ subtitle }}</div>
+    </div>
+
+    <div class="kpi-right">
+      @if (showTrend) {
+        <div
+          class="trend"
+          [class.green]="trendColor === 'green'"
+          [class.red]="trendColor === 'red'"
+          aria-label="trend"
+          >
+          @if (trendDirection === 'up') {
+            &#x25B2;
+          }
+          @if (trendDirection === 'down') {
+            &#x25BC;
+          }
+        </div>
+      }
+
+      @if (showAction) {
+        <button
+          mat-icon-button
+          type="button"
+          class="stats-card__chevron"
+          [attr.aria-label]="actionAriaLabel"
+          (click)="onActionClicked($event)"
+          >
+          <mat-icon>{{ actionIcon }}</mat-icon>
+        </button>
+      }
+    </div>
+  </div>
+</mat-card>

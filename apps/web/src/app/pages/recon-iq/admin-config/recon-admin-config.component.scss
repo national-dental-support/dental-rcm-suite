@@ -1,0 +1,207 @@
+.admin-page { display: flex; flex-direction: column; padding: 0 24px 24px; }
+
+// --- Header + section nav ----------------------------------------------------
+.admin-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 0 12px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 16px;
+
+  &__title { font-size: 1rem; font-weight: 600; color: var(--color-gray-800); white-space: nowrap; }
+}
+
+.admin-nav { display: flex; gap: 4px; }
+
+.anav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-600);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+
+  mat-icon { font-size: var(--font-size-base); width: var(--font-size-base); height: var(--font-size-base); }
+
+  &:hover { background: var(--color-bg-subtle); color: var(--color-gray-800); }
+  &--active { background: var(--rcm-color-1, var(--color-info)); color: var(--color-surface); }
+  &--active:hover { background: var(--rcm-color-1, var(--color-info)); }
+}
+
+.anav-badge {
+  background: var(--color-danger);
+  color: var(--color-surface);
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  &--warn { background: var(--color-warning); }
+}
+
+// --- Settings grid -----------------------------------------------------------
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: stretch;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.setting-group {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px 16px 22px;
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    margin-bottom: 12px;
+  }
+
+  &__divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 12px 0;
+  }
+}
+
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  &:last-child { margin-bottom: 0; }
+  &.indent { padding-left: 14px; border-left: 2px solid var(--color-border); margin-top: 4px; }
+}
+
+.setting-hint { font-size: 0.77rem; color: var(--color-text-muted); margin-bottom: 2px; }
+.num-field { width: 100%; max-width: 240px; }
+
+// --- Save bar ----------------------------------------------------------------
+.save-bar { display: flex; align-items: center; gap: 12px; padding: 4px 0 12px; }
+.save-ok  { font-size: 0.85rem; color: var(--color-success); font-weight: 500; }
+
+// --- Sub-nav (alerts) --------------------------------------------------------
+.sub-nav { display: flex; gap: 4px; margin-bottom: 12px; }
+
+.subnav-btn {
+  padding: 5px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: var(--color-surface);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-gray-600);
+  cursor: pointer;
+  &--active { background: var(--color-bg-subtle); border-color: var(--rcm-color-1, var(--color-info)); color: var(--rcm-color-1, var(--color-info)); }
+}
+
+// --- Escalation stats strip --------------------------------------------------
+.esc-stats { display: flex; gap: 10px; margin-bottom: 12px; }
+
+.esc-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 18px;
+  border-radius: var(--radius);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  min-width: 76px;
+
+  &__v { font-size: 1.3rem; font-weight: 700; line-height: 1; color: var(--color-gray-800); }
+  &__l { font-size: 0.7rem; color: var(--color-text-muted); margin-top: 2px; }
+
+  &--open { border-color: var(--color-danger); background: #fef2f2; .esc-stat__v { color: var(--color-danger); } }
+  &--inv  { border-color: var(--color-warning); background: #fffbeb; .esc-stat__v { color: var(--color-warning); } }
+  &--res  { border-color: var(--color-success); background: #ecfdf5; .esc-stat__v { color: var(--color-success); } }
+}
+
+// --- Escalations toolbar -----------------------------------------------------
+.esc-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.filter-sel  { width: 140px; }
+
+// --- Shared data table -------------------------------------------------------
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  margin-bottom: 4px;
+
+  th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--color-bg-subtle); }
+
+  th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    background: var(--color-bg-subtle);
+  }
+
+  tr:hover td { background: var(--color-bg-subtle); }
+  .row--editing td { background: #fef9c3; }
+}
+
+.empty-cell    { text-align: center; color: var(--color-text-subtle); padding: 24px !important; }
+.mono          { font-family: monospace; font-size: 0.82rem; }
+.small-text    { font-size: 0.8rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.actions-cell  { display: flex; gap: 4px; align-items: center; white-space: nowrap; }
+
+// --- Inline form -------------------------------------------------------------
+.inline-form {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  background: var(--color-bg-subtle);
+  margin-bottom: 12px;
+
+  &__title   { font-weight: 600; font-size: 0.88rem; margin-bottom: 10px; color: var(--color-gray-800); }
+  &__row     { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+  &__actions { display: flex; gap: 8px; }
+}
+
+.wide-field        { min-width: 220px; flex: 1; }
+.wide-setting-field { width: 100%; max-width: 400px; }
+.setting-hint--sm { font-size: 0.82rem; color: var(--color-gray-600); }
+.num-field--full { max-width: 100%; }
+.check-label { display: flex; align-items: center; gap: 6px; font-size: 0.84rem; padding-top: var(--font-size-base); cursor: pointer; }
+
+// --- Toggle button -----------------------------------------------------------
+.toggle-btn {
+  padding: 2px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.77rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-text-subtle);
+  &--on { background: var(--color-success-light); border-color: var(--color-success); color: var(--color-success); }
+}
+
+.btn-delete { color: var(--color-danger) !important; }
+
+// --- Pagination --------------------------------------------------------------
+.pagination { display: flex; align-items: center; gap: var(--font-size-xs); padding: 10px 0; font-size: 0.84rem; }
+
+// --- Loading -----------------------------------------------------------------
+.loading-center { display: flex; justify-content: center; padding: 32px; }

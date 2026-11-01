@@ -1,0 +1,27 @@
+<div class="rp-line-chart">
+  @if (title) {
+    <div class="rp-line-chart__title">{{ title }}</div>
+  }
+
+  @if (hasData) {
+    <apx-chart
+      #chartRef
+      [series]="chartOptions.series!"
+      [chart]="chartOptions.chart!"
+      [dataLabels]="chartOptions.dataLabels!"
+      [stroke]="chartOptions.stroke!"
+      [xaxis]="chartOptions.xaxis!"
+      [yaxis]="chartOptions.yaxis!"
+      [tooltip]="chartOptions.tooltip!"
+      [legend]="chartOptions.legend!"
+      [grid]="chartOptions.grid!"
+      [colors]="chartOptions.colors || []"
+      [markers]="chartOptions.markers || {}"
+    ></apx-chart>
+  } @else {
+    <div class="rp-line-chart__no-data">
+      <span>No data available at this time</span>
+    </div>
+  }
+
+</div>

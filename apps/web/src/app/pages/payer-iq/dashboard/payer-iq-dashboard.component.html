@@ -1,0 +1,150 @@
+<section class="payer-iq-dashboard">
+
+  <!-- ========================= -->
+  <!-- "Payer Non Payments by CDT Code" - tables first -->
+  <!-- ========================= -->
+  <section class="payer-tables-grid">
+    <!-- Payer Non Payment by CPT Code -->
+    <app-section-card
+      [title]="'Payer Non Payment by CPT Code'"
+      [tooltip]="'Drilldown of unpaid or partially paid charges grouped by payer, then CPT procedure code, then individual claim. Shows total charges, claim count, and the outstanding balance per group &#x2014; highlighting which payers and procedures have the highest non-payment rates.'">
+      <div cardHeaderActions class="chart-actions">
+        <button mat-stroked-button class="chart-action-btn export-btn"
+          (click)="exportNonPaymentCsv()" matTooltip="Export to CSV" type="button">
+          <mat-icon>download</mat-icon> Export
+        </button>
+      </div>
+      <rp-advanced-table
+        [data]="nonPaymentTree"
+        [columns]="payerNonPaymentColumns"
+        [enableNestedRows]="true"
+        [childrenAccessor]="getNonPaymentChildren"
+        [idField]="'id'"
+      ></rp-advanced-table>
+    </app-section-card>
+
+    <!-- Payer Details -->
+    <app-section-card
+      title="Payer Details"
+      [tooltip]="'Hierarchical breakdown of all payers by category (Commercial, Government, LeaseNetwork), then group/plan type, then individual payer and plan. Shows total charges and claim counts at each level &#x2014; useful for understanding your full payer contract landscape.'">
+      <div cardHeaderActions class="chart-actions">
+        <button mat-stroked-button class="chart-action-btn export-btn"
+          (click)="exportPayerDetailsCsv()" matTooltip="Export to CSV" type="button">
+          <mat-icon>download</mat-icon> Export
+        </button>
+      </div>
+      <rp-advanced-table
+        [data]="payerDetailsTree"
+        [columns]="payerDetailsColumns"
+        [enableNestedRows]="true"
+        [childrenAccessor]="childrenAccessor"
+        [rowClassFn]="payerDetailsRowClass"
+        [idField]="'id'"
+      ></rp-advanced-table>
+    </app-section-card>
+  </section>
+
+  <!-- ========================= -->
+  <!-- PAYER MIX -->
+  <!-- ========================= -->
+  <section class="payer-mix-grid">
+    <app-section-card
+      [title]="'Payer Mix by Charges'"
+      [tooltip]="'Total billed charges (before adjustments or payments) distributed across the top 5 payers. Calculated as the sum of all charge amounts per payer over the selected period.'">
+      <div cardHeaderActions class="chart-actions">
+        @if (chargesDrilled) {
+          <button mat-icon-button class="chart-action-btn back-btn"
+            (click)="resetPieDrilldown('charges')" matTooltip="Back to summary" aria-label="Back to summary" type="button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        }
+        <button mat-stroked-button class="chart-action-btn export-btn"
+          (click)="exportPieCsv('payer-mix-charges.csv', payerMixCharges)" matTooltip="Export CSV" type="button">
+          <mat-icon>download</mat-icon> Export
+        </button>
+      </div>
+      <app-pie-chart chartId="charges" [data]="payerMixCharges ?? []" [isCurrency]="true"
+        (sliceClicked)="onPieSliceClicked('charges', $event)">
+      </app-pie-chart>
+    </app-section-card>
+
+    <app-section-card
+      [title]="'Payer Mix by Payments'"
+      [tooltip]="'Actual payments received from each payer after claims processing. Calculated as the sum of all payment amounts received per payer over the selected period.'">
+      <div cardHeaderActions class="chart-actions">
+        @if (paymentsDrilled) {
+          <button mat-icon-button class="chart-action-btn back-btn"
+            (click)="resetPieDrilldown('payments')" matTooltip="Back to summary" aria-label="Back to summary" type="button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        }
+        <button mat-stroked-button class="chart-action-btn export-btn"
+          (click)="exportPieCsv('payer-mix-payments.csv', payerMixPaymentsApi)" matTooltip="Export CSV" type="button">
+          <mat-icon>download</mat-icon> Export
+        </button>
+      </div>
+      <app-pie-chart chartId="payments" [data]="payerMixPaymentsApi ?? []" [isCurrency]="true"
+        (sliceClicked)="onPieSliceClicked('payments', $event)">
+      </app-pie-chart>
+    </app-section-card>
+
+    <app-section-card
+      [title]="'Payer Mix by Patient Volume'"
+      [tooltip]="'Number of unique patient encounters covered by each payer. Calculated as the count of distinct patients with claims submitted to each insurance plan.'">
+      <div cardHeaderActions class="chart-actions">
+        @if (patientDrilled) {
+          <button mat-icon-button class="chart-action-btn back-btn"
+            (click)="resetPieDrilldown('patient')" matTooltip="Back to summary" aria-label="Back to summary" type="button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        }
+        <button mat-stroked-button class="chart-action-btn export-btn"
+          (click)="exportPieCsv('payer-mix-patient-volume.csv', payerMixPatientVolumeApi)" matTooltip="Export CSV" type="button">
+          <mat-icon>download</mat-icon> Export
+        </button>
+      </div>
+      <app-pie-chart chartId="patient" [data]="payerMixPatientVolumeApi ?? []"
+        (sliceClicked)="onPieSliceClicked('patient', $event)">
+      </app-pie-chart>
+    </app-section-card>
+
+    <app-section-card
+      [title]="'Payer Mix by CPT Volume'"
+      [tooltip]="'Number of procedure line items (CPT/CDT codes) billed to each payer. Calculated as the count of procedure codes submitted per insurance plan, showing which payers receive the most claims activity.'">
+      <div cardHeaderActions class="chart-actions">
+        @if (cptDrilled) {
+          <button mat-icon-button class="chart-action-btn back-btn"
+            (click)="resetPieDrilldown('cpt')" matTooltip="Back to summary" aria-label="Back to summary" type="button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        }
+        <button mat-stroked-button class="chart-action-btn export-btn"
+          (click)="exportPieCsv('payer-mix-cpt-volume.csv', payerMixCptVolumeApi)" matTooltip="Export CSV" type="button">
+          <mat-icon>download</mat-icon> Export
+        </button>
+      </div>
+      <app-pie-chart chartId="cpt" [data]="payerMixCptVolumeApi ?? []"
+        (sliceClicked)="onPieSliceClicked('cpt', $event)">
+      </app-pie-chart>
+    </app-section-card>
+  </section>
+
+  <app-section-card
+    title="Forecasting by Payer Mix Group or Plans &#x2014; Actuals vs Forecast"
+    [tooltip]="'Payment forecast using a 3-month rolling average. The dashed Forecast line extends both backward (showing what the algorithm would have predicted for past months) and forward (next 3 months), while the solid Actuals line shows measured payments &#x2014; allowing you to assess historical forecast accuracy.'"
+    class="risk-forecast-grid">
+    <div cardHeaderActions class="chart-actions">
+      <button mat-stroked-button class="chart-action-btn export-btn"
+        (click)="exportForecastCsv()" matTooltip="Export CSV" type="button">
+        <mat-icon>download</mat-icon> Export
+      </button>
+    </div>
+    <app-line-chart
+      [seriesOverride]="forecastSeries"
+      [categoriesOverride]="forecastCategories"
+      [tooltipAsCurrency]="true"
+      [optionsOverride]="{ stroke: { curve: 'smooth', width: 2, dashArray: [0, 5] } }">
+    </app-line-chart>
+  </app-section-card>
+
+</section>

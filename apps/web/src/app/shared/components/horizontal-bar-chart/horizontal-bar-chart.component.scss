@@ -1,0 +1,36 @@
+.hbar-no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  border-radius: var(--radius);
+  background: var(--color-bg-muted);
+  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--font-size-md);
+  font-style: italic;
+  opacity: 0.75;
+}
+
+.horizontal-bar-chart {
+  width: 100%;
+
+  // ::ng-deep .apexcharts-xaxis-label {
+  //   /* left labels (statuses) */
+  //   font-weight: 500;
+  //   dominant-baseline: middle;
+  // }
+
+  // ::ng-deep .apexcharts-yaxis-label {
+  //   /* numeric axis is already hidden, but be extra sure */
+  //   display: none;
+  // }
+
+  ::ng-deep .apexcharts-bar-horizontal {
+    rx: 6;
+    ry: 6;
+  }
+
+  // ::ng-deep .apexcharts-data-label {
+  //   font-weight: 600 !important;
+  // }
+}

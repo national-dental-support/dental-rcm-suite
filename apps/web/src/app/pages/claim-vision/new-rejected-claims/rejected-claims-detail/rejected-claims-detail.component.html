@@ -1,0 +1,153 @@
+<div class="rc-detail-page">
+
+  <!-- Back button -->
+  <button class="breadcrumbs__back" (click)="goBack()">
+    <mat-icon class="breadcrumbs__icon">arrow_back</mat-icon>
+    Back to Rejected Claims
+  </button>
+
+  <h1>Rejected Claims Details</h1>
+
+  <!-- Header Card -->
+  <div class="header-card">
+    <div class="row">
+      <label>Submission Date:</label>
+      <span class="bold">{{ submissionDate | date }}</span>
+    </div>
+
+    <div class="row">
+      <label>Rejection Message:</label>
+      <span class="bold">{{ rejectionMessageHeader }}</span>
+    </div>
+
+    <div class="row">
+      <label>Remedy:</label>
+      <span class="bold">{{ remedyHeader }}</span>
+    </div>
+  </div>
+
+  <!-- Toggle Row -->
+  <div class="toggle-row">
+    <span class="claims-count">{{ dataSource.data.length }} claim{{ dataSource.data.length !== 1 ? 's' : '' }}</span>
+    <mat-slide-toggle
+      [checked]="showCompleted"
+      (change)="toggleShowCompleted($event.checked)">
+      Show completed
+    </mat-slide-toggle>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+
+    <table mat-table [dataSource]="dataSource" matSort class="rc-table">
+
+      <!-- Priority -->
+      <ng-container matColumnDef="priority">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="priority">#</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="priority-num">{{ row.priority }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Patient + Claim ID -->
+      <ng-container matColumnDef="patient">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="patient">Patient</th>
+        <td mat-cell *matCellDef="let row">
+          <div class="patient-cell">
+            <span class="patient-main">{{ row.patient || '&#x2014;' }}</span>
+            <span class="patient-sub">{{ row.id }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Date of Service -->
+      <ng-container matColumnDef="dos">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="dateOfService">DOS</th>
+        <td mat-cell *matCellDef="let row" class="date-cell">{{ row.dateOfService || '&#x2014;' }}</td>
+      </ng-container>
+
+      <!-- Submitted Date -->
+      <ng-container matColumnDef="submittedDate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="submittedDate">Submitted</th>
+        <td mat-cell *matCellDef="let row" class="date-cell">{{ row.submittedDate || '&#x2014;' }}</td>
+      </ng-container>
+
+      <!-- Payer -->
+      <ng-container matColumnDef="payer">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="payer">Payer</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="payer-cell" [title]="row.payer">{{ row.payer || '&#x2014;' }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Charged -->
+      <ng-container matColumnDef="charged">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="chargeAmt" class="th-right">Charged</th>
+        <td mat-cell *matCellDef="let row" class="currency-cell">
+          {{ (row.chargeAmt ?? 0) | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+      </ng-container>
+
+      <!-- Insurance Balance -->
+      <ng-container matColumnDef="insBalance">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="insuranceBalance" class="th-right">Ins. Bal.</th>
+        <td mat-cell *matCellDef="let row" class="currency-cell">
+          {{ (row.insuranceBalance ?? 0) | currency:'USD':'symbol':'1.0-0' }}
+        </td>
+      </ng-container>
+
+      <!-- Aging -->
+      <ng-container matColumnDef="aging">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="agingDays">Aging</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="aging-badge" [ngClass]="agingClass(row.agingDays)">
+            {{ row.agingDays ?? 0 }}d
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Status -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status-chip" [ngClass]="statusClass(row.status)">{{ row.status }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+        <td mat-cell *matCellDef="let row" class="actions-cell">
+          <button
+            type="button"
+            mat-stroked-button
+            [color]="row.status !== 'Completed' ? 'primary' : ''"
+            class="action-btn"
+            (click)="markAsComplete(row)">
+            @if (row.status !== 'Completed') {
+              Mark Complete
+            } @else {
+              Mark Incomplete
+            }
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"
+          [class.row-completed]="row.status === 'Completed'"></tr>
+    </table>
+
+    @if (dataSource.data.length === 0) {
+      <div class="empty-state">
+        <mat-icon>check_circle_outline</mat-icon>
+        <p>No claims to display.</p>
+      </div>
+    }
+
+    <div class="paginator-row">
+      <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+    </div>
+
+  </div>
+</div>

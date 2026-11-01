@@ -1,0 +1,73 @@
+<!-- rule-create-page.component.html -->
+<section class="page">
+  <h1 class="page-title">New Rule</h1>
+  <header class="page-header">
+    <button type="button" class="breadcrumbs__back" (click)="goBack()">
+      <mat-icon class="breadcrumbs__icon">arrow_back</mat-icon>
+      <span>Back to Rules</span>
+    </button>
+  </header>
+
+  <rp-rule-editor
+    mode="edit"
+    (cancel)="goBack()"
+    (save)="onSave($event)"
+    (simulate)="onSimulate($event)"
+  ></rp-rule-editor>
+
+  @if (simulating) {
+    <div class="sim-panel sim-panel--loading">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>Running simulation against last 90 days&#x2026;</span>
+    </div>
+  }
+
+  @if (simError) {
+    <div class="sim-panel sim-panel--error">
+      <mat-icon color="warn">error</mat-icon>
+      <span>{{ simError }}</span>
+    </div>
+  }
+
+  @if (simResult) {
+    <div class="sim-panel">
+      <div class="sim-panel__header">
+        <mat-icon color="primary">analytics</mat-icon>
+        <strong>Simulation Result:</strong>
+        <span>{{ simResult.matchCount }} claim{{ simResult.matchCount === 1 ? '' : 's' }} would match in the last 90 days</span>
+      </div>
+
+      @if (simResult.sampleClaims.length > 0) {
+        <table class="sim-table">
+          <thead>
+            <tr>
+              <th>Claim ID</th>
+              <th>Patient</th>
+              <th>Payer</th>
+              <th>Status</th>
+              <th>DOS</th>
+              <th>Charged</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of simResult.sampleClaims; track c.id) {
+              <tr>
+                <td>{{ c.id }}</td>
+                <td>{{ c.patient }}</td>
+                <td>{{ c.payer }}</td>
+                <td>{{ c.status }}</td>
+                <td>{{ c.dos }}</td>
+                <td>{{ c.charged | currency }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (simResult.matchCount > simResult.sampleClaims.length) {
+          <p class="sim-panel__note">Showing {{ simResult.sampleClaims.length }} of {{ simResult.matchCount }} matches.</p>
+        }
+      } @else {
+        <p class="sim-panel__note">No matching claims found in the last 90 days.</p>
+      }
+    </div>
+  }
+</section>

@@ -1,0 +1,507 @@
+<!-- src/app/shared/components/advanced-table/advanced-table.component.html -->
+
+<section class="rp-table-card">
+  <!-- TOP BAR (search + optional actions) -->
+  <!-- TOP BAR (search + optional actions) -->
+  <div class="rp-table-topbar" [class.rp-table-topbar--has-filters]="hasAnyActiveFilters()">
+
+    <!-- Actions row -->
+    @if (enableGlobalSearch || enableExport) {
+      <div class="rp-table-toolbar">
+        <!-- Global search -->
+        @if (enableGlobalSearch) {
+          <mat-form-field
+            appearance="outline"
+            class="rp-filter-field cmdbar__search"
+            [floatLabel]="floatLabel"
+            >
+            <mat-label>Search</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              [value]="globalSearchTerm"
+              (input)="onGlobalSearchChange($any($event.target).value)"
+              placeholder="Search all columns"
+              />
+            @if (globalSearchTerm) {
+              <button
+                matSuffix
+                mat-icon-button
+                aria-label="Clear search"
+                (click)="clearGlobalSearch()"
+                >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+        }
+        <!-- Spacer pushes export to the right when search exists -->
+        <span class="rp-table-toolbar__spacer"></span>
+        <!-- Export -->
+        @if (enableExport) {
+          <button
+            mat-stroked-button
+            type="button"
+            class="rp-export-btn"
+            (click)="exportToExcel()"
+            [disabled]="isExportDisabled()"
+            >
+            <mat-icon>download</mat-icon>
+            Export
+          </button>
+        }
+      </div>
+    }
+
+    <!-- FILTER SUMMARY (V2) -->
+    @if (hasAnyActiveFilters()) {
+      <div class="rp-filter-summary">
+        <div class="rp-filter-summary__label">Filtered by:</div>
+        <div class="rp-filter-summary__pills">
+          @for (pill of getActiveFilterPills(); track pill.label) {
+            <button
+              type="button"
+              class="rp-filter-pill"
+              (click)="clearFilterPill(pill)"
+              [attr.aria-label]="'Remove filter: ' + pill.label"
+              >
+              <span class="rp-filter-pill__text">{{ pill.label }}</span>
+              <mat-icon class="rp-filter-pill__x" aria-hidden="true">close</mat-icon>
+            </button>
+          }
+        </div>
+        <button
+          type="button"
+          class="rp-filter-summary__clear"
+          (click)="clearAllFilters()"
+          >
+          Clear all
+        </button>
+      </div>
+    }
+  </div>
+
+
+  <!-- Table -->
+  <table mat-table [dataSource]="dataSource" matSort class="rp-table mat-elevation-z1"
+    [class.rp-table-hover]="enableRowHover">
+    @if (loading) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+
+    <!-- MULTI-SELECT CHECKBOX COLUMN -->
+    @if (enableMultiSelect) {
+      <ng-container matColumnDef="__select">
+        <th mat-header-cell *matHeaderCellDef class="rp-select-col">
+          <mat-checkbox
+            [checked]="isAllMultiSelected()"
+            [indeterminate]="isMultiSelectIndeterminate()"
+            (change)="toggleMultiSelectAll($event.checked)"
+            (click)="$event.stopPropagation()"
+          ></mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let vm" class="rp-select-col" (click)="$event.stopPropagation()">
+          <mat-checkbox
+            [checked]="isMultiSelected(vm)"
+            (change)="toggleMultiSelectRow(vm)"
+            (click)="$event.stopPropagation()"
+          ></mat-checkbox>
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="rp-select-col"></td>
+      </ng-container>
+    }
+
+    <!-- EXPANDER COLUMN (dedicated) -->
+    @if (enableNestedRows) {
+      <ng-container matColumnDef="__expand">
+        <th mat-header-cell *matHeaderCellDef class="rp-expand-col"></th>
+        <td mat-cell *matCellDef="let vm" class="rp-expand-col" (click)="$event.stopPropagation()">
+          @if (isExpandable(vm)) {
+            <button mat-icon-button type="button" class="rp-expand-btn"
+              (click)="toggleRowExpanded(vm, $event)" disableRipple [attr.aria-label]="isRowExpanded(vm) ? 'Collapse row' : 'Expand row'"
+              [attr.aria-expanded]="isRowExpanded(vm)">
+              <mat-icon>
+                {{ isRowExpanded(vm) ? 'expand_more' : 'chevron_right' }}
+              </mat-icon>
+            </button>
+          }
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="rp-expand-col"></td>
+      </ng-container>
+    }
+
+    <!-- Dynamic column defs -->
+    @for (col of columns; track col; let colIndex = $index) {
+      <ng-container [matColumnDef]="col.id">
+        <!-- Header (sortable vs non-sortable) -->
+        @if (col.sortable) {
+          <th mat-header-cell *matHeaderCellDef mat-sort-header [style.width]="col.width || null"
+        [ngClass]="{
+        'rp-align-center': col.align === 'center',
+        'rp-align-end': col.align === 'end'
+  }"
+            >
+            <div class="rp-header-with-filter">
+              <span>{{ col.header }}</span>
+              @if (col.filterable) {
+                <button
+                  mat-icon-button
+                  class="rp-filter-icon-btn"
+                  [matMenuTriggerFor]="columnFilterMenu"
+                  [matMenuTriggerData]="{ column: col }"
+                  (click)="$event.stopPropagation()">
+              <span class="material-icons rp-filter-icon" [class.active]="
+                    !!filterState.columns[col.id]?.value ||
+                    !!filterState.columns[col.id]?.value2 ||
+                    (filterState.columns[col.id]?.selectedValues?.length || 0) > 0
+                  ">
+                    filter_list
+                  </span>
+                </button>
+              }
+            </div>
+          </th>
+        } @else {
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [style.width]="col.width || null"
+          [ngClass]="{
+            'rp-align-center': col.align === 'center',
+            'rp-align-end': col.align === 'end'
+          }"
+            >
+            <div class="rp-header-with-filter">
+              <span class="rp-header-text">{{ col.header }}</span>
+              @if (col.filterable) {
+                <button
+                  mat-icon-button
+                  class="rp-filter-icon-btn"
+                  [matMenuTriggerFor]="columnFilterMenu"
+                  [matMenuTriggerData]="{ column: col }"
+                  (click)="$event.stopPropagation()"
+                  >
+              <span class="material-icons rp-filter-icon" [class.active]="
+                !!filterState.columns[col.id]?.value ||
+                !!filterState.columns[col.id]?.value2 ||
+                (filterState.columns[col.id]?.selectedValues?.length || 0) > 0
+              ">
+                    filter_list
+                  </span>
+                </button>
+              }
+            </div>
+          </th>
+        }
+        <!-- Cell -->
+      <td mat-cell *matCellDef="let vm" [ngClass]="{
+            'rp-align-center': col.align === 'center',
+            'rp-align-end': col.align === 'end'
+          }">
+          <div class="rp-cell-inner" [class.rp-cell-inner--child]="vm.isChild"
+            >
+            <!-- Custom cell template -->
+            @if (getCellTemplate(col.id); as tpl) {
+              <ng-container [ngTemplateOutlet]="tpl"
+            [ngTemplateOutletContext]="{
+                $implicit: vm.row,
+                row: vm.row,
+                column: col,
+                value: getDisplayValue(vm.row, col, getRawValue(vm.row, col))
+              }"></ng-container>
+            } @else {
+              @switch (col.type) {
+                @case ('action') {
+                  @if (col.actionVisible ? col.actionVisible(vm.row) : true) {
+                    <button type="button"
+                      class="rp-row-action-btn" [ngClass]="col.buttonClass" [attr.data-action-id]="col.actionId || col.id"
+                      [color]="col.buttonColor || 'primary'"
+                      (click)="onActionClick(col, vm.row, $event)" mat-stroked-button>
+                      {{ col.buttonLabel || 'View' }}
+                    </button>
+                  }
+                }
+                @case ('chip') {
+<span class="rp-chip" [ngClass]="[
+      col.chipConfig?.getColor?.(getRawValue(vm.row, col), vm.row) || null,
+      col.chipConfig?.chipClass || null
+    ]">
+                    {{
+                    col.chipConfig?.getLabel
+                    ? col.chipConfig!.getLabel!(getRawValue(vm.row, col), vm.row)
+                    : getDisplayValue(vm.row, col, getRawValue(vm.row, col))
+                    }}
+                  </span>
+                }
+                @default {
+                  <span
+                    [matTooltip]="col.tooltip ? col.tooltip(vm.row) : ''"
+                    [matTooltipDisabled]="!col.tooltip || !col.tooltip(vm.row)"
+                    matTooltipPosition="above"
+                    >
+                    {{ getDisplayValue(vm.row, col, getRawValue(vm.row, col)) }}
+                  </span>
+                }
+              }
+            }
+            <!-- Default cell -->
+          </div>
+        </td>
+        <td
+          mat-footer-cell
+          *matFooterCellDef
+          [style.width]="col.width || null"
+        [ngClass]="{
+          'rp-align-center': col.align === 'center',
+          'rp-align-end': col.align === 'end'
+        }"
+          >
+          <div class="rp-cell-inner">
+            {{ getFooterDisplayValue(col) }}
+          </div>
+        </td>
+      </ng-container>
+    }
+
+    <!-- Header / rows -->
+    <tr mat-header-row *matHeaderRowDef="renderedColumns" [class.rp-sticky-header]="stickyHeader"></tr>
+
+    <tr
+      mat-row
+      *matRowDef="let vm; columns: renderedColumns;"
+      [class.rp-level-0]="vm.level === 0"
+      [class.rp-level-1]="vm.level === 1"
+      [class.rp-level-2]="vm.level === 2"
+      [class.rp-row--child]="vm.level > 0"
+      [class.rp-row--parent]="vm.level === 0"
+      [ngClass]="rowClassFn ? rowClassFn(vm.row) : null"
+      (click)="onRowClick(vm)"
+      [class.is-selected]="isSelected(vm.row)"
+    ></tr>
+    <tr mat-footer-row *matFooterRowDef="renderedColumns" class="rp-footer-row"
+    [class.rp-footer-row--empty]="!hasFooter()" ></tr>
+  </table>
+
+  <!-- EMPTY STATE (V2) -->
+  @if (!loading && dataSource?.filteredData?.length === 0) {
+    <div class="rp-table-empty">
+      <div class="rp-table-empty__title">No results match your filters.</div>
+      <div class="rp-table-empty__subtitle">Try clearing filters or adjusting your search.</div>
+      <button
+        mat-stroked-button
+        color="primary"
+        type="button"
+        class="rp-table-empty__btn"
+        (click)="clearAllFilters()"
+        >
+        Clear filters
+      </button>
+    </div>
+  }
+  <!-- Column filter menu (shared across columns) -->
+  <mat-menu
+    #columnFilterMenu="matMenu"
+    class="rp-filter-menu-panel"
+    >
+    <ng-template matMenuContent let-column="column">
+      <div
+        class="rp-filter-dialog"
+        (click)="$event.stopPropagation()"
+        (mousedown)="$event.stopPropagation()"
+        >
+        <!-- HEADER -->
+        <header class="rp-filter-dialog__header">
+          <div class="rp-filter-dialog__title">
+            Filter &#x2013; {{ column.header }}
+          </div>
+
+          <button
+            mat-icon-button
+            class="rp-filter-dialog__close"
+            type="button"
+            aria-label="Close filter"
+            (click)="closeActiveFilterMenu()"
+            disableRipple
+            >
+            <mat-icon>close</mat-icon>
+          </button>
+        </header>
+
+        <!-- BODY -->
+        <div class="rp-filter-dialog__body">
+          <div class="rp-filter-dialog__subtitle">
+            Show items where:
+          </div>
+
+          <!-- VALUE LIST / GROUPED CHECKBOXES -->
+          @if (column.filterConfig?.supportsValueList) {
+            <div class="rp-value-filter">
+              <div class="rp-value-filter__list">
+                <!-- GROUPED MODE -->
+                @if (column.filterConfig?.supportsGroupValues) {
+                  @for (group of getGroupedValues(column.id); track group) {
+                    <div
+                      class="rp-filter-group"
+                    [ngClass]="{
+                      'rp-filter-group--active':
+                        isGroupFullySelected(column.id, group) ||
+                        isGroupIndeterminate(column.id, group)
+                    }"
+                      >
+                      <div class="rp-filter-group__header">
+                        <button
+                          type="button"
+                          class="rp-filter-group__toggle"
+                          (click)="group.expanded = !group.expanded"
+                          >
+                          <mat-icon
+                            class="rp-filter-group__chevron"
+                            [class.rp-filter-group__chevron--collapsed]="group.expanded !== true"
+                            >
+                            expand_more
+                          </mat-icon>
+                          <mat-checkbox
+                            class="rp-filter-group__checkbox"
+                            [checked]="isGroupFullySelected(column.id, group)"
+                            [indeterminate]="isGroupIndeterminate(column.id, group)"
+                            (change)="onGroupToggle(column.id, group, $event.checked)"
+                            (click)="$event.stopPropagation()"
+                            >
+                            {{ group.label }}
+                          </mat-checkbox>
+                        </button>
+                        <span class="rp-filter-group__count-pill">
+                          {{ getGroupSelectedCount(column.id, group) }}/{{ getGroupTotalCount(group) }}
+                        </span>
+                      </div>
+                      @if (group.expanded === true) {
+                        <div
+                          class="rp-filter-group__children"
+                          >
+                          @for (child of group.children; track child) {
+                            <mat-checkbox
+                              class="rp-filter-group__leaf"
+                              [checked]="isLeafSelected(column.id, child.value!)"
+                              (change)="onLeafToggle(column.id, child.value!, $event.checked)"
+                              >
+                              {{ child.label }}
+                            </mat-checkbox>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                } @else {
+                  @for (v of uniqueValues[column.id]; track v) {
+                    <mat-checkbox
+                      class="rp-value-filter__item"
+                      [checked]="filterState.columns[column.id]?.selectedValues?.includes(v)"
+                      (change)="onValueFilterToggle(column.id, v, $event.checked)"
+                      >
+                      {{ v }}
+                    </mat-checkbox>
+                  }
+                }
+                <!-- FLAT VALUE LIST -->
+              </div>
+            </div>
+          }
+
+          <!-- OPERATOR + VALUE(S) -->
+          @if (column.filterable) {
+            <mat-form-field
+              appearance="outline"
+              class="rp-filter-field rp-filter-field--operator"
+              >
+              <mat-label>Operator</mat-label>
+              <mat-select
+                [value]="filterState.columns[column.id]?.operator"
+                (selectionChange)="onColumnOperatorChange(column.id, $event.value)"
+                >
+                @for (op of getColumnOperators(column); track op) {
+                  <mat-option
+                    [value]="op"
+                    >
+                    {{ op }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field
+              appearance="outline"
+              class="rp-filter-field"
+              >
+              <mat-label>
+                {{
+                filterState.columns[column.id]?.operator === 'between'
+                ? 'Value (start)'
+                : 'Value'
+                }}
+              </mat-label>
+              <input
+                matInput
+                [placeholder]="column.filterConfig?.placeholder || ''"
+                [type]="column.type === 'number' ? 'number' : 'text'"
+                [value]="filterState.columns[column.id]?.value || ''"
+                (input)="onColumnValueChange(column.id, $any($event.target).value)"
+                />
+            </mat-form-field>
+            @if (filterState.columns[column.id]?.operator === 'between') {
+              <mat-form-field
+                appearance="outline"
+                class="rp-filter-field"
+                >
+                <mat-label>Value (end)</mat-label>
+                <input
+                  matInput
+                  [type]="column.type === 'number' ? 'number' : 'text'"
+                  [value]="filterState.columns[column.id]?.value2 || ''"
+                  (input)="onColumnValue2Change(column.id, $any($event.target).value)"
+                  />
+              </mat-form-field>
+            }
+          }
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="rp-filter-dialog__footer">
+          <button
+            mat-button
+            type="button"
+            class="rp-filter-dialog__btn rp-filter-dialog__btn--ghost"
+            (click)="clearColumnFilter(column.id); closeActiveFilterMenu()"
+            >
+            Clear
+          </button>
+
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            class="rp-filter-dialog__btn rp-filter-dialog__btn--primary"
+            (click)="closeActiveFilterMenu()"
+            >
+            Apply filters
+          </button>
+        </footer>
+      </div>
+    </ng-template>
+  </mat-menu>
+
+  <!-- Paginator -->
+  @if (enablePagination && !enableNestedRows) {
+    <div
+      class="rp-paginator-wrapper"
+      >
+      <mat-paginator
+        [length]="serverSideTotalCount != null ? serverSideTotalCount : dataSource.filteredData.length"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+        >
+      </mat-paginator>
+    </div>
+  }
+
+</section>

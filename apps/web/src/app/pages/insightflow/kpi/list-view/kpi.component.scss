@@ -1,0 +1,183 @@
+.info-tip {
+  font-size: var(--font-size-md);
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  color: var(--color-text-subtle);
+  cursor: help;
+  flex-shrink: 0;
+  vertical-align: middle;
+
+  &:hover { color: var(--color-text-muted); }
+}
+
+/* Page shell */
+.kpi-page {
+  padding: 24px 32px;
+  background: var(--rcm-bg, var(--color-bg-subtle));
+  min-height: calc(100vh - 64px); // leave space for top nav
+}
+
+/* Header */
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+
+  h1 {
+    margin: 0 0 4px;
+    font-weight: 600;
+    font-size: 22px;
+  }
+
+  .meta {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .links {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .link-btn {
+    padding: 0;
+    min-width: auto;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--rcm-accent, var(--color-info));
+  }
+}
+
+/* Tabs card (white rounded bar behind tabs + filter button) */
+.kpi-tabs-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: 8px 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+/* Material tabs tweaks */
+.kpi-tabs {
+  flex: 1;
+}
+
+/* override MDC tab styles for this component only */
+:host ::ng-deep .kpi-tabs .mat-mdc-tab-labels {
+  justify-content: flex-start;
+}
+
+:host ::ng-deep .kpi-tabs .mdc-tab {
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.08em;
+  min-width: auto;
+}
+
+:host ::ng-deep .kpi-tabs .mdc-tab-indicator__content--underline {
+  border-color: var(--rcm-accent, var(--color-info));
+  border-width: 2px;
+}
+
+/* Filter button in tab card */
+.filter-btn {
+  margin-left: 16px;
+}
+
+/* Chips row */
+.chip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+
+.chip-row .clear {
+  font-size: var(--font-size-xs);
+}
+
+/* KPI cards list */
+.kpi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Each KPI row is a rounded white card with shadow */
+.kpi-card {
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+}
+
+.kpi-card .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.kpi-card .title {
+  font-weight: 600;
+  font-size: var(--font-size-md);
+}
+
+.kpi-card .right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kpi-card .value {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+/* RAG chip */
+.rag-chip {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  letter-spacing: 0.06em;
+}
+
+.rag-chip.red {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.rag-chip.amber {
+  background: var(--color-warning-light);
+  color: #92400e;
+}
+
+.rag-chip.green {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+/* Benchmark row */
+.kpi-card .footer {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.kpi-card .footer .spacer {
+  flex: 1;
+}
+
+.benchmark .muted {
+  color: var(--color-text-muted);
+}
+

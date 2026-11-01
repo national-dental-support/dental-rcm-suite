@@ -1,0 +1,22 @@
+.dt-no-data {
+  text-align: center;
+  padding: 40px 16px !important;
+  background: var(--color-bg-muted);
+  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--font-size-md);
+  font-style: italic;
+  opacity: 0.75;
+}
+
+.data-table {
+  @apply w-full text-left text-sm text-gray-700;
+  thead {
+    @apply bg-gray-100 font-medium;
+  }
+  tbody tr:nth-child(even) {
+    @apply bg-gray-50;
+  }
+  th, td {
+    @apply px-4 py-2;
+  }
+}

@@ -1,0 +1,167 @@
+.tab-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0 8px;
+
+  .refresh-btn {
+    flex-shrink: 0;
+  }
+
+  .row-count {
+    margin-left: auto;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+}
+
+/* Event name chip */
+.event-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  background: #e8f4fd;
+  color: var(--color-info);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Error type chip */
+.type-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  background: #fce4ec;
+  color: var(--color-danger);
+
+  &.type-http      { background: #fff3e0; color: var(--color-warning); }
+  &.type-component { background: #f3e5f5; color: #6a1b9a; }
+}
+
+/* HTTP status badges */
+.status-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+
+  &.status-4xx { background: #fff3e0; color: var(--color-warning); }
+  &.status-5xx { background: #fce4ec; color: var(--color-danger); }
+}
+
+.method-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-bg-muted);
+  color: var(--color-gray-700);
+  margin-right: 4px;
+}
+
+.tab-icon-err {
+  font-size: var(--font-size-base);
+  height: 16px;
+  width: 16px;
+  margin-right: 4px;
+  color: var(--color-danger);
+  vertical-align: middle;
+}
+
+.tab-icon-audit {
+  font-size: var(--font-size-base);
+  height: 16px;
+  width: 16px;
+  margin-right: 4px;
+  color: var(--color-info);
+  vertical-align: middle;
+}
+
+/* Action chip (Admin Actions tab) */
+.action-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  background: #e3f2fd;
+  color: #0d47a1;
+
+  &.action-user-create     { background: #e8f5e9; color: #1b5e20; }
+  &.action-user-update     { background: #fff8e1; color: var(--color-warning); }
+  &.action-user-disable    { background: #fff3e0; color: #bf360c; }
+  &.action-user-delete     { background: #fce4ec; color: #880e4f; }
+  &.action-user-terminate  { background: #fce4ec; color: var(--color-danger); }
+  &.action-role-change     { background: #f3e5f5; color: #4a148c; }
+}
+
+/* Role badge next to actor email */
+.role-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--color-bg-muted);
+  color: var(--color-gray-600);
+  vertical-align: middle;
+}
+
+/* Diff / changes cell */
+.diff-cell {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-600);
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ip-cell {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.err-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-danger);
+  color: var(--color-surface);
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.actor-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;          // REQUIRED so the email can ellipsis inside flex
+}
+
+.actor-email {
+  flex: 1 1 auto;
+  min-width: 0;          // REQUIRED for ellipsis in flex children
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-badge {
+  flex: 0 0 auto;        // DON'T shrink
+  white-space: nowrap;
+}

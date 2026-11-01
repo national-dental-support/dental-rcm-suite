@@ -1,0 +1,254 @@
+<div class="patient-statements">
+
+  <!-- -- Toolbar ----------------------------------------------------------- -->
+  <div class="ps-toolbar xen-toolbar">
+    <div class="ps-toolbar__left">
+      <h2 class="ps-title">Patient Statements</h2>
+      @if (!loading && totalRows > 0) {
+        <span class="ps-subtitle">
+          {{ totalRows }} patient{{ totalRows === 1 ? '' : 's' }} with balance
+        </span>
+      }
+    </div>
+    <div class="ps-toolbar__right">
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="selectedCount === 0 || generating"
+        (click)="generateStatements()">
+        <mat-icon>description</mat-icon>
+        Generate Statements ({{ selectedCount }} selected)
+      </button>
+    </div>
+  </div>
+
+  <!-- -- Success banner --------------------------------------------------- -->
+  @if (successMessage) {
+    <div class="ps-banner ps-banner--success">
+      <mat-icon>check_circle</mat-icon>
+      <span>{{ successMessage }}</span>
+    </div>
+  }
+
+  <!-- -- Error banner ----------------------------------------------------- -->
+  @if (error && !loading) {
+    <div class="ps-banner ps-banner--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>An error occurred. <a (click)="load()">Retry</a></span>
+    </div>
+  }
+
+  <!-- -- Filters ----------------------------------------------------------- -->
+  <mat-card class="ps-filter-card xen-card" [formGroup]="filterForm">
+    <mat-card-content>
+      <div class="ps-filter-row">
+
+        <mat-form-field appearance="outline" class="ps-field">
+          <mat-label>Statement Period From</mat-label>
+          <input matInput [matDatepicker]="fromPicker" formControlName="from">
+          <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="ps-field">
+          <mat-label>Statement Period To</mat-label>
+          <input matInput [matDatepicker]="toPicker" formControlName="to">
+          <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="ps-field ps-field--sm">
+          <mat-label>Min Balance ($)</mat-label>
+          <input matInput type="number" formControlName="minBalance" min="0">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="ps-field">
+          <mat-label>Aging Bucket</mat-label>
+          <mat-select formControlName="agingBucket">
+            @for (o of agingBucketOptions; track o) {
+              <mat-option [value]="o.value">{{ o.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button (click)="resetFilters()" class="ps-reset-btn">
+          <mat-icon>refresh</mat-icon>
+          Reset
+        </button>
+
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- -- Loading ----------------------------------------------------------- -->
+  @if (loading) {
+    <div class="xen-loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading patient balances&#x2026;</p>
+    </div>
+  }
+
+  <!-- -- Empty state ------------------------------------------------------- -->
+  @if (!loading && !error && dataSource.data.length === 0) {
+    <div class="xen-empty">
+      <mat-icon>inbox</mat-icon>
+      <p>No patients with an outstanding balance match the current filters.</p>
+    </div>
+  }
+
+  <!-- -- Table ------------------------------------------------------------ -->
+  @if (!loading && dataSource.data.length > 0) {
+    <mat-card class="ps-table-card xen-card">
+      <mat-card-content>
+        <div class="ps-table-scroll">
+          <table mat-table [dataSource]="dataSource" class="xen-table" [trackBy]="trackById">
+            <!-- Checkbox -->
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-checkbox
+                  [checked]="isAllSelected()"
+                  [indeterminate]="selection.hasValue() && !isAllSelected()"
+                  (change)="toggleAllRows()">
+                </mat-checkbox>
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <mat-checkbox
+                  [checked]="selection.isSelected(row)"
+                  (change)="selection.toggle(row); cdr.markForCheck()">
+                </mat-checkbox>
+              </td>
+            </ng-container>
+            <!-- Patient Name -->
+            <ng-container matColumnDef="patientName">
+              <th mat-header-cell *matHeaderCellDef>Patient</th>
+              <td mat-cell *matCellDef="let row">{{ row.patientName }}</td>
+            </ng-container>
+            <!-- Account -->
+            <ng-container matColumnDef="patientAccount">
+              <th mat-header-cell *matHeaderCellDef>Account #</th>
+              <td mat-cell *matCellDef="let row">{{ row.patientAccount }}</td>
+            </ng-container>
+            <!-- Location -->
+            <ng-container matColumnDef="location">
+              <th mat-header-cell *matHeaderCellDef>Location</th>
+              <td mat-cell *matCellDef="let row">{{ row.location }}</td>
+            </ng-container>
+            <!-- Balance Due -->
+            <ng-container matColumnDef="balanceDue">
+              <th mat-header-cell *matHeaderCellDef class="col-right">Balance Due</th>
+              <td mat-cell *matCellDef="let row" class="col-right">
+                <span class="ps-balance" [class.ps-balance--high]="row.balanceDue >= 500">
+                  {{ fmt(row.balanceDue) }}
+                </span>
+              </td>
+            </ng-container>
+            <!-- Aging 0-30 -->
+            <ng-container matColumnDef="aging0_30">
+              <th mat-header-cell *matHeaderCellDef class="col-right">0&#x2013;30d</th>
+              <td mat-cell *matCellDef="let row" class="col-right">{{ fmt(row.aging0_30) }}</td>
+            </ng-container>
+            <!-- Aging 31-60 -->
+            <ng-container matColumnDef="aging31_60">
+              <th mat-header-cell *matHeaderCellDef class="col-right">31&#x2013;60d</th>
+              <td mat-cell *matCellDef="let row" class="col-right">{{ fmt(row.aging31_60) }}</td>
+            </ng-container>
+            <!-- Aging 61-90 -->
+            <ng-container matColumnDef="aging61_90">
+              <th mat-header-cell *matHeaderCellDef class="col-right">61&#x2013;90d</th>
+              <td mat-cell *matCellDef="let row" class="col-right">{{ fmt(row.aging61_90) }}</td>
+            </ng-container>
+            <!-- Aging 90+ -->
+            <ng-container matColumnDef="aging90Plus">
+              <th mat-header-cell *matHeaderCellDef class="col-right">90+d</th>
+              <td mat-cell *matCellDef="let row" class="col-right">{{ fmt(row.aging90Plus) }}</td>
+            </ng-container>
+            <!-- Last Statement -->
+            <ng-container matColumnDef="lastStatementDate">
+              <th mat-header-cell *matHeaderCellDef>Last Statement</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.lastStatementDate ?? '&#x2014;' }}
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+              [class.ps-row--selected]="selection.isSelected(row)"
+              (click)="selection.toggle(row); cdr.markForCheck()">
+            </tr>
+          </table>
+        </div>
+        <!-- -- Pagination ------------------------------------------------- -->
+        @if (totalPages > 1) {
+          <div class="ps-pagination">
+            <button mat-icon-button [disabled]="page <= 1" (click)="goToPage(page - 1)">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <span class="ps-pagination__label">Page {{ page }} of {{ totalPages }}</span>
+            <button mat-icon-button [disabled]="page >= totalPages" (click)="goToPage(page + 1)">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- -- Active Batch Status ------------------------------------------------ -->
+  @if (activeBatch) {
+    <mat-card class="batch-status-card">
+      <mat-card-content>
+        <div class="batch-header">
+          <mat-icon [class]="'batch-icon batch-icon--' + activeBatch.status">
+            {{ activeBatch.status === 'completed' ? 'check_circle' : activeBatch.status === 'failed' ? 'error' : 'hourglass_empty' }}
+          </mat-icon>
+          <div>
+            <div class="batch-title">Batch {{ activeBatch.batchId.slice(0, 8) }}&#x2026;</div>
+            <div class="batch-sub">{{ activeBatch.status | titlecase }} &#x00B7; {{ activeBatch.completedCount }} / {{ activeBatch.totalPatients }} statements</div>
+          </div>
+          @if (activeBatch.downloadUrl) {
+            <a mat-stroked-button [href]="activeBatch.downloadUrl" target="_blank">
+              <mat-icon>download</mat-icon> Download All
+            </a>
+          }
+        </div>
+        <mat-progress-bar mode="determinate" [value]="batchProgress()" class="batch-progress"></mat-progress-bar>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- -- Recent Batches ----------------------------------------------------- -->
+  <mat-card class="recent-batches-card">
+    <mat-card-header>
+      <mat-card-title>
+        <button mat-button type="button" (click)="showRecentBatches = !showRecentBatches">
+          <mat-icon>{{ showRecentBatches ? 'expand_less' : 'expand_more' }}</mat-icon>
+          Recent Batches ({{ recentBatches.length }})
+        </button>
+      </mat-card-title>
+    </mat-card-header>
+    @if (showRecentBatches) {
+      <mat-card-content>
+        @if (recentBatches.length) {
+          <table class="recent-table">
+            <thead><tr><th>Batch ID</th><th>Status</th><th>Patients</th><th>Completed</th><th>Errors</th><th>Requested By</th><th>Created</th></tr></thead>
+            <tbody>
+              @for (b of recentBatches; track b) {
+                <tr>
+                  <td class="mono">{{ b.batchId.slice(0, 8) }}&#x2026;</td>
+                  <td><span class="status-chip status-chip--{{ b.status }}">{{ b.status }}</span></td>
+                  <td>{{ b.totalPatients }}</td>
+                  <td>{{ b.completedCount }}</td>
+                  <td>{{ b.errorCount }}</td>
+                  <td>{{ b.requestedBy }}</td>
+                  <td>{{ b.createdAt | date:'short' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="no-data">No batches yet.</p>
+        }
+      </mat-card-content>
+    }
+  </mat-card>
+
+</div>

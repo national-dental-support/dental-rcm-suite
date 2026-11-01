@@ -1,0 +1,286 @@
+:host {
+  display: block;
+}
+
+/* =====================================================
+   PAGE CONTAINER
+   ===================================================== */
+
+.payer-iq-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  padding: 24px;
+  background: var(--rcm-bg, var(--color-bg-subtle)); /* matches Denial Resolution Dashboard */
+  min-height: 100%;
+}
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* =====================================================
+   GLOBAL FILTER BAR
+   ===================================================== */
+
+.global-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  padding: 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid #e5ecf4;
+}
+
+/* temporary native buttons - will map cleanly to filter pills later */
+.global-filters > button {
+  height: 36px;
+  padding: 0 14px;
+
+  border-radius: 10px;
+  border: 1px solid #e5ecf4;
+  background: var(--color-surface);
+
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  cursor: pointer;
+}
+
+.global-filters > button:hover {
+  background: var(--color-bg-subtle);
+}
+
+/* =====================================================
+   SECTION CONTAINERS (matches big white blocks)
+   ===================================================== */
+
+// :host ::ng-deep app-section-card {
+//   display: flex;
+//   justify-content: center;
+//   width: 100%;
+// }
+
+// /* Add breathing room inside section cards */
+// :host ::ng-deep app-section-card .section-card__content {
+//   display: flex;
+//   flex-direction: column;
+//   gap: 12px;
+// }
+
+/* =====================================================
+   MULTI-COLUMN GRIDS
+   ===================================================== */
+
+.payer-mix-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.risk-forecast-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .payer-mix-grid,
+  .risk-forecast-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =====================================================
+   CHART HEADER ACTIONS
+   ===================================================== */
+
+.chart-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chart-action-btn {
+  color: var(--color-text-muted);
+  opacity: 0.7;
+  transition: opacity 120ms ease, color 120ms ease;
+
+  &:hover { opacity: 1; color: var(--color-text); }
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+  &:not(.export-btn) {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
+}
+
+.export-btn {
+  height: 28px;
+  font-size: 0.8rem;
+  line-height: 28px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.85;
+  &:hover { opacity: 1; }
+}
+
+.back-btn { color: #1473e6; opacity: 1; }
+
+/* =====================================================
+   TABLES
+   ===================================================== */
+
+:host ::ng-deep rp-advanced-table {
+  width: 100%;
+  display: block;
+}
+
+/* Prevent overflow issues */
+:host ::ng-deep .mat-mdc-table {
+  width: 100%;
+}
+
+/* =====================================================
+   CHARTS
+   ===================================================== */
+
+:host ::ng-deep app-line-chart,
+:host ::ng-deep app-bar-chart,
+:host ::ng-deep app-pie-chart {
+  width: 100%;
+  display: block;
+}
+
+.payer-tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 columns */
+  gap: 24px;
+  align-items: start;
+
+  /* Match your app page padding if needed */
+  /* padding: 24px; */
+}
+
+/* Tablet + down: stack */
+@media (max-width: 1200px) {
+  .payer-tables-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Optional: ensure the cards fill the grid cell cleanly */
+.payer-tables-grid app-section-card {
+  display: block;
+  min-width: 0; /* IMPORTANT: prevents overflow issues inside grid/flex */
+}
+
+/* ============================
+   Payer Details Row Styling
+   ============================ */
+
+/* PAYER (top level) */
+.pd-row--payer {
+  background: var(--color-bg-subtle); // slate-100
+  font-weight: 600;
+}
+
+/* GROUP */
+.pd-row--group-commercial {
+  background: #eef6ff; // light accent blue
+  font-weight: 600;
+}
+
+.pd-row--group-government {
+  background: #f7f7f7;
+  font-weight: 600;
+}
+
+/* PLAN */
+.pd-row--plan {
+  background: var(--color-surface);
+  font-weight: 500;
+}
+
+/* SUBGROUPS */
+.pd-row--subgroup {
+  background: var(--color-bg-subtle);
+}
+
+.pd-row--subgroup-direct {
+  border-left: 4px solid var(--color-info); // blue-600
+}
+
+.pd-row--subgroup-network {
+  border-left: 4px solid var(--color-success); // green-600
+}
+
+.pd-row--subgroup-out-network {
+  border-left: 4px solid #f97316; // orange-500
+}
+
+.rp-table-card tr.mat-row:hover {
+  background-color: var(--color-bg-subtle);
+}
+
+/* Make sure row + cells get the background */
+.pd-row--payer,
+.pd-row--payer > td,
+.pd-row--payer > .mat-mdc-cell,
+.pd-row--payer > .mdc-data-table__cell {
+  background: var(--color-bg-subtle) !important;
+}
+
+.pd-row--group-commercial,
+.pd-row--group-commercial > td,
+.pd-row--group-commercial > .mat-mdc-cell,
+.pd-row--group-commercial > .mdc-data-table__cell {
+  background: #eef6ff !important;
+}
+
+.pd-row--group-government,
+.pd-row--group-government > td,
+.pd-row--group-government > .mat-mdc-cell,
+.pd-row--group-government > .mdc-data-table__cell {
+  background: #f7f7f7 !important;
+}
+
+.pd-row--plan,
+.pd-row--plan > td,
+.pd-row--plan > .mat-mdc-cell,
+.pd-row--plan > .mdc-data-table__cell {
+  background: var(--color-surface) !important;
+}
+
+.pd-row--subgroup,
+.pd-row--subgroup > td,
+.pd-row--subgroup > .mat-mdc-cell,
+.pd-row--subgroup > .mdc-data-table__cell {
+  background: var(--color-bg-subtle) !important;
+}
+

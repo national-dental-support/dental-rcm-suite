@@ -1,0 +1,56 @@
+// ---------------------------------------------
+// Typography scale - 6 text classes + utility
+// Standardizes on rem; eliminates ad-hoc px declarations
+// ---------------------------------------------
+
+.text-xs {
+  font-size: var(--font-size-xs);      // 12px
+  line-height: var(--line-height-normal);
+}
+
+.text-sm {
+  font-size: var(--font-size-sm);      // 13px
+  line-height: var(--line-height-normal);
+}
+
+.text-md {
+  font-size: var(--font-size-md);      // 14px
+  line-height: var(--line-height-normal);
+}
+
+.text-base {
+  font-size: var(--font-size-base);    // 16px
+  line-height: var(--line-height-normal);
+}
+
+.text-lg {
+  font-size: var(--font-size-lg);      // 18px
+  line-height: var(--line-height-tight);
+}
+
+.text-xl {
+  font-size: var(--font-size-xl);      // 20px
+  line-height: var(--line-height-tight);
+}
+
+// -- Weight utilities -------------------------
+.font-normal   { font-weight: var(--font-weight-normal); }
+.font-medium   { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold     { font-weight: var(--font-weight-bold); }
+
+// -- Color utilities --------------------------
+.text-muted  { color: var(--color-text-muted); }
+.text-subtle { color: var(--color-text-subtle); }
+.text-danger { color: var(--color-danger); }
+.text-success { color: var(--color-success); }
+.text-primary { color: var(--color-primary); }
+
+// -- Heading defaults -------------------------
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}

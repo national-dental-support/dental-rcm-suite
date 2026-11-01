@@ -1,0 +1,135 @@
+.rp-dialog {
+  display: block;
+  background: var(--color-surface);
+
+  .rp-dialog__header {
+    position: relative;
+    padding: 18px 20px 10px;
+    background: var(--color-surface);
+
+    /* accent bar */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: #e5ecf4; /* default */
+    }
+  }
+
+  &[data-tone='default'] .rp-dialog__header::before { background: #e5ecf4; }
+  &[data-tone='info']    .rp-dialog__header::before { background: var(--color-info); }
+  &[data-tone='success'] .rp-dialog__header::before { background: var(--color-success); }
+  &[data-tone='warning'] .rp-dialog__header::before { background: var(--color-warning); }
+  &[data-tone='danger']  .rp-dialog__header::before { background: var(--color-danger); }
+
+  .rp-dialog__header {
+    padding: 18px 20px 10px;
+    background: var(--color-surface);
+  }
+
+  .rp-dialog__title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .rp-dialog__title-wrap {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    min-width: 0;
+  }
+
+  .rp-dialog__icon {
+    margin-top: 2px;
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+    opacity: 0.95;
+  }
+
+  .rp-dialog__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    color: var(--color-text);
+    line-height: 1.2;
+  }
+
+  .rp-dialog__subtitle {
+    margin: 6px 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: 1.35;
+  }
+
+  .rp-dialog__content {
+    padding: 0 20px 8px;
+    color: var(--color-text);
+
+    width: min(720px, 92vw);
+    box-sizing: border-box;
+  }
+
+  .rp-dialog__message {
+    margin: 8px 0 0;
+    color: var(--color-gray-700);
+    font-size: var(--font-size-md);
+    line-height: 1.5;
+  }
+
+  .rp-dialog__error {
+    display: block;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--color-danger);
+    font-size: var(--font-size-sm);
+  }
+
+  .rp-dialog__actions {
+    padding: 14px 16px 16px;
+    margin: 0;
+    background: var(--color-surface);
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+
+    /* subtle separator like cards */
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  /* Pill-style action buttons */
+  .rp-dialog__actions button[mat-button],
+  .rp-dialog__actions button[mat-stroked-button],
+  .rp-dialog__actions button[mat-flat-button] {
+    border-radius: var(--radius-md);
+    height: 36px;
+    padding: 0 14px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+  }
+
+  .rp-dialog__actions button[mat-button] {
+    color: var(--color-text);
+  }
+
+  .rp-dialog__spinner {
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  /* tone icon colors */
+  &[data-tone='danger']  .rp-dialog__icon { color: var(--color-danger); }
+  &[data-tone='warning'] .rp-dialog__icon { color: var(--color-warning); }
+  &[data-tone='success'] .rp-dialog__icon { color: var(--color-success); }
+  &[data-tone='info']    .rp-dialog__icon { color: var(--color-info); }
+}

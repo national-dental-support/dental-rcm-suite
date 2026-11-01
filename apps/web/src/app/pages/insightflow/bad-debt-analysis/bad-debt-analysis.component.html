@@ -1,0 +1,108 @@
+<div class="analytics-page">
+
+  <div *ngIf="loading" class="xen-loading">
+    <mat-spinner diameter="36"></mat-spinner>
+  </div>
+
+  <div *ngIf="error && !loading" class="xen-empty err">
+    <mat-icon>error_outline</mat-icon>
+    <span>Failed to load bad debt data.</span>
+    <button mat-stroked-button (click)="load()">Retry</button>
+  </div>
+
+  <ng-container *ngIf="data && !loading">
+
+    <!-- Summary Cards -->
+    <div class="kpi-row">
+      <div class="kpi-card primary">
+        <div class="kpi-label">Total Write-Offs (YTD)</div>
+        <div class="kpi-value">{{ data.summary.totalWriteOffsYTD | currency:'USD':'symbol':'1.0-0' }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">% of Revenue</div>
+        <div class="kpi-value">{{ data.summary.pctOfRevenue | number:'1.1-1' }}%</div>
+        <div class="kpi-sub">Year to date</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Write-Off / Claim</div>
+        <div class="kpi-value">{{ data.summary.avgPerClaim | currency:'USD':'symbol':'1.0-0' }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Claims with Write-Off</div>
+        <div class="kpi-value">{{ data.summary.claimsWithWriteOff | number }}</div>
+        <div class="kpi-sub">YTD</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+
+      <div class="chart-card">
+        <div class="chart-title">Write-Offs by Payer</div>
+        <apx-chart
+          [series]="payerChartOptions.series"
+          [chart]="payerChartOptions.chart"
+          [xaxis]="payerChartOptions.xaxis"
+          [dataLabels]="payerChartOptions.dataLabels"
+          [tooltip]="payerChartOptions.tooltip"
+          [plotOptions]="payerChartOptions.plotOptions"
+          [fill]="payerChartOptions.fill">
+        </apx-chart>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">By Age Bucket</div>
+        <apx-chart
+          [series]="ageChartOptions.series"
+          [chart]="ageChartOptions.chart"
+          [labels]="ageChartOptions.labels"
+          [legend]="ageChartOptions.legend"
+          [dataLabels]="ageChartOptions.dataLabels"
+          [tooltip]="ageChartOptions.tooltip">
+        </apx-chart>
+      </div>
+
+    </div>
+
+    <!-- Monthly Trend -->
+    <div class="chart-card">
+      <div class="chart-title">Monthly Write-Off Trend (Last 12 Months)</div>
+      <apx-chart
+        [series]="trendChartOptions.series"
+        [chart]="trendChartOptions.chart"
+        [xaxis]="trendChartOptions.xaxis"
+        [stroke]="trendChartOptions.stroke"
+        [dataLabels]="trendChartOptions.dataLabels"
+        [tooltip]="trendChartOptions.tooltip"
+        [yaxis]="trendChartOptions.yaxis">
+      </apx-chart>
+    </div>
+
+    <!-- Top Payers Table -->
+    <div class="table-card">
+      <div class="table-title">Top Payers by Write-Off Amount</div>
+      <table mat-table [dataSource]="data.byPayer" class="xen-table">
+
+        <ng-container matColumnDef="payer">
+          <th mat-header-cell *matHeaderCellDef>Payer</th>
+          <td mat-cell *matCellDef="let r"><strong>{{ r.payer }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="writeOffAmount">
+          <th mat-header-cell *matHeaderCellDef class="num">Write-Off Amount</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.writeOffAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="claimCount">
+          <th mat-header-cell *matHeaderCellDef class="num">Claims</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.claimCount | number }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="payerColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: payerColumns;" class="xen-row"></tr>
+      </table>
+    </div>
+
+  </ng-container>
+
+</div>

@@ -1,0 +1,35 @@
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- Impersonation banner - above entire layout, pushes content down -->
+@if (impersonation.impersonating$ | async; as imp) {
+  <div class="impersonation-banner">
+    <mat-icon>visibility</mat-icon>
+    <span>Viewing as <strong>{{ imp.name }}</strong> ({{ imp.role }})</span>
+    <button mat-flat-button color="warn" (click)="impersonation.stopImpersonation()">
+      <mat-icon>close</mat-icon> Exit
+    </button>
+  </div>
+}
+
+<div class="app-container" [class.sidebar-open]="sidebarOpen">
+  @if (sidebarOpen) {
+    <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
+  }
+  <app-side-nav
+    [class.sidebar-visible]="sidebarOpen"
+    [navCollapsed]="navCollapsed"
+    (collapseToggle)="navCollapsed = !navCollapsed"
+    (click)="closeSidebar()">
+  </app-side-nav>
+  <div class="main-content">
+    <app-top-nav
+      (menuToggle)="toggleSidebar()"
+      [navCollapsed]="navCollapsed"
+      [isSuperAdmin]="isSuperAdmin"
+      (expandNav)="navCollapsed = false">
+    </app-top-nav>
+    <main id="main-content" class="page-content" role="main">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

@@ -1,0 +1,128 @@
+<!-- [ok] Reusable Search (optional) -->
+@if (showSearch) {
+  <div class="rp-filter-search">
+    <mat-form-field class="rp-filter-search__field" appearance="outline" [floatLabel]="floatLabel">
+      <mat-label>{{ searchLabel }}</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        type="text"
+        [formControl]="searchCtrl"
+        [placeholder]="searchPlaceholder"
+        />
+        @if (searchCtrl.value) {
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Clear search"
+            (click)="clearSearch()"
+            >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+  }
+
+  <!-- [ok] Existing Filter Form (optional) -->
+  @if (showForm && form) {
+    <form [formGroup]="form" class="rp-filter-form">
+      @for (r of rows; track r) {
+        <div class="row">
+          @for (field of fieldsForRow(r); track field) {
+            <!-- TEXT -->
+            @if (field.type === 'text') {
+              <mat-form-field appearance="outline" class="field" [ngClass]="'w-' + (field.width || 'md')" [floatLabel]="floatLabel">
+                <mat-label>{{ field.label }}</mat-label>
+                <input matInput [formControlName]="field.key" />
+              </mat-form-field>
+            }
+            <!-- NUMBER -->
+            @if (field.type === 'number') {
+              <mat-form-field appearance="outline" class="field" [ngClass]="'w-' + (field.width || 'md')" [floatLabel]="floatLabel">
+                <mat-label>{{ field.label }}</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  [attr.min]="field.min ?? null"
+                  [attr.max]="field.max ?? null"
+                  [attr.step]="field.step ?? null"
+                  [formControlName]="field.key"
+                  />
+                </mat-form-field>
+              }
+              <!-- SELECT -->
+              @if (field.type === 'select') {
+                <mat-form-field appearance="outline" class="field" [ngClass]="'w-' + (field.width || 'md')" [floatLabel]="floatLabel">
+                  <mat-label>{{ field.label }}</mat-label>
+                  <mat-select [formControlName]="field.key">
+                    @for (opt of field.options; track opt) {
+                      <mat-option [value]="opt.value">
+                        {{ opt.label }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                  @if (field.key === 'bankName' && !form.get('bankName')?.value) {
+                    <mat-hint class="bank-hint">
+                      Select a Bank to continue.
+                    </mat-hint>
+                  }
+                  @if (field.key === 'bankFeedId' && form.get('bankName')?.value) {
+                    <mat-hint class="bank-hint">
+                      Optional: select a Bank Feed ID, then click Apply.
+                    </mat-hint>
+                  }
+                </mat-form-field>
+              }
+              <!-- DATE -->
+              @if (field.type === 'date') {
+                <mat-form-field appearance="outline" class="field" [ngClass]="'w-' + (field.width || 'md')" [floatLabel]="floatLabel">
+                  <mat-label>{{ field.label }}</mat-label>
+                  <input matInput [matDatepicker]="dp" [formControlName]="field.key" />
+                  <mat-datepicker-toggle matSuffix [for]="dp"></mat-datepicker-toggle>
+                  <mat-datepicker #dp></mat-datepicker>
+                </mat-form-field>
+              }
+              <!-- DATE RANGE -->
+              @if (field.type === 'dateRange') {
+                <div class="date-range field" [ngClass]="'w-' + (field.width || 'lg')">
+                  <mat-form-field appearance="outline" [floatLabel]="floatLabel">
+                    <mat-label>{{ field.label }} From</mat-label>
+                    <input
+                      matInput
+                      [matDatepicker]="fromDp"
+                      [value]="getDateRangeValue(field.key).from"
+                      (dateChange)="setDateRangePart(field.key, 'from', $event.value)"
+                      />
+                      <mat-datepicker-toggle matSuffix [for]="fromDp"></mat-datepicker-toggle>
+                      <mat-datepicker #fromDp></mat-datepicker>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" [floatLabel]="floatLabel">
+                      <mat-label>{{ field.label }} To</mat-label>
+                      <input
+                        matInput
+                        [matDatepicker]="toDp"
+                        [value]="getDateRangeValue(field.key).to"
+                        (dateChange)="setDateRangePart(field.key, 'to', $event.value)"
+                        />
+                        <mat-datepicker-toggle matSuffix [for]="toDp"></mat-datepicker-toggle>
+                        <mat-datepicker #toDp></mat-datepicker>
+                      </mat-form-field>
+                    </div>
+                  }
+                  <!-- CHECKBOX -->
+                  @if (field.type === 'checkbox') {
+                    <mat-checkbox class="field" [ngClass]="'w-' + (field.width || 'md')" [formControlName]="field.key">
+                      {{ field.label }}
+                    </mat-checkbox>
+                  }
+                }
+              </div>
+            }
+            <div class="row actions">
+              <span class="spacer"></span>
+              <button mat-button type="button" (click)="onReset()">Reset</button>
+            </div>
+          </form>
+        }

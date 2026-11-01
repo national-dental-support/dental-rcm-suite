@@ -1,0 +1,151 @@
+<section class="page-content">
+  <div class="toolbar-card">
+    <div class="cmdbar">
+      <div class="cmdbar__left">
+        <div class="cmdbar__title">Reconciliation Alerts</div>
+        <div class="cmdbar__hint">Aging items requiring attention</div>
+      </div>
+      <div class="cmdbar__right">
+        <button mat-flat-button [color]="activeTab === 'alerts' ? 'primary' : undefined"
+        type="button" (click)="activeTab = 'alerts'">Alerts ({{ alerts.length }})</button>
+        <button mat-flat-button [color]="activeTab === 'config' ? 'primary' : undefined"
+        type="button" (click)="activeTab = 'config'">Alert Config</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Alerts Tab -->
+  @if (activeTab === 'alerts') {
+    @if (alertsLoading) {
+      <div class="loading-row"><mat-spinner diameter="28"></mat-spinner></div>
+    }
+    @if (!alertsLoading) {
+      <app-section-card [title]="'Open Alerts'">
+        @if (alerts.length) {
+          <table class="alert-table">
+            <thead>
+              <tr>
+                <th>Type</th><th>Item ID</th><th>Item Date</th><th>Days Aged</th>
+                <th>Threshold</th><th>Severity</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of alerts; track a) {
+                <tr>
+                  <td>{{ a.alertType | titlecase }}</td>
+                  <td class="mono">{{ a.itemId }}</td>
+                  <td>{{ a.itemDate | date:'shortDate' }}</td>
+                  <td>{{ a.daysAged }}</td>
+                  <td>{{ a.thresholdDays }}d</td>
+                  <td><span [class]="severityClass(a.severity)">{{ a.severity | titlecase }}</span></td>
+                  <td>
+                    <button mat-stroked-button type="button" (click)="acknowledge(a)">Acknowledge</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        @if (!alerts.length) {
+          <p class="empty-row">No open alerts.</p>
+        }
+      </app-section-card>
+    }
+  }
+
+  <!-- Config Tab -->
+  @if (activeTab === 'config') {
+    <app-section-card [title]="'Alert Thresholds'">
+      @if (configsLoading) {
+        <div class="loading-row"><mat-spinner diameter="28"></mat-spinner></div>
+      }
+      @if (!configsLoading && configs.length) {
+        <table class="alert-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Threshold</th>
+              <th>Severity</th>
+              <th>Enabled</th>
+              <th>Notify Emails</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of configs; track c) {
+              <tr [class.row--editing]="editingConfig?.id === c.id">
+                <td>{{ c.alertType }}</td>
+                <td>{{ c.thresholdDays }}d</td>
+                <td><span [class]="severityClass(c.severity)">{{ c.severity | titlecase }}</span></td>
+                <td>
+                  <button class="toggle-btn" [class.toggle-btn--on]="c.isEnabled"
+                    type="button" (click)="toggleEnabled(c)"
+                    [title]="c.isEnabled ? 'Enabled &#x2014; click to disable' : 'Disabled &#x2014; click to enable'">
+                    {{ c.isEnabled ? 'Yes' : 'No' }}
+                  </button>
+                </td>
+                <td class="emails-cell">{{ c.notifyEmails || '&#x2014;' }}</td>
+                <td class="actions-cell">
+                  <button mat-icon-button type="button" title="Edit" (click)="startEdit(c)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" title="Delete" class="btn-delete" (click)="deleteConfig(c)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      @if (!configsLoading && !configs.length) {
+        <p class="empty-row">No alert configs yet. Add one below.</p>
+      }
+    </app-section-card>
+    <app-section-card [title]="formTitle">
+      <div class="config-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Alert Type</mat-label>
+          <mat-select [(ngModel)]="newConfigType" [disabled]="!!editingConfig">
+            @for (t of alertTypes; track t) {
+              <mat-option [value]="t">{{ t }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Threshold Days</mat-label>
+          <input matInput type="number" [(ngModel)]="newConfigDays" min="1" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Severity</mat-label>
+          <mat-select [(ngModel)]="newConfigSeverity">
+            <mat-option value="info">Info</mat-option>
+            <mat-option value="warning">Warning</mat-option>
+            <mat-option value="critical">Critical</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Notify Emails (comma-separated)</mat-label>
+          <input matInput type="text" [(ngModel)]="newConfigEmails" placeholder="a@example.com, b@example.com" />
+        </mat-form-field>
+        <div class="form-enabled-row">
+          <label class="enabled-label">
+            <input type="checkbox" [(ngModel)]="newConfigEnabled" />
+            Enabled
+          </label>
+        </div>
+        <div class="form-actions">
+          <button mat-flat-button color="primary" type="button"
+            [disabled]="!newConfigType || savingConfig" (click)="saveConfig()">
+            {{ editingConfig ? 'Update Config' : 'Add Config' }}
+          </button>
+          @if (editingConfig) {
+            <button mat-stroked-button type="button" (click)="cancelEdit()">
+              Cancel
+            </button>
+          }
+        </div>
+      </div>
+    </app-section-card>
+  }
+</section>

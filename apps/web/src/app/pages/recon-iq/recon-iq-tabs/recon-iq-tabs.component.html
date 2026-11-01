@@ -1,0 +1,38 @@
+<nav mat-tab-nav-bar [tabPanel]="panel">
+  <!-- Dashboard (always first) -->
+  <a
+    mat-tab-link
+    [routerLink]="dashboardTab.link"
+    routerLinkActive
+    #dashRla="routerLinkActive"
+    [active]="dashRla.isActive"
+    >
+    {{ dashboardTab.label }}
+  </a>
+
+  <!-- Route-only detail tab (right after Dashboard) -->
+  @if (showFullyReconciledTab$ | async) {
+    <a
+      mat-tab-link
+      [active]="true"
+      class="detail-tab"
+      >
+      Fully Reconciled (Posted)
+    </a>
+  }
+
+  <!-- Remaining tabs -->
+  @for (t of otherTabs$ | async; track trackByLabel($index, t)) {
+    <a
+      mat-tab-link
+      [routerLink]="t.link"
+      routerLinkActive
+      #rla="routerLinkActive"
+      [active]="rla.isActive"
+      >
+      {{ t.label }}
+    </a>
+  }
+</nav>
+
+<mat-tab-nav-panel #panel></mat-tab-nav-panel>

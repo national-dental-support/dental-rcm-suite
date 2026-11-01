@@ -1,0 +1,48 @@
+@use '../enrichment-panel.shared';
+
+.claim-vision-panel .panel-icon { color: #6a1b9a; }
+
+.rule-row {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+
+  &:last-child { border-bottom: none; }
+}
+
+.rule-icon {
+  color: var(--color-danger);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.rule-name {
+  font-weight: 500;
+  font-size: var(--font-size-md);
+}
+
+.rule-desc {
+  font-size: var(--font-size-sm);
+  color: rgba(0,0,0,0.6);
+  margin: 2px 0 6px;
+}
+
+.rule-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-chip {
+  font-size: 11px;
+  background: #f3e5f5;
+  color: #6a1b9a;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.rule-date {
+  font-size: var(--font-size-xs);
+  color: rgba(0,0,0,0.45);
+}

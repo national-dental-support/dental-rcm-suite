@@ -1,0 +1,201 @@
+<div class="writeoff-container">
+
+  <!-- Rules List -->
+  <app-section-card title="Write-Off Rules" subtitle="Configure auto-adjustment and approval workflows for aged AR">
+    <div class="toolbar">
+      <button mat-flat-button color="primary" (click)="newRule()">
+        <mat-icon>add</mat-icon> New Rule
+      </button>
+      <span class="spacer"></span>
+      <button mat-stroked-button (click)="runScan(true)" [disabled]="scanning">
+        {{ scanning ? 'Scanning...' : 'Dry Run (Preview)' }}
+      </button>
+      <button mat-flat-button color="accent" (click)="runScan(false)" [disabled]="scanning">
+        Run Scan
+      </button>
+    </div>
+
+    @if (loading) {
+      <div class="loading-container">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+    }
+
+    @if (!loading && rules.length) {
+      <table class="xen-table rules-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Rule Name</th>
+            <th>Conditions</th>
+            <th>Adjustment Type</th>
+            <th>Action</th>
+            <th>Active</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rule of rules; track rule) {
+            <tr [class.inactive]="!rule.is_active">
+              <td>{{ rule.priority }}</td>
+              <td>{{ rule.rule_name }}</td>
+              <td class="conditions">
+                @if (rule.conditions?.minAgingDays) {
+                  <span>Age &ge; {{ rule.conditions.minAgingDays }}d</span>
+                }
+                @if (rule.conditions?.maxBalance) {
+                  <span>, Balance &le; ${{ rule.conditions.maxBalance }}</span>
+                }
+                @if (rule.conditions?.minBalance) {
+                  <span>, Balance &ge; ${{ rule.conditions.minBalance }}</span>
+                }
+                @if (rule.conditions?.denialCodes?.length) {
+                  <span>, Codes: {{ rule.conditions.denialCodes.join(', ') }}</span>
+                }
+              </td>
+              <td>{{ rule.adj_type }}</td>
+              <td>
+                <span class="badge" [class.auto]="!rule.requires_approval" [class.approval]="rule.requires_approval">
+                  {{ rule.requires_approval ? 'Requires ' + rule.approval_level + ' approval' : 'Auto-post' }}
+                </span>
+              </td>
+              <td>
+                <mat-slide-toggle [checked]="rule.is_active" (change)="toggleActive(rule)"></mat-slide-toggle>
+              </td>
+              <td>
+                <button mat-icon-button (click)="editRule(rule)"><mat-icon>edit</mat-icon></button>
+                <button mat-icon-button color="warn" (click)="deleteRule(rule)"><mat-icon>delete</mat-icon></button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    @if (!loading && !rules.length) {
+      <div class="empty">
+        No write-off rules configured yet. Click "New Rule" to create one.
+      </div>
+    }
+  </app-section-card>
+
+  <!-- Rule Editor -->
+  @if (showEditor) {
+    <app-section-card title="{{ editingRule.id ? 'Edit' : 'New' }} Write-Off Rule">
+      <div class="editor-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Rule Name</mat-label>
+          <input matInput [(ngModel)]="editingRule.rule_name" placeholder="e.g., Auto write-off small balances">
+        </mat-form-field>
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Priority (lower = first)</mat-label>
+            <input matInput type="number" [(ngModel)]="editingRule.priority">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Adjustment Type</mat-label>
+            <mat-select [(ngModel)]="editingRule.adj_type">
+              @for (t of adjTypes; track t) {
+                <mat-option [value]="t">{{ t }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Min Aging Days</mat-label>
+            <input matInput type="number" [(ngModel)]="editingRule.conditions.minAgingDays">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Max Balance ($)</mat-label>
+            <input matInput type="number" [(ngModel)]="editingRule.conditions.maxBalance">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Min Balance ($)</mat-label>
+            <input matInput type="number" [(ngModel)]="editingRule.conditions.minBalance">
+          </mat-form-field>
+        </div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Note Template</mat-label>
+          <input matInput [(ngModel)]="editingRule.adj_note_template" placeholder="Auto write-off per policy">
+        </mat-form-field>
+        <div class="form-row">
+          <mat-slide-toggle [(ngModel)]="editingRule.requires_approval">Requires Approval</mat-slide-toggle>
+          @if (editingRule.requires_approval) {
+            <mat-form-field appearance="outline">
+              <mat-label>Approval Level</mat-label>
+              <mat-select [(ngModel)]="editingRule.approval_level">
+                @for (l of approvalLevels; track l) {
+                  <mat-option [value]="l">{{ l | titlecase }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+        </div>
+        <div class="actions-bar">
+          <button mat-stroked-button (click)="cancelEdit()">Cancel</button>
+          <button mat-flat-button color="primary" (click)="saveRule()" [disabled]="saving || !editingRule.rule_name">
+            {{ saving ? 'Saving...' : 'Save Rule' }}
+          </button>
+        </div>
+      </div>
+    </app-section-card>
+  }
+
+  <!-- Scan Results -->
+  @if (scanResult) {
+    <app-section-card title="Scan Results {{ scanResult.dryRun ? '(Dry Run)' : '' }}">
+      <div class="scan-summary">
+        <div class="scan-stat">
+          <span class="stat-value">{{ scanResult.totalClaims }}</span>
+          <span class="stat-label">Total Aged Claims</span>
+        </div>
+        <div class="scan-stat">
+          <span class="stat-value">{{ scanResult.totalMatched }}</span>
+          <span class="stat-label">Matched Rules</span>
+        </div>
+        @if (!scanResult.dryRun) {
+          <div class="scan-stat">
+            <span class="stat-value">{{ scanResult.autoPosted }}</span>
+            <span class="stat-label">Auto-Posted</span>
+          </div>
+        }
+        @if (!scanResult.dryRun) {
+          <div class="scan-stat">
+            <span class="stat-value">{{ scanResult.requestsCreated }}</span>
+            <span class="stat-label">Sent for Approval</span>
+          </div>
+        }
+      </div>
+      @if (scanResult.matches.length) {
+        <table class="xen-table matches-table">
+          <thead>
+            <tr>
+              <th>Claim ID</th>
+              <th>Balance</th>
+              <th>Aging Days</th>
+              <th>Rule</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of scanResult.matches; track m) {
+              <tr>
+                <td>{{ m.claimId }}</td>
+                <td>{{ m.balance | currency }}</td>
+                <td>{{ m.agingDays }}</td>
+                <td>{{ m.ruleName }}</td>
+                <td>
+                  <span class="badge" [class.auto]="!m.requiresApproval" [class.approval]="m.requiresApproval">
+                    {{ m.requiresApproval ? 'Approval Required' : 'Auto-Post' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </app-section-card>
+  }
+
+</div>

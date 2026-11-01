@@ -1,0 +1,121 @@
+<div class="report-builder">
+
+  @if (loading) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+
+  @if (!loading && schema) {
+    <!-- Saved Reports -->
+    @if (savedReports.length > 0) {
+      <div class="saved-section">
+        <h4>Saved Reports</h4>
+        <div class="saved-chips">
+          @for (r of savedReports; track r) {
+            <div class="saved-chip">
+              <button mat-button (click)="loadSaved(r)">{{ r.name }}</button>
+              <button mat-icon-button (click)="deleteSaved(r.id)" matTooltip="Delete">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    <!-- Builder -->
+    <div class="builder-grid">
+      <!-- Dimensions -->
+      <div class="builder-section">
+        <h5>Dimensions (Group By)</h5>
+        <div class="chip-grid">
+          @for (d of schema.dimensions; track d) {
+            <button
+              class="builder-chip"
+              [class.selected]="isDimSelected(d.key)"
+              (click)="toggleDim(d.key)">
+              {{ d.label }}
+            </button>
+          }
+        </div>
+      </div>
+      <!-- Measures -->
+      <div class="builder-section">
+        <h5>Measures</h5>
+        <div class="chip-grid">
+          @for (m of schema.measures; track m) {
+            <button
+              class="builder-chip"
+              [class.selected]="isMeasureSelected(m.key)"
+              (click)="toggleMeasure(m.key)">
+              {{ m.label }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+    <!-- Controls -->
+    <section class="controls-row">
+      <mat-form-field appearance="outline" class="narrow">
+        <mat-label>Period</mat-label>
+        <mat-select [(ngModel)]="days">
+          <mat-option [value]="30">30 Days</mat-option>
+          <mat-option [value]="90">90 Days</mat-option>
+          <mat-option [value]="180">6 Months</mat-option>
+          <mat-option [value]="365">1 Year</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-flat-button color="primary" [disabled]="!canRun() || running" (click)="runReport()">
+        <mat-icon>play_arrow</mat-icon>
+        {{ running ? 'Running...' : 'Run Report' }}
+      </button>
+      @if (result) {
+        <button mat-button (click)="showSaveForm = !showSaveForm">
+          <mat-icon>save</mat-icon> Save Report
+        </button>
+      }
+    </section>
+    <!-- Save form -->
+    @if (showSaveForm) {
+      <app-section-card class="save-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Report Name</mat-label>
+          <input matInput [(ngModel)]="saveName" placeholder="e.g. Monthly Denial by Payer">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Description</mat-label>
+          <input matInput [(ngModel)]="saveDesc">
+        </mat-form-field>
+        <button mat-flat-button color="primary" [disabled]="!saveName || saving" (click)="saveReport()">
+          {{ saving ? 'Saving...' : 'Save' }}
+        </button>
+      </app-section-card>
+    }
+    <!-- Results -->
+    @if (result) {
+      <app-section-card class="results">
+        <div class="results-header">
+          <span>{{ result.rowCount }} rows</span>
+        </div>
+        <div class="results-scroll">
+          <table class="simple-table">
+            <thead>
+              <tr>
+                @for (col of resultColumns; track col) {
+                  <th>{{ col }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of result.rows; track row) {
+                <tr>
+                  @for (col of resultColumns; track col) {
+                    <td>{{ row[col] }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-section-card>
+    }
+  }
+</div>

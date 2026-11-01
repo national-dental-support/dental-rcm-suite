@@ -1,0 +1,212 @@
+<div class="rcm-container">
+  <!-- Header + actions -->
+  <div class="page-header">
+    <!-- <div class="header-actions">
+    <button mat-stroked-button color="primary" (click)="openFilterDialog()">Filter...</button>
+    <button mat-button (click)="resetAll()">Reset</button>
+  </div> -->
+</div>
+
+<!-- Chips -->
+@if ((chips$ | async)?.length) {
+  <div class="chips">
+    <mat-chip-set>
+      @for (chip of (chips$ | async); track chip) {
+        <mat-chip
+          (removed)="removeChip(chip.key, chip.label)">
+          {{ chip.label }}
+          <mat-icon matChipRemove>close</mat-icon>
+        </mat-chip>
+      }
+    </mat-chip-set>
+  </div>
+}
+
+<!-- KPI Cards - hidden until data arrives -->
+@if ((collectionRate$ | async) != null || (claimsCount$ | async) != null || (grossProduction$ | async) != null) {
+  <div class="kpi-grid">
+
+    <mat-card class="kpi-card">
+      <mat-card-subtitle>
+        Closed Claim Collection Rate
+        <mat-icon class="info-tip" matTooltip="Adjusted Collection Rate for fully closed claims (status: Accepted). Formula: Payments &#x00F7; (Payments + Write-offs + Outstanding Balance) &#x00D7; 100. Measures how much of collectible revenue was actually received, after contractual discounts are removed. Industry benchmark: 95%+." matTooltipPosition="right">info_outline</mat-icon>
+      </mat-card-subtitle>
+      <mat-card-title>
+        {{ (collectionRate$ | async) | number:'1.1-1' }}%
+        <mat-icon class="trend-icon trend-{{ (closedClaimTrend$ | async) }}">
+          {{ (closedClaimTrend$ | async) === 'up' ? 'trending_up' : (closedClaimTrend$ | async) === 'down' ? 'trending_down' : 'trending_flat' }}
+        </mat-icon>
+      </mat-card-title>
+      @for (m of (closedClaimMonths$ | async); track m.month) {
+        <div class="muted">
+          <span>{{ m.month }}</span>
+          <span>{{ m.rate | number:'1.1-1' }}%</span>
+        </div>
+      }
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-card-subtitle>
+        Closed Claims
+        <mat-icon class="info-tip" matTooltip="Total number of fully adjudicated (Accepted) claims per month over the past 3 complete calendar months, grouped by date of service." matTooltipPosition="right">info_outline</mat-icon>
+      </mat-card-subtitle>
+      <mat-card-title>
+        {{ (claimsCount$ | async) | number:'1.0-0' }}
+        <mat-icon class="trend-icon trend-{{ (claimsTrend$ | async) }}">
+          {{ (claimsTrend$ | async) === 'up' ? 'trending_up' : (claimsTrend$ | async) === 'down' ? 'trending_down' : 'trending_flat' }}
+        </mat-icon>
+      </mat-card-title>
+      @for (m of (claimsMonths$ | async); track m.month) {
+        <div class="muted">
+          <span>{{ m.month }}</span>
+          <span>{{ m.count | number:'1.0-0' }}</span>
+        </div>
+      }
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-card-subtitle>
+        Total Gross Production
+        <mat-icon class="info-tip" matTooltip="Total billed charges (gross production) per month over the past 3 complete calendar months, across all claims and payers before any adjustments or write-offs." matTooltipPosition="right">info_outline</mat-icon>
+      </mat-card-subtitle>
+      <mat-card-title>
+        {{ (grossProduction$ | async) | currency:'USD':'symbol':'1.0-0' }}
+        <mat-icon class="trend-icon trend-{{ (grossProductionTrend$ | async) }}">
+          {{ (grossProductionTrend$ | async) === 'up' ? 'trending_up' : (grossProductionTrend$ | async) === 'down' ? 'trending_down' : 'trending_flat' }}
+        </mat-icon>
+      </mat-card-title>
+      @for (m of (grossProductionMonths$ | async); track m.month) {
+        <div class="muted">
+          <span>{{ m.month }}</span>
+          <span>{{ m.amount | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+      }
+    </mat-card>
+
+  </div>
+}
+
+<!-- Revenue by Practice Table -->
+<app-section-card title="Revenue by Practice" [tooltip]="'Total collected revenue broken down by practice location over the selected period. Calculated as the sum of payment transactions (TrxType = Payment) grouped by location/practice, showing which sites contribute most to collections.'">
+  <button type="button" cardHeaderActions mat-stroked-button class="btn-export" (click)="exportRevenueByPractice()">Export</button>
+  @if (isLoading$ | async) {
+    <mat-progress-bar
+      mode="indeterminate"
+      class="table-header__progress">
+    </mat-progress-bar>
+  }
+
+  @if (table$ | async; as rows) {
+    <rp-advanced-table
+      [data]="rows"
+      [columns]="columns"
+      [enableGlobalSearch]="true"
+      [enableExport]="false"
+      [idField]="'id'"
+      [childIndentPx]="16"
+      [enableNestedRows]="false"
+      [autoGenerateValueLists]="true"
+      [serverSideTotalCount]="(totalRows$ | async) ?? 0"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      (pageChanged)="onPageChange($event)">
+    </rp-advanced-table>
+  }
+</app-section-card>
+
+<!-- Charts Grid -->
+<div class="rcm-charts-grid">
+
+  <!-- 1. Claim Value by Status -->
+  <mat-card class="chart-card">
+    <div class="chart-head">
+      <div class="title">Claim Value by Status <mat-icon class="info-tip" matTooltip="Total dollar value of claims grouped by their current processing status (e.g., Pending, Paid, Denied). Helps identify bottlenecks in the revenue cycle." matTooltipPosition="right">info_outline</mat-icon></div>
+      <span class="spacer"></span>
+      <button type="button" mat-stroked-button class="btn-export" (click)="exportClaimValueByStatus()">Export</button>
+    </div>
+    @if (claimValueByStatus$ | async; as data) {
+      <app-horizontal-bar-chart
+        [data]="data | toClaimValueByStatusChart"
+        [barColor]="(primaryColor$ | async) ?? '#18a69b'"
+        [currency]="true">
+      </app-horizontal-bar-chart>
+    }
+  </mat-card>
+
+  <!-- 2. Claim Amounts by Practice -->
+  <mat-card class="chart-card">
+    <div class="chart-head">
+      <div class="title">Claim Amounts <mat-icon class="info-tip" matTooltip="Top 5 practices ranked by total claim value. Compares billed amounts across practice locations to identify volume concentration." matTooltipPosition="right">info_outline</mat-icon></div>
+      <div class="meta">Viewing top 5 &#x2022; <b>By Practice</b></div>
+      <span class="spacer"></span>
+      <button type="button" mat-stroked-button class="btn-export" (click)="exportClaimAmountsByPractice()">Export</button>
+    </div>
+    @if (claimAmountsByPractice$ | async; as data) {
+      <app-horizontal-bar-chart
+        [data]="data | toClaimAmountsByPracticeChart"
+        [barColor]="(primaryColor$ | async) ?? '#18a69b'"
+        [currency]="true">
+      </app-horizontal-bar-chart>
+    }
+  </mat-card>
+
+  <!-- 3. Collection & Adjustment Trends (combo: 2 bar series + 1 line) -->
+  <mat-card class="chart-card">
+    <div class="chart-head">
+      <div class="title">Collection &amp; Adjustment Trends <mat-icon class="info-tip" matTooltip="Month-over-month trend of collections and adjustments. Bar series show dollar amounts; line overlay shows the collection rate percentage." matTooltipPosition="right">info_outline</mat-icon></div>
+      <span class="spacer"></span>
+      <button type="button" mat-stroked-button class="btn-export" (click)="exportCollectionAdjustmentTrends()">Export</button>
+    </div>
+    @if (collectionAdjustmentTrends$ | async; as data) {
+      <apx-chart
+        class="chart-host"
+        [series]="data | toCollectionAdjustmentSeries"
+        [chart]="collectionTrendOptions.chart!"
+        [stroke]="collectionTrendOptions.stroke!"
+        [plotOptions]="collectionTrendOptions.plotOptions!"
+        [dataLabels]="collectionTrendOptions.dataLabels!"
+        [xaxis]="collectionTrendOptions.xaxis!"
+        [yaxis]="collectionTrendOptions.yaxis!"
+        [grid]="collectionTrendOptions.grid!"
+        [legend]="collectionTrendOptions.legend!"
+        [colors]="(chartColors$ | async) ?? []">
+      </apx-chart>
+    }
+  </mat-card>
+
+  <!-- 4. Claim Amounts by Payer -->
+  <mat-card class="chart-card">
+    <div class="chart-head">
+      <div class="title">Claim Amounts by Payer <mat-icon class="info-tip" matTooltip="Top 8 payers ranked by total billed claim amount. Shows which insurance carriers represent the largest share of your revenue." matTooltipPosition="right">info_outline</mat-icon></div>
+      <div class="meta">Viewing top 8</div>
+      <span class="spacer"></span>
+      <button type="button" mat-stroked-button class="btn-export" (click)="exportClaimAmountsByPayer()">Export</button>
+    </div>
+    @if (claimAmountsByPayer$ | async; as data) {
+      <app-horizontal-bar-chart
+        [data]="data | toClaimAmountsByPayerChart"
+        [barColor]="(primaryColor$ | async) ?? '#18a69b'"
+        [currency]="true">
+      </app-horizontal-bar-chart>
+    }
+  </mat-card>
+
+  <!-- 5. Claim Values by Type -->
+  <mat-card class="chart-card">
+    <div class="chart-head">
+      <div class="title">Claim Values by Type <mat-icon class="info-tip" matTooltip="Claims grouped by type (e.g., Professional, Institutional) showing the dollar value distribution across claim categories." matTooltipPosition="right">info_outline</mat-icon></div>
+      <span class="spacer"></span>
+      <button type="button" mat-stroked-button class="btn-export" (click)="exportClaimValuesByType()">Export</button>
+    </div>
+    @if (claimValuesByType$ | async; as data) {
+      <app-horizontal-bar-chart
+        [data]="data | toClaimValuesByTypeChart"
+        [barColor]="(primaryColor$ | async) ?? '#18a69b'"
+        [currency]="true">
+      </app-horizontal-bar-chart>
+    }
+  </mat-card>
+
+</div>
+
+</div>

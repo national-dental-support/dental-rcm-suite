@@ -1,0 +1,72 @@
+<div class="kpi-detail-page">
+
+  <div class="breadcrumb">
+    <button mat-button (click)="back()"><mat-icon>arrow_back</mat-icon> Back to Financial Overview</button>
+    <button mat-stroked-button class="btn-export" (click)="exportTrend()">Export</button>
+  </div>
+
+  @if (detail$ | async; as d) {
+    <div class="grid">
+      <div class="card month">
+        <div class="heading">Past Month <mat-icon class="info-tip" matTooltip="Current month's value and RAG status for this KPI based on configured thresholds." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="value">{{ d.item.value | number:'1.0-1' }}{{ d.item.unit }}</div>
+        <app-kpi-progress-bar
+          [value]="d.item.value"
+          [thresholds]="d.item.thresholds"
+          [unit]="d.item.unit || '%'"
+          [rag]="d.item.rag">
+        </app-kpi-progress-bar>
+      </div>
+      <div class="card trend">
+        <app-line-chart
+          class="heading"
+          [title]="'Past FY Quarterly Trend'"
+          [categoriesOverride]="quarterCategories(d.trendQuarterly)"
+          [seriesOverride]="quarterSeries(d.trendQuarterly)"
+          [tooltipAsCurrency]="false"
+        ></app-line-chart>
+      </div>
+      <div class="card benchmark">
+        <div class="heading">Benchmark <mat-icon class="info-tip" matTooltip="Industry standard comparison value and explanation of how this KPI is calculated." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="content">
+          <div><span class="muted">Benchmark:</span> {{ d.item.benchmark || '&#x2014;' }}</div>
+          <div><span class="muted">How it&#x2019;s calculated:</span> {{ d.item.calcHint || '&#x2014;' }}</div>
+        </div>
+      </div>
+      <div class="card interpret">
+        <div class="heading">Interpretation <mat-icon class="info-tip" matTooltip="Guidance on what high and low values mean for this KPI to help with decision-making." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="content">
+          <div><strong>Higher {{ d.item.title }}</strong> indicates:</div>
+          <ul>@for (i of d.interpretationHigh; track i) {
+            <li>{{ i }}</li>
+          }</ul>
+          <div><strong>Lower {{ d.item.title }}</strong> may suggest:</div>
+          <ul>@for (i of d.interpretationLow; track i) {
+            <li>{{ i }}</li>
+          }</ul>
+        </div>
+      </div>
+      <div class="card definition">
+        <div class="heading">Definition <mat-icon class="info-tip" matTooltip="Formal definition and calculation methodology for this KPI." matTooltipPosition="right">info_outline</mat-icon></div>
+        <div class="content">{{ d.definition }}</div>
+      </div>
+      <div class="card improve">
+        <div class="heading">How to improve <mat-icon class="info-tip" matTooltip="Actionable recommendations to move this KPI in the desired direction." matTooltipPosition="right">info_outline</mat-icon></div>
+        <ul>@for (tip of d.improvements; track tip) {
+          <li>{{ tip }}</li>
+        }</ul>
+      </div>
+      @if (d.contributingFactors?.length) {
+        <div class="card factors">
+          <div class="heading">Contributing factors <mat-icon class="info-tip" matTooltip="Key drivers and variables that influence this KPI's value." matTooltipPosition="right">info_outline</mat-icon></div>
+          <ul>
+            @for (factor of d.contributingFactors; track factor) {
+              <li>{{ factor }}</li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  }
+</div>
+

@@ -1,0 +1,28 @@
+::ng-deep .mat-tab-group {
+  width: 100% !important;
+}
+
+::ng-deep .mat-tab-label {
+  opacity: 1 !important;
+  color: #5a6b7a !important;
+  background: transparent !important;
+}
+
+::ng-deep .mat-tab-label.mat-tab-label-active {
+  color: #2c3e50 !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+::ng-deep .mat-tab-label.mat-tab-disabled {
+  opacity: 0.4 !important;
+}
+
+:host {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+}
+

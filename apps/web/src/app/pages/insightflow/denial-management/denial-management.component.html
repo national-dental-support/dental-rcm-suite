@@ -1,0 +1,199 @@
+<!-- Header / last-updated -->
+<section class="header">
+  <div class="subtle">Last update: {{ formattedLastUpdated }}</div>
+</section>
+
+@if (error) {
+  <div class="data-error">
+    <mat-icon>error_outline</mat-icon> Unable to load denial data. Please try again later.
+  </div>
+}
+
+<!-- ======================= LINE CHART ======================= -->
+<app-section-card title="Total Denied Claims & Charges by Month" [tooltip]="'Monthly trend of denied claim counts and associated charge amounts over the selected period. Calculated from remittance records with denial reason codes (CARC/RARC), grouped by month.'" class="panel">
+  <ng-container cardHeaderActions>
+    <button mat-button [matMenuTriggerFor]="periodMenu" type="button">{{ periodLabel }}</button>
+    <mat-menu #periodMenu="matMenu">
+      <button mat-menu-item (click)="setPeriod('All time')">All time</button>
+      <button mat-menu-item (click)="setPeriod('Last 30 days')">Last 30 days</button>
+      <button mat-menu-item (click)="setPeriod('Last 90 days')">Last 90 days</button>
+      <button mat-menu-item (click)="setPeriod('Last 6 months')">Last 6 months</button>
+      <button mat-menu-item (click)="setPeriod('Last 12 months')">Last 12 months</button>
+      <button mat-menu-item (click)="setPeriod('MTD')">MTD</button>
+      <button mat-menu-item (click)="setPeriod('QTD')">QTD</button>
+      <button mat-menu-item (click)="setPeriod('YTD')">YTD</button>
+      <button mat-menu-item (click)="setPeriod('This year')">This year</button>
+    </mat-menu>
+    @if (periodLabel !== 'This year') {
+      <button mat-icon-button type="button" (click)="setPeriod('This year')" matTooltip="Reset to default period" aria-label="Reset period">
+        <mat-icon>restart_alt</mat-icon>
+      </button>
+    }
+    <button mat-stroked-button class="btn-export" (click)="exportTrend()" type="button">Export</button>
+  </ng-container>
+
+  <app-line-chart
+    [seriesOverride]="lineSeries"
+    [categoriesOverride]="lineCategories"
+    [optionsOverride]="lineChartOverride"
+    [tooltipAsCurrency]="false">
+  </app-line-chart>
+</app-section-card>
+
+<!-- ====================== SECOND ROW ====================== -->
+<div class="two-col">
+
+  <!-- Top Preventable Denials (grouped bar - 2 series) + expandable drill-down table -->
+  <app-section-card title="Top Preventable Denials" [tooltip]="'Preventable denials grouped by root cause (Eligibility, Coding, Medical Necessity, etc.) ranked by denied charges. Based on the CARC/RARC &#x2192; grouping classification managed under Admin &#x2192; Denial Code Mapping. Excludes contractual adjustments and patient-responsibility reason codes.'" class="panel">
+    <button cardHeaderActions mat-stroked-button class="btn-export" (click)="exportTopReasons()">Export</button>
+    <apx-chart
+      [series]="barOpts.series!"
+      [chart]="barOpts.chart!"
+      [xaxis]="barOpts.xaxis!"
+      [plotOptions]="barOpts.plotOptions!"
+      [legend]="barOpts.legend!"
+      [dataLabels]="barOpts.dataLabels!"
+      [tooltip]="barOpts.tooltip!"
+      [grid]="barOpts.grid!"
+      [fill]="barOpts.fill!">
+    </apx-chart>
+
+    <!-- Drill-down table: Grouping -> CARC/RARC -> Claims -->
+    @if (currentReasons.length) {
+      <div class="drilldown-section">
+        <h4 class="drilldown-title">Breakdown by Grouping</h4>
+        <table class="drilldown-table">
+          <thead>
+            <tr>
+              <th class="expand-col"><span class="sr-only">Expand</span></th>
+              <th class="sortable-col" (click)="sortReasonsBy('Reason')">
+                Grouping / Code / Claim
+                <mat-icon class="sort-icon">{{ reasonSortIcon('Reason') }}</mat-icon>
+              </th>
+              <th class="num-col sortable-col" (click)="sortReasonsBy('CurrentAmount')">
+                Current 90d
+                <mat-icon class="sort-icon">{{ reasonSortIcon('CurrentAmount') }}</mat-icon>
+              </th>
+              <th class="num-col sortable-col" (click)="sortReasonsBy('PreviousAmount')">
+                Prior 90d
+                <mat-icon class="sort-icon">{{ reasonSortIcon('PreviousAmount') }}</mat-icon>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of sortedReasons; track trackByReason($index, r)) {
+              <!-- Level 1: Grouping row -->
+              <tr class="row-grouping" (click)="toggleGrouping(r.Reason)">
+                <td class="expand-col">
+                  <mat-icon>{{ isGroupingExpanded(r.Reason) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                </td>
+                <td class="label-cell"><strong>{{ r.Reason }}</strong></td>
+                <td class="num-col">{{ r.CurrentAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+                <td class="num-col">{{ r.PreviousAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+              </tr>
+              <!-- Level 2: loading bar while codes load -->
+              @if (isGroupingExpanded(r.Reason) && codesLoading[r.Reason]) {
+                <tr>
+                  <td colspan="4" class="loading-cell">
+                    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                  </td>
+                </tr>
+              }
+              <!-- Level 2: empty state -->
+              @if (isGroupingExpanded(r.Reason) && !codesLoading[r.Reason] && (codesByGrouping[r.Reason]?.length === 0)) {
+                <tr>
+                  <td colspan="4" class="empty-cell">No codes found for this grouping in the current window.</td>
+                </tr>
+              }
+              <!-- Level 2: CARC/RARC rows -->
+              @if (isGroupingExpanded(r.Reason) && !codesLoading[r.Reason]) {
+                @for (c of codesByGrouping[r.Reason]; track trackByCode($index, c)) {
+                  <tr class="row-code" (click)="toggleCode(c.carcCode, c.rarcCode)">
+                    <td class="expand-col">
+                      <mat-icon>{{ isCodeExpanded(c.carcCode, c.rarcCode) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                    </td>
+                    <td class="label-cell code-cell">
+                      <span class="code-chip">{{ formatCode(c.carcCode, c.rarcCode) }}</span>
+                      <span class="claim-count">{{ c.ClaimCount }} claim{{ c.ClaimCount === 1 ? '' : 's' }}</span>
+                    </td>
+                    <td class="num-col">{{ c.CurrentAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+                    <td class="num-col">{{ c.PreviousAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+                  </tr>
+                  <!-- Level 3: loading / empty / claims -->
+                  @if (isCodeExpanded(c.carcCode, c.rarcCode) && claimsLoading[codeKey(c.carcCode, c.rarcCode)]) {
+                    <tr>
+                      <td colspan="4" class="loading-cell">
+                        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                      </td>
+                    </tr>
+                  }
+                  @if (isCodeExpanded(c.carcCode, c.rarcCode) && !claimsLoading[codeKey(c.carcCode, c.rarcCode)] && claimsByCode[codeKey(c.carcCode, c.rarcCode)]?.length === 0) {
+                    <tr>
+                      <td colspan="4" class="empty-cell">No claims in current 90 days.</td>
+                    </tr>
+                  }
+                  @if (isCodeExpanded(c.carcCode, c.rarcCode) && !claimsLoading[codeKey(c.carcCode, c.rarcCode)]) {
+                    @for (claim of claimsByCode[codeKey(c.carcCode, c.rarcCode)]; track trackByClaim($index, claim)) {
+                      <tr class="row-claim"
+                        >
+                        <td class="expand-col"></td>
+                        <td class="label-cell claim-cell">
+                          <a [routerLink]="['/app/denial-iq/claim-queue', claim.claimId]" class="claim-link"
+                          title="Open claim in Denial IQ">{{ claim.claimId }}</a>
+                          <span class="claim-meta">
+                            {{ claim.patientName || '&#x2014;' }}
+                            @if (claim.payerName) {
+                              <span> &#x00B7; {{ claim.payerName }}</span>
+                            }
+                            @if (claim.dateOfService) {
+                              <span> &#x00B7; {{ claim.dateOfService | date:'MMM d, y' }}</span>
+                            }
+                          </span>
+                        </td>
+                        <td class="num-col">{{ claim.chargeAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+                        <td class="num-col">&#x2014;</td>
+                      </tr>
+                    }
+                  }
+                }
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </app-section-card>
+
+  <!-- Denial Insights (KPI data cards) -->
+  <app-section-card title="Denial Insights" [tooltip]="'Breakdown of denial categories (Eligibility, Authorization, Coding, Timely Filing, etc.) by volume and dollar impact over the selected period. Helps identify which denial types need workflow intervention.'" class="panel insights">
+    <ng-container cardHeaderActions>
+      <button mat-button [matMenuTriggerFor]="insightsPeriodMenu">{{ periodLabel }}</button>
+      <mat-menu #insightsPeriodMenu="matMenu">
+        <button mat-menu-item (click)="setPeriod('All time')">All time</button>
+        <button mat-menu-item (click)="setPeriod('Last 30 days')">Last 30 days</button>
+        <button mat-menu-item (click)="setPeriod('Last 90 days')">Last 90 days</button>
+        <button mat-menu-item (click)="setPeriod('Last 6 months')">Last 6 months</button>
+        <button mat-menu-item (click)="setPeriod('Last 12 months')">Last 12 months</button>
+        <button mat-menu-item (click)="setPeriod('MTD')">MTD</button>
+        <button mat-menu-item (click)="setPeriod('QTD')">QTD</button>
+        <button mat-menu-item (click)="setPeriod('YTD')">YTD</button>
+        <button mat-menu-item (click)="setPeriod('This year')">This year</button>
+      </mat-menu>
+    </ng-container>
+
+    <div class="kpi-grid">
+      @for (k of kpis; track trackByLabel($index, k)) {
+        <app-data-card
+          [title]="k.label"
+          [value]="kpiValue(k)"
+          [subtitle]="kpiSubtitle(k)"
+          [trendDirection]="kpiTrendDirection(k)"
+          [trendColor]="kpiTrendColor(k)"
+          [tooltip]="k.tooltip ?? ''"
+          [loading]="loading">
+        </app-data-card>
+      }
+    </div>
+  </app-section-card>
+
+</div>

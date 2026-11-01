@@ -1,0 +1,381 @@
+<section class="strategy">
+
+  <!-- Header -->
+  <header class="strategy__header">
+    <div class="strategy__title">
+      <p class="mat-body-2">
+        Model fee schedule changes and prioritize negotiation targets based on real payer performance.
+      </p>
+    </div>
+
+    <form class="strategy__filters" [formGroup]="form">
+      <mat-form-field appearance="outline" class="filter">
+        <mat-label>Contract / Fee Schedule</mat-label>
+        <mat-select
+          formControlName="contractId"
+          [compareWith]="compareContractIds"
+          >
+          <mat-option [value]="null">Select contract&#x2026;</mat-option>
+
+          @for (c of contractOptions; track trackByContractId($index, c)) {
+            <mat-option
+              [value]="c.id"
+              >
+              {{ c.display }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter">
+        <mat-label>Time Window</mat-label>
+        <mat-select formControlName="timeWindow">
+          <mat-option value="12m">Last 12 months</mat-option>
+          <mat-option value="6m">Last 6 months</mat-option>
+          <mat-option value="3m">Last 3 months</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="strategy__actions">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="clearProposed()"
+          [disabled]="!rows?.length"
+          >
+          Clear Proposed
+        </button>
+
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="optimizeProposed()"
+          [disabled]="optimizing || !rows?.length"
+          >
+          <mat-icon>auto_fix_high</mat-icon>
+          {{ optimizing ? 'Optimizing&#x2026;' : 'AI Optimize' }}
+        </button>
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="runStrategy()"
+          [disabled]="!form.valid || !rows?.length || running"
+          >
+          {{ running ? 'Running&#x2026;' : 'Run Strategy' }}
+        </button>
+      </div>
+    </form>
+  </header>
+
+  <!-- Baseline KPIs -->
+  @if (form.valid) {
+    <section class="strategy__page">
+      @if (form.valid) {
+        <section class="kpis">
+          @if (kpis) {
+            <mat-card class="kpi-card">
+              <div class="kpi-label">Total Underpayments (count / $)</div>
+              <div class="kpi-value">
+                {{ asNumber(kpis.underpaymentCount) }} / {{ asCurrency(kpis.underpaymentAmount) }}
+              </div>
+            </mat-card>
+          } @else {
+            <mat-card class="kpi-card kpi-card--skeleton"></mat-card>
+          }
+          @if (kpis) {
+            <mat-card class="kpi-card">
+              <div class="kpi-label">Average Payment Lag</div>
+              <div class="kpi-value">{{ asNumber(kpis.avgPaymentLagDays) }} days</div>
+            </mat-card>
+          } @else {
+            <mat-card class="kpi-card kpi-card--skeleton"></mat-card>
+          }
+          @if (kpis) {
+            <mat-card class="kpi-card">
+              <div class="kpi-label">Total Denials</div>
+              <div class="kpi-value">{{ asNumber(kpis.denialCount) }}</div>
+            </mat-card>
+          } @else {
+            <mat-card class="kpi-card kpi-card--skeleton"></mat-card>
+          }
+        </section>
+      }
+      <!-- AI Reasoning Panel -->
+      @if (aiSuggestions.length || aiError) {
+        <mat-expansion-panel class="ai-reasoning-panel" [expanded]="!!aiError">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="ai-icon">{{ aiError ? 'error_outline' : 'smart_toy' }}</mat-icon>
+              AI Reasoning
+            </mat-panel-title>
+            <mat-panel-description>
+              @if (aiMeta) {
+                {{ aiMeta.codesAnalyzed }} codes &middot; {{ aiMeta.model }} &middot; {{ aiMeta.analyzedAt | date:'MMM d, y, h:mm a' }}
+              }
+              @if (aiError && !aiMeta) {
+                Optimization failed
+              }
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          @if (aiError) {
+            <div class="ai-error-header">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ aiError }}</span>
+            </div>
+          }
+
+          @if (aiSuggestions.length) {
+            <div class="ai-strategy-block">
+              <span class="ai-strategy-label">Strategy:</span>{{ aiRationale }}
+            </div>
+
+            <table class="ai-reasoning-table">
+              <thead>
+                <tr>
+                  <th>CPT</th>
+                  <th class="col-right">Payment Ratio</th>
+                  <th>Tier</th>
+                  <th class="col-right">Current Allowed</th>
+                  <th class="col-right">Proposed</th>
+                  <th>AI Reasoning</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of aiSuggestions; track s.cpt) {
+                  <tr>
+                    <td class="col-cpt">{{ s.cpt }}</td>
+                    <td class="col-right" [ngClass]="ratioClass(s.paymentRatio)">{{ formatPct(s.paymentRatio) }}</td>
+                    <td><span class="tier-badge tier-badge--{{ s.tier }}">{{ s.tier }}</span></td>
+                    <td class="col-right">{{ asCurrency(s.currentAllowed) }}</td>
+                    <td class="col-right">{{ asCurrency(s.proposedAllowed) }}</td>
+                    <td class="col-reasoning">{{ s.reasoning }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+
+          @if (aiInputRows?.length) {
+            <details class="ai-raw">
+              <summary>Input data ({{ aiInputRows!.length }} codes submitted)</summary>
+              <table class="ai-input-table">
+                <thead>
+                  <tr>
+                    <th>CPT</th>
+                    <th class="col-right">Volume</th>
+                    <th class="col-right">Current Allowed</th>
+                    <th class="col-right">Avg Paid</th>
+                    <th class="col-right">Payment Ratio</th>
+                    <th>Tier</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of aiInputRows!; track r.cpt) {
+                    <tr>
+                      <td class="col-cpt">{{ r.cpt }}</td>
+                      <td class="col-right">{{ r.volume }}</td>
+                      <td class="col-right">{{ asCurrency(r.currentAllowed) }}</td>
+                      <td class="col-right">{{ asCurrency(r.avgPaid) }}</td>
+                      <td class="col-right" [ngClass]="ratioClass(r.paymentRatio)">{{ formatPct(r.paymentRatio) }}</td>
+                      <td><span class="tier-badge tier-badge--{{ r.tier }}">{{ r.tier }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </details>
+          }
+
+          @if (aiPromptSent) {
+            <details class="ai-raw">
+              <summary>Prompt sent to model</summary>
+              <pre class="ai-raw__pre">{{ aiPromptSent }}</pre>
+            </details>
+          }
+
+          @if (aiRawResponse) {
+            <details class="ai-raw">
+              <summary>Raw model output</summary>
+              <pre class="ai-raw__pre">{{ aiRawResponse }}</pre>
+            </details>
+          }
+
+        </mat-expansion-panel>
+      }
+
+      <!-- Builder -->
+      @if (form.valid) {
+        <mat-card class="builder">
+          <mat-card-header>
+            <mat-card-title>Contract Strategy Builder</mat-card-title>
+            <mat-card-subtitle>
+              Update proposed allowed amounts by CPT code. Estimated annual impact uses baseline volume.
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            @if (!rows?.length) {
+              <div class="empty">
+                <h3 class="mat-subtitle-2">Select a contract to load baseline performance</h3>
+                <p class="mat-body-2">
+                  This will populate top CPT codes by volume/value/underpayment for the selected time window.
+                </p>
+              </div>
+            }
+            @if (rows?.length) {
+              <div class="totals-bar">
+                <span>Total Annual Impact: <strong [class.positive]="totalImpact > 0" [class.negative]="totalImpact < 0">{{ asCurrency(totalImpact) }}</strong></span>
+                @if (avgPaymentLag > 0) {
+                  <span>Avg Payment Lag: <strong>{{ avgPaymentLag | number:'1.1-1' }} days</strong></span>
+                }
+              </div>
+              <div class="table-wrap">
+                <table mat-table [dataSource]="rows" class="mat-elevation-z0 strategy-table">
+                  <!-- CPT -->
+                  <ng-container matColumnDef="cpt">
+                    <th mat-header-cell *matHeaderCellDef>CPT</th>
+                    <td mat-cell *matCellDef="let r">
+                      <div class="cpt">
+                        <div class="cpt__code">{{ r.cpt }}</div>
+                        @if (r.description) {
+                          <div class="cpt__desc">{{ r.description }}</div>
+                        }
+                      </div>
+                    </td>
+                  </ng-container>
+                  <!-- Volume -->
+                  <ng-container matColumnDef="volume">
+                    <th mat-header-cell *matHeaderCellDef class="num">Volume</th>
+                    <td mat-cell *matCellDef="let r" class="num">{{ asNumber(r.volume) }}</td>
+                  </ng-container>
+                  <!-- Current Allowed -->
+                  <ng-container matColumnDef="currentAllowed">
+                    <th mat-header-cell *matHeaderCellDef class="num">Current Allowed</th>
+                    <td mat-cell *matCellDef="let r" class="num">{{ asCurrency(r.currentAllowed) }}</td>
+                  </ng-container>
+                  <!-- Avg Paid -->
+                  <ng-container matColumnDef="avgPaid">
+                    <th mat-header-cell *matHeaderCellDef class="num">Avg Paid</th>
+                    <td mat-cell *matCellDef="let r" class="num">{{ asCurrency(r.avgPaid) }}</td>
+                  </ng-container>
+                  <!-- Underpaid -->
+                  <ng-container matColumnDef="underpaidAmount">
+                    <th mat-header-cell *matHeaderCellDef class="num">Underpaid $</th>
+                    <td mat-cell *matCellDef="let r" class="num">{{ asCurrency(r.underpaidAmount) }}</td>
+                  </ng-container>
+                  <!-- Total Charges -->
+                  <ng-container matColumnDef="totalCharges">
+                    <th mat-header-cell *matHeaderCellDef class="num">Total Charges</th>
+                    <td mat-cell *matCellDef="let r" class="num">{{ asCurrency(r.totalCharges) }}</td>
+                  </ng-container>
+                  <!-- Proposed Allowed (editable) -->
+                  <ng-container matColumnDef="proposedAllowed">
+                    <th mat-header-cell *matHeaderCellDef class="num">Proposed Allowed</th>
+                    <td mat-cell *matCellDef="let r" class="num proposed-cell">
+                      <mat-form-field appearance="outline" class="cell-input">
+                        <span matPrefix>$&nbsp;</span>
+                        <input
+                          matInput
+                          type="number"
+                          inputmode="decimal"
+                          [value]="r.proposedAllowed ?? ''"
+                          placeholder="&#x2014;"
+                          (input)="onSetProposed(r, $any($event.target).value)"
+                          />
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="cell-input cell-input--pct">
+                        <input
+                          matInput
+                          type="number"
+                          inputmode="decimal"
+                          [value]="r.proposedPct != null ? (r.proposedPct | number:'1.1-1') : ''"
+                          placeholder="&#x2014;"
+                          (input)="onSetProposedPct(r, $any($event.target).value)"
+                          />
+                        <span matSuffix>%</span>
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+                    <!-- % Change -->
+                    <ng-container matColumnDef="pctChange">
+                      <th mat-header-cell *matHeaderCellDef class="num">% Change</th>
+                      <td mat-cell *matCellDef="let r" class="num">{{ asPct(r.pctChange) }}</td>
+                    </ng-container>
+                    <!-- Annual Impact -->
+                    <ng-container matColumnDef="annualImpact">
+                      <th mat-header-cell *matHeaderCellDef class="num">Annual Impact</th>
+                      <td
+                        mat-cell
+                        *matCellDef="let r"
+                        class="num impact"
+                        [class.positive]="(r.annualImpact ?? 0) > 0"
+                        [class.negative]="(r.annualImpact ?? 0) < 0"
+                        >
+                        {{ asCurrency(r.annualImpact) }}
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+                  </table>
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
+        }
+        <!-- Results -->
+        @if (result) {
+          <mat-card class="results">
+            <mat-card-header class="results__header">
+              <mat-card-title>Strategy Results</mat-card-title>
+              <mat-card-subtitle>
+                Projected annual impact:
+                <span class="impact-number">{{ asCurrency(result.totalAnnualImpact) }}</span>
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="results__grid">
+                <div class="results-card">
+                  <h3 class="mat-subtitle-2">Top drivers</h3>
+                  <table mat-table [dataSource]="result.topDrivers" class="mat-elevation-z0 drivers-table">
+                    <ng-container matColumnDef="cpt">
+                      <th mat-header-cell *matHeaderCellDef>CPT</th>
+                      <td mat-cell *matCellDef="let d">{{ d.cpt }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="volume">
+                      <th mat-header-cell *matHeaderCellDef class="num">Volume</th>
+                      <td mat-cell *matCellDef="let d" class="num">{{ asNumber(d.volume) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="currentAllowed">
+                      <th mat-header-cell *matHeaderCellDef class="num">Current</th>
+                      <td mat-cell *matCellDef="let d" class="num">{{ asCurrency(d.currentAllowed) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="proposedAllowed">
+                      <th mat-header-cell *matHeaderCellDef class="num">Proposed</th>
+                      <td mat-cell *matCellDef="let d" class="num">{{ asCurrency(d.proposedAllowed ?? null) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="annualImpact">
+                      <th mat-header-cell *matHeaderCellDef class="num">Impact</th>
+                      <td mat-cell *matCellDef="let d" class="num">{{ asCurrency(d.annualImpact ?? null) }}</td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="['cpt','volume','currentAllowed','proposedAllowed','annualImpact']"></tr>
+                    <tr mat-row *matRowDef="let row; columns: ['cpt','volume','currentAllowed','proposedAllowed','annualImpact']"></tr>
+                  </table>
+                </div>
+                <div class="results-card">
+                  <h3 class="mat-subtitle-2">Assumptions (MVP)</h3>
+                  <mat-list>
+                    @for (a of result.assumptions; track a) {
+                      <mat-list-item>
+                        <span matLine>{{ a }}</span>
+                      </mat-list-item>
+                    }
+                  </mat-list>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </section>
+    }
+  </section>

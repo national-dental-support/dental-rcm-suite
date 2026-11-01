@@ -1,0 +1,56 @@
+<h2 mat-dialog-title>Customize Dashboard</h2>
+
+<mat-dialog-content class="customize-content">
+  <div class="name-row">
+    <mat-form-field appearance="outline" class="name-field">
+      <mat-label>Layout name</mat-label>
+      <input matInput [(ngModel)]="layoutName" placeholder="e.g. Daily Ops" maxlength="80">
+    </mat-form-field>
+    <mat-checkbox [(ngModel)]="isDefault" class="default-check">Set as default</mat-checkbox>
+  </div>
+
+  <p class="drag-hint">
+    <mat-icon class="hint-icon">drag_indicator</mat-icon>
+    Drag to reorder sections. Uncheck to hide.
+  </p>
+
+  <div cdkDropList (cdkDropListDropped)="dropSection($event)" class="section-list">
+    @for (section of editSections; track trackBySlug($index, section)) {
+      <div
+        cdkDrag
+        class="section-drag-item">
+        <div class="cdk-placeholder" *cdkDragPlaceholder></div>
+        <div class="section-row">
+          <mat-icon cdkDragHandle class="drag-handle" title="Drag to reorder">drag_indicator</mat-icon>
+          <mat-checkbox [(ngModel)]="section.visible" class="section-check"></mat-checkbox>
+          <span class="section-name" [class.section-name--hidden]="!section.visible">{{ section.label }}</span>
+          <button
+            mat-icon-button
+            class="expand-btn"
+            (click)="toggleExpand(section)"
+            [attr.aria-label]="section.expanded ? 'Collapse KPIs' : 'Expand KPIs'">
+            <mat-icon>{{ section.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+        </div>
+        @if (section.expanded) {
+          <div class="kpi-list">
+            @for (kpi of section.kpis; track trackByKey($index, kpi)) {
+              <mat-checkbox
+                [(ngModel)]="kpi.visible"
+                class="kpi-check">
+                {{ kpi.label }}
+              </mat-checkbox>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="save()" [disabled]="!canSave">
+    Save Layout
+  </button>
+</mat-dialog-actions>

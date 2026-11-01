@@ -1,0 +1,100 @@
+<div class="analytics-page">
+
+  <div *ngIf="loading" class="xen-loading">
+    <mat-spinner diameter="36"></mat-spinner>
+  </div>
+
+  <div *ngIf="error && !loading" class="xen-empty err">
+    <mat-icon>error_outline</mat-icon>
+    <span>Failed to load cycle time data.</span>
+    <button mat-stroked-button (click)="load()">Retry</button>
+  </div>
+
+  <ng-container *ngIf="data && !loading">
+
+    <!-- Summary Cards -->
+    <div class="kpi-row">
+      <div class="kpi-card primary">
+        <div class="kpi-label">Avg Cycle Time</div>
+        <div class="kpi-value">{{ data.summary.avgCycleDays | number:'1.0-1' }} <span class="kpi-unit">days</span></div>
+        <div class="kpi-sub">Submission to payment</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Paid Within 30 Days</div>
+        <div class="kpi-value">{{ data.summary.pctWithin30 | number:'1.0-1' }}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Paid Within 60 Days</div>
+        <div class="kpi-value">{{ data.summary.pctWithin60 | number:'1.0-1' }}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Paid Within 90 Days</div>
+        <div class="kpi-value">{{ data.summary.pctWithin90 | number:'1.0-1' }}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Claims Analyzed</div>
+        <div class="kpi-value">{{ data.summary.totalClaims | number }}</div>
+      </div>
+    </div>
+
+    <!-- Monthly Trend -->
+    <div class="chart-card">
+      <div class="chart-title">Avg Cycle Time &#x2014; Monthly Trend (Last 12 Months)</div>
+      <apx-chart
+        [series]="trendChartOptions.series"
+        [chart]="trendChartOptions.chart"
+        [xaxis]="trendChartOptions.xaxis"
+        [stroke]="trendChartOptions.stroke"
+        [dataLabels]="trendChartOptions.dataLabels"
+        [tooltip]="trendChartOptions.tooltip"
+        [yaxis]="trendChartOptions.yaxis">
+      </apx-chart>
+    </div>
+
+    <!-- Slowest Payers Chart -->
+    <div class="chart-card">
+      <div class="chart-title">Slowest Payers by Avg Cycle Days</div>
+      <apx-chart
+        [series]="payerChartOptions.series"
+        [chart]="payerChartOptions.chart"
+        [xaxis]="payerChartOptions.xaxis"
+        [dataLabels]="payerChartOptions.dataLabels"
+        [tooltip]="payerChartOptions.tooltip"
+        [plotOptions]="payerChartOptions.plotOptions"
+        [fill]="payerChartOptions.fill">
+      </apx-chart>
+    </div>
+
+    <!-- Payer Table -->
+    <div class="table-card">
+      <div class="table-title">Payer Cycle Time Breakdown</div>
+      <table mat-table [dataSource]="data.slowestPayers" class="xen-table">
+
+        <ng-container matColumnDef="payer">
+          <th mat-header-cell *matHeaderCellDef>Payer</th>
+          <td mat-cell *matCellDef="let r"><strong>{{ r.payer }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="avgDays">
+          <th mat-header-cell *matHeaderCellDef class="num">Avg Days</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.avgDays | number:'1.0-1' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="claimCount">
+          <th mat-header-cell *matHeaderCellDef class="num">Claims</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.claimCount | number }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="pctOnTime">
+          <th mat-header-cell *matHeaderCellDef class="num">% On-Time (&#x2264;30d)</th>
+          <td mat-cell *matCellDef="let r" class="num">{{ r.pctOnTime | number:'1.0-1' }}%</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="payerColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: payerColumns;" class="xen-row"></tr>
+      </table>
+    </div>
+
+  </ng-container>
+
+</div>

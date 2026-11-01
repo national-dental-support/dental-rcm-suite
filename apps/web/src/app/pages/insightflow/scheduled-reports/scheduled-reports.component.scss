@@ -1,0 +1,56 @@
+.sr-root { padding: 24px; }
+
+.sr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.sr-title { margin: 0 0 2px; font-size: 18px; font-weight: 700; color: var(--color-text); }
+.sr-subtitle { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+
+.sr-loading { display: flex; justify-content: center; padding: 40px 0; }
+
+.sr-empty {
+  text-align: center; padding: 48px 0; color: var(--color-text-muted);
+  mat-icon { font-size: 48px; height: 48px; width: 48px; color: var(--color-border-strong); margin-bottom: var(--font-size-xs); }
+  p { margin: 0 0 16px; }
+}
+
+.sr-list { display: flex; flex-direction: column; gap: 10px; }
+
+.sr-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px var(--radius-lg); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px;
+  transition: box-shadow 0.12s;
+  &:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+}
+
+.sr-card-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.sr-card-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sr-card-name { font-weight: 600; font-size: var(--font-size-md); color: var(--color-text); }
+.sr-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sr-card-recipients { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.sr-card-dates { font-size: 11px; color: var(--color-text-subtle); }
+.sr-card-actions { display: flex; gap: 4px; }
+
+.sr-chip {
+  display: inline-flex; padding: 1px var(--radius); border-radius: 999px; font-size: 11px;
+  font-weight: 500; background: var(--color-bg-subtle); color: var(--color-gray-600); border: 1px solid var(--color-border);
+}
+.sr-chip--freq { background: var(--color-info-light); color: var(--color-info); border-color: #93c5fd; }
+
+.sr-editor {
+  padding: 20px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-bg-subtle);
+  h4 { margin: 0 0 var(--font-size-base); font-size: var(--font-size-base); font-weight: 700; }
+}
+
+.sr-form-row { display: flex; gap: 12px; }
+.sr-field { flex: 1; }
+.sr-field-full { width: 100%; margin-bottom: 8px; }
+
+.sr-form-buttons {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border);
+}

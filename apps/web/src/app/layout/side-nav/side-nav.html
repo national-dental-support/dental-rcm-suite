@@ -1,0 +1,233 @@
+<nav class="sidebar" [class.nav-collapsed]="navCollapsed" aria-label="Product navigation">
+  <div class="nav-content">
+
+    <!-- -- Standalone items ---------------------------------------------- -->
+    <ul class="nav-top">
+      @for (item of standaloneItems; track item) {
+        <li>
+          <a
+            class="nav-item"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            >
+            <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+        </li>
+      }
+
+      <!-- -- RCM group --------------------------------------------------- -->
+      @if (rcmItems.length > 0 || lockedRcmItems.length > 0) {
+        <li class="nav-group">
+          <div class="group-divider"></div>
+          <div class="group-header" (click)="rcmExpanded = !rcmExpanded">
+            <span class="group-label">RCM</span>
+            <mat-icon class="group-chevron">{{ rcmExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </div>
+          @if (rcmExpanded) {
+            <ul class="group-items">
+              @for (item of rcmItems; track item) {
+                <li>
+                  <a
+                    class="nav-item"
+                    [routerLink]="item.route"
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: false }"
+                    >
+                    <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+                    <span class="nav-label">{{ item.label }}</span>
+                  </a>
+                </li>
+              }
+              @for (item of lockedRcmItems; track item) {
+                <li>
+                  <div
+                    class="nav-item nav-item-locked"
+                    [matTooltip]="'Contact your administrator to enable ' + item.label"
+                    matTooltipPosition="right"
+                    >
+                    <mat-icon class="nav-icon locked-icon">{{ item.icon }}</mat-icon>
+                    <span class="nav-label">{{ item.label }}</span>
+                    <mat-icon class="lock-badge">lock</mat-icon>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+
+      <!-- -- Other Apps (external, dynamic - only shown if deployed) -- -->
+      @if (externalApps.length > 0) {
+        <li class="nav-group">
+          <div class="group-divider"></div>
+          <ul class="group-items">
+            @for (app of externalApps; track app) {
+              <li>
+                <a class="nav-item" [href]="app.url" target="_blank" rel="noopener"
+                  [matTooltip]="app.name" matTooltipPosition="right"
+                  [attr.title]="app.name">
+                  <mat-icon class="nav-icon external-app-icon">{{ app.icon }}</mat-icon>
+                  <span class="nav-label">{{ app.name }}</span>
+                  <mat-icon class="external-link-indicator">open_in_new</mat-icon>
+                </a>
+              </li>
+            }
+          </ul>
+        </li>
+      }
+
+      <!-- -- Collaboration group ---------------------------------------- -->
+      <li class="nav-group">
+        <div class="group-divider"></div>
+        <div class="group-header" (click)="collaborationExpanded = !collaborationExpanded">
+          <span class="group-label">Collaboration</span>
+          <mat-icon class="group-chevron">{{ collaborationExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </div>
+        @if (collaborationExpanded) {
+          <ul class="group-items">
+            <li>
+              <a class="nav-item" routerLink="/app/team-chat" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                <mat-icon class="nav-icon-mat">chat</mat-icon>
+                <span class="nav-label">Team Chat</span>
+              </a>
+            </li>
+          </ul>
+        }
+      </li>
+
+      <!-- -- Configure group --------------------------------------------- -->
+      @if (configureItems.length > 0) {
+        <li class="nav-group">
+          <div class="group-divider"></div>
+          <div class="group-header" (click)="configureExpanded = !configureExpanded">
+            <span class="group-label">Configure</span>
+            <mat-icon class="group-chevron">{{ configureExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </div>
+          @if (configureExpanded) {
+            <ul class="group-items">
+              @for (item of configureItems; track item) {
+                <li>
+                  <a
+                    class="nav-item"
+                    [routerLink]="item.route"
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: false }"
+                    >
+                    <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+                    <span class="nav-label">{{ item.label }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+
+    <!-- -- Bottom items ---------------------------------------------------- -->
+    <ul class="nav-bottom">
+      <!-- Collapse button -->
+      <li>
+        <button class="collapse-btn" (click)="toggleCollapse()" [matTooltip]="'Collapse sidebar'">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+      </li>
+
+      <li>
+        <div class="nav-icon-label">
+          <span class="product-wordmark" title="Dental RCM Suite">Dental RCM Suite</span>
+        </div>
+      </li>
+
+      <!-- Customer context switcher (SuperAdmin only, more than one tenant) -->
+      @if (isSuperAdmin && enterprises.length > 1) {
+        <li class="enterprise-switcher">
+          <label class="switcher-label">Customer</label>
+          <select
+            class="enterprise-select"
+            aria-label="Switch customer"
+            (change)="onEnterpriseChange($event)"
+            >
+            @for (ent of enterprises; track ent.id) {
+              <option
+                [value]="ent.id"
+                [selected]="ent.id === (enterpriseSvc.active$ | async)?.id"
+                >{{ ent.name }}</option>
+            }
+          </select>
+        </li>
+      }
+
+      <!-- Switch Persona button (Super Admin only, not while impersonating) -->
+      @if (isSuperAdmin && !(impersonation.impersonating$ | async)) {
+        <li>
+          <button class="collapse-btn" matTooltip="Switch Persona" (click)="openPersonaSwitcher()">
+            <mat-icon>swap_horiz</mat-icon>
+          </button>
+        </li>
+      }
+
+      <li class="user-avatar" (click)="toggleUserMenu()">
+        <div class="avatar-container">
+          @if (userProfilePicUrl) {
+            <img
+              [src]="userProfilePicUrl"
+              alt="User Avatar"
+              class="avatar-img"
+              />
+          }
+          @if (!userProfilePicUrl) {
+            <div class="avatar-fallback">
+              {{ userInitials }}
+            </div>
+          }
+        </div>
+
+        @if (showUserMenu) {
+          <div class="user-popup">
+            @if (userProfilePicUrl) {
+              <img
+                [src]="userProfilePicUrl"
+                alt="User Avatar"
+                class="avatar-img"
+                />
+            }
+            @if (!userProfilePicUrl) {
+              <div class="avatar-fallback">
+                {{ userInitials }}
+              </div>
+            }
+            <p>{{ userEmail }}</p>
+            <button (click)="logout()">Logout</button>
+          </div>
+        }
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Persona Switcher Panel -->
+@if (showPersonaSwitcher) {
+  <div class="persona-switcher-overlay" (click)="showPersonaSwitcher = false">
+    <div class="persona-switcher-panel" (click)="$event.stopPropagation()">
+      <div class="persona-switcher-header">
+        <h3>Switch Persona</h3>
+        <button mat-icon-button (click)="showPersonaSwitcher = false"><mat-icon>close</mat-icon></button>
+      </div>
+      <select class="persona-native-select" aria-label="Select persona" (change)="onPersonaSelect($event)">
+        <option value="" disabled selected>Select a user...</option>
+        @for (group of personaGroups; track group) {
+          <optgroup [label]="group.role">
+            @for (user of group.users; track user) {
+              <option [value]="user.id">
+                {{ user.name }} ({{ user.email }})
+              </option>
+            }
+          </optgroup>
+        }
+      </select>
+    </div>
+  </div>
+}

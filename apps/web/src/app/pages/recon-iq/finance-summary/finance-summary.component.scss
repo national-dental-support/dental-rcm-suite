@@ -1,0 +1,360 @@
+.finance-summary {
+  padding: 8px 0;
+}
+
+// -- Controls ------------------------------------------------------------------
+.controls-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+// -- Filter pills (matches global-filters style) --------------------------------
+.filter-pill {
+  height: 38px;
+  min-width: 160px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid #e5ecf4;
+  background: var(--color-surface);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background 120ms ease, border-color 120ms ease;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+
+  &:hover { background: var(--color-bg-subtle); border-color: #d7e3f1; }
+  &[aria-expanded='true'] { background: var(--color-bg-subtle); border-color: #d7e3f1; }
+}
+
+.pill-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.pill-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pill-caret {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  color: var(--color-text-muted);
+  margin-left: 2px;
+}
+
+::ng-deep .mat-mdc-menu-panel.fs-filter-menu {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid #e5ecf4;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.06);
+  min-width: 160px;
+
+  .fs-menu-item--active {
+    color: var(--rcm-color-1, var(--color-info));
+    font-weight: 600;
+  }
+}
+
+// -- State boxes ---------------------------------------------------------------
+.state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: var(--color-text-muted);
+}
+
+.error-box {
+  mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--color-danger); }
+  a { color: var(--color-info); cursor: pointer; text-decoration: underline; }
+}
+
+// -- KPI Row -------------------------------------------------------------------
+.kpi-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.kpi-card {
+  flex: 1;
+  min-width: 160px;
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px !important;
+  }
+
+  .kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(25, 118, 210, 0.08);
+    mat-icon { color: var(--color-info); font-size: 22px; width: 22px; height: 22px; }
+  }
+
+  .kpi-body {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .kpi-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .kpi-label {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-gray-700);
+    margin-top: 1px;
+  }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--color-text-subtle);
+    margin-top: 2px;
+  }
+
+  // Accent variants
+  &.accent-blue .kpi-icon   { background: rgba(25, 118, 210, 0.1); mat-icon { color: var(--color-info); } }
+  &.accent-green .kpi-icon  { background: rgba(34, 197, 94, 0.1);  mat-icon { color: var(--color-success); } }
+  &.accent-teal .kpi-icon   { background: rgba(20, 184, 166, 0.1); mat-icon { color: #0d9488; } }
+  &.accent-purple .kpi-icon { background: rgba(139, 92, 246, 0.1); mat-icon { color: #7c3aed; } }
+  &.accent-amber .kpi-icon  { background: rgba(245, 158, 11, 0.1); mat-icon { color: var(--color-warning); } }
+  &.accent-red .kpi-icon    { background: rgba(239, 68, 68, 0.1);  mat-icon { color: var(--color-danger); } }
+}
+
+// -- Performance Row -----------------------------------------------------------
+.perf-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.perf-card {
+  flex: 1;
+  min-width: 140px;
+
+  mat-card-content {
+    padding: 16px !important;
+  }
+
+  .perf-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted);
+    margin-bottom: 6px;
+  }
+
+  .perf-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+
+    &.rate-green { color: var(--color-success); }
+    &.rate-amber { color: var(--color-warning); }
+    &.rate-red   { color: var(--color-danger); }
+    &.neutral    { color: var(--color-info); }
+  }
+
+  .perf-sub {
+    font-size: 11px;
+    color: var(--color-text-subtle);
+    margin-bottom: 10px;
+  }
+
+  .perf-bar {
+    height: 4px;
+    background: var(--color-border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .perf-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+    max-width: 100%;
+
+    &.rate-green { background: var(--color-success); }
+    &.rate-amber { background: var(--color-warning); }
+    &.rate-red   { background: var(--color-danger); }
+  }
+}
+
+// -- Mid grid (waterfall + pie) ------------------------------------------------
+.mid-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// -- Waterfall ----------------------------------------------------------------
+.waterfall {
+  padding: 4px 0;
+}
+
+.wf-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-bg-muted);
+
+  &.wf-result {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    font-weight: 600;
+  }
+
+  &.wf-negative {
+    background: #fff5f5;
+    border-color: #fecaca;
+  }
+}
+
+.wf-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-700);
+  flex-shrink: 0;
+}
+
+.wf-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.wf-amount {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+  min-width: 110px;
+  text-align: right;
+  flex-shrink: 0;
+
+  &.wf-amount-neg { color: var(--color-danger); }
+}
+
+.wf-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.wf-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--color-info);
+  transition: width 0.5s ease;
+
+  &.wf-bar-neg    { background: var(--color-danger); }
+  &.wf-bar-result { background: var(--color-success); }
+}
+
+// -- Trend card ---------------------------------------------------------------
+.trend-card {
+  display: block;
+  margin-bottom: 16px;
+}
+
+// -- Transaction table ---------------------------------------------------------
+.trx-table {
+  width: 100%;
+
+  th.mat-header-cell {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  td.mat-cell {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-700);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-bg-muted);
+  }
+
+  tr.mat-row:hover td { background: var(--color-bg-subtle); }
+
+  .col-right {
+    text-align: right;
+  }
+}
+
+// Category chip
+.cat-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+
+  &.cat-charge            { background: var(--color-info-light); color: var(--color-info); }
+  &.cat-insurance_payment { background: var(--color-success-light); color: var(--color-success); }
+  &.cat-patient_payment   { background: #ede9fe; color: #6d28d9; }
+  &.cat-adjustment        { background: #fef9c3; color: #a16207; }
+  &.cat-writeoff          { background: var(--color-danger-light); color: var(--color-danger); }
+  &.cat-other             { background: var(--color-bg-muted); color: var(--color-gray-600); }
+}

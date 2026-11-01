@@ -1,0 +1,109 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.kpi-card {
+  /* lock consistent card sizing */
+  height: 100%;
+  min-height: 152px; /* pick a number that matches your desired visual */
+
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+
+  /* stabilize internal layout */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+
+  &.loading {
+    opacity: 0.6;
+  }
+}
+
+/* top row: value + action icon */
+.kpi-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kpi-main {
+  min-width: 0; /* enables ellipsis */
+}
+
+/* Subtitle (your "title") - keep single line */
+.mat-mdc-card-subtitle,
+mat-card-subtitle {
+  margin: 0 0 6px 0;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-title-info {
+  font-size: var(--font-size-md);
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  color: var(--color-text-subtle);
+  cursor: help;
+  flex-shrink: 0;
+
+  &:hover {
+    color: var(--color-text-muted);
+  }
+}
+
+/* Big number - never wrap */
+.mat-mdc-card-title,
+mat-card-title {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-text);
+
+  white-space: nowrap;
+}
+
+/* Bottom helper text - clamp to 2 lines so height is consistent */
+.muted {
+  margin-top: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+
+  /* reserve the same space even when short (prevents jitter) */
+  min-height: calc(13px * 1.25 * 2); /* 2 lines worth */
+}
+
+/* Right side (trend/chevron) should never reflow the card */
+.kpi-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+/* If you render the action as an icon button, keep it fixed */
+.stats-card__chevron {
+  margin-right: -6px;
+  margin-top: 2px;
+  flex: 0 0 auto;
+}

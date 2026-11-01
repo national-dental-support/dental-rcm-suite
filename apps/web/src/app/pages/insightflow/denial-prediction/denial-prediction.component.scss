@@ -1,0 +1,73 @@
+.denial-pred-page { padding: 16px; }
+
+.xen-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.page-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+
+.spacer { flex: 1; }
+
+.filter-field { width: 160px; }
+
+.top-row {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.accuracy-card, .chart-card { padding: 4px; }
+
+.accuracy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.acc-stat { text-align: center; }
+
+.acc-label {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+}
+
+.acc-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  &.accent { color: var(--rcm-color-1, #00bfa5); }
+}
+
+.risk-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.risk-bar {
+  height: 8px;
+  border-radius: var(--radius-sm);
+  max-width: 80px;
+}
+
+.risk-score-label { font-weight: 700; font-size: 0.9rem; }
+
+.risk-badge { font-weight: 700; font-size: 0.85rem; }
+
+.factor-chip {
+  display: inline-block;
+  background: rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 2px 7px;
+  font-size: 0.73rem;
+  margin: 2px 2px 2px 0;
+}
+
+.action-text { font-size: 0.82rem; color: rgba(255,255,255,0.75); max-width: 220px; }
+
+.table-card { margin-top: 4px; }

@@ -1,0 +1,52 @@
+.ltv-page {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+
+  &.primary {
+    border-left: 4px solid var(--rcm-color-1);
+  }
+}
+
+.kpi-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 4px 0;
+}
+
+.kpi-sub {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.ltv-col {
+  color: var(--rcm-color-1);
+}
+
+mat-tab-group {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
